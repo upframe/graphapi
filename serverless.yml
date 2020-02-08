@@ -1,0 +1,31 @@
+service: graphapi
+
+provider:
+  name: aws
+  runtime: nodejs10.x
+  stage: ${opt:stage, 'prod'}
+  timeout: 10
+  region: eu-west-2
+
+functions:
+  graphapi:
+    handler: src/handler.graphapi
+    events:
+      - http:
+          path: /
+          method: post
+          cors: true
+      - http:
+          path: /
+          method: get
+          cors: true
+    environment:
+      stage: ${self:provider.stage}
+
+plugins:
+  - serverless-webpack
+  - serverless-offline
+
+custom:
+  serverless-offline:
+    port: 5000
