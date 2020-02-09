@@ -3,9 +3,10 @@ service: graphapi
 provider:
   name: aws
   runtime: nodejs10.x
-  stage: ${opt:stage, 'prod'}
+  stage: ${opt:stage, 'dev'}
   timeout: 10
   region: eu-west-2
+  profile: up-serverless
 
 functions:
   graphapi:

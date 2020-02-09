@@ -5,7 +5,12 @@ import resolvers from './resolvers'
 const server = new ApolloServer({
   typeDefs: typeDefs,
   resolvers,
-  introspection: true,
+  ...(process.env.stage === 'dev' && {
+    introspection: true,
+    playground: {
+      endpoint: `/${process.env.stage}`,
+    },
+  }),
 })
 
 export const graphapi = server.createHandler({
