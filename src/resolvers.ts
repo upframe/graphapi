@@ -1,5 +1,16 @@
+import db from './db'
+
 export default {
   Query: {
-    hello: () => 'graphapi says hello!',
+    mentors: () =>
+      db('users')
+        .select('name')
+        .where({ type: 'mentor', newsfeed: 'Y' }),
+
+    me: async () => {},
+  },
+  Mutation: {
+    login: () => {},
+    logout: () => {},
   },
 }

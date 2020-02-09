@@ -1,7 +1,18 @@
+type User {
+  name: String
+}
+
 type Query {
-  hello: String
+  me: User
+  mentors: [User]
+}
+
+type Mutation {
+  login: ID
+  logout: ID
 }
 
 schema {
   query: Query
+  mutation: Mutation
 }
