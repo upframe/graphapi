@@ -2,3 +2,6 @@ node_modules
 .webpack
 .serverless
 .env*
+*.key
+.DS_STORE
+*.log

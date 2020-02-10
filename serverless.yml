@@ -2,11 +2,10 @@ service: graphapi
 
 provider:
   name: aws
-  runtime: nodejs10.x
+  runtime: nodejs12.x
   stage: ${opt:stage, 'dev'}
   timeout: 10
   region: eu-west-2
-  profile: up-serverless
 
 functions:
   graphapi:
@@ -31,3 +30,5 @@ plugins:
 custom:
   serverless-offline:
     port: 5000
+  webpack:
+    includeModules: true
