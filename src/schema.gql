@@ -7,9 +7,14 @@ type Query {
   mentors: [User]
 }
 
+input LoginInput {
+  email: String!
+  password: String!
+}
+
 type Mutation {
-  login: ID
-  logout: ID
+  signIn(input: LoginInput): User
+  signOut: ID
 }
 
 schema {
