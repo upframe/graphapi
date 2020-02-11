@@ -21,14 +21,18 @@ functions:
           cors: true
     environment:
       stage: ${self:provider.stage}
-      DB_HOST: ${ssm:UP_DB_HOST}
-      DB_USER: ${ssm:UP_DB_USER_API}
-      DB_PASS: ${ssm:UP_DB_PASS_API}
+      PUBLIC_KEY: ${ssm:/API/PublicKey}
+      PRIVATE_KEY: ${ssm:/API/PrivateKey~true}
+      PROD_DB_HOST: ${ssm:/API/Prod/DB/Host}
+      PROD_DB_USER: ${ssm:/API/Prod/DB/User}
+      PROD_DB_PASS: ${ssm:/API/Prod/DB/Password~true}
+      DEV_DB_HOST: ${ssm:/API/Dev/DB/Host}
+      DEV_DB_USER: ${ssm:/API/Dev/DB/User}
+      DEV_DB_PASS: ${ssm:/API/Dev/DB/Password~true}
 
 plugins:
   - serverless-webpack
   - serverless-offline
-  - serverless-offline-ssm
 
 custom:
   serverless-offline:

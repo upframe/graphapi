@@ -1,7 +1,5 @@
 const slsw = require('serverless-webpack')
 const nodeExternals = require('webpack-node-externals')
-const webpack = require('webpack')
-const fs = require('fs')
 
 module.exports = {
   entry: slsw.lib.entries,
@@ -49,14 +47,4 @@ module.exports = {
       },
     ],
   },
-  plugins: [
-    new webpack.DefinePlugin({
-      'process.env.PRIVATE_KEY': JSON.stringify(
-        fs.readFileSync('./private.key', 'utf-8')
-      ),
-      'process.env.PUBLIC_KEY': JSON.stringify(
-        fs.readFileSync('./public.key', 'utf-8')
-      ),
-    }),
-  ],
 }
