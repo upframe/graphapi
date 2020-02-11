@@ -51,10 +51,12 @@ module.exports = {
   },
   plugins: [
     new webpack.DefinePlugin({
-      'process.env': {
-        PRIVATE_KEY: JSON.stringify(fs.readFileSync('./private.key', 'utf-8')),
-        PUBLIC_KEY: JSON.stringify(fs.readFileSync('./public.key', 'utf-8')),
-      },
+      'process.env.PRIVATE_KEY': JSON.stringify(
+        fs.readFileSync('./private.key', 'utf-8')
+      ),
+      'process.env.PUBLIC_KEY': JSON.stringify(
+        fs.readFileSync('./public.key', 'utf-8')
+      ),
     }),
   ],
 }

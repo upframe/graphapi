@@ -5,3 +5,4 @@ node_modules
 *.key
 .DS_STORE
 *.log
+credentials

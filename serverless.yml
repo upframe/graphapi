@@ -21,11 +21,14 @@ functions:
           cors: true
     environment:
       stage: ${self:provider.stage}
+      DB_HOST: ${ssm:UP_DB_HOST}
+      DB_USER: ${ssm:UP_DB_USER_API}
+      DB_PASS: ${ssm:UP_DB_PASS_API}
 
 plugins:
   - serverless-webpack
   - serverless-offline
-  - serverless-dotenv-plugin
+  - serverless-offline-ssm
 
 custom:
   serverless-offline:
