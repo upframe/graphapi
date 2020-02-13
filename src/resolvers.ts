@@ -33,4 +33,11 @@ export default {
     },
     signOut: () => {},
   },
+
+  Person: {
+    __resolveType({ type }) {
+      if (type === 'user') return 'User'
+      if (type === 'mentor') return 'Mentor'
+    },
+  },
 }

@@ -1,18 +1,28 @@
 directive @private on FIELD_DEFINITION
 
-type User {
+interface Person {
   name: String!
+  email: String
+}
+
+type User implements Person {
+  name: String!
+  email: String @private
+}
+
+type Mentor implements Person {
+  name: String!
+  email: String @private
   keycode: String!
   role: String
   company: String
   location: String
   website: String
-  email: String! @private
 }
 
 type Query {
-  me: User
-  mentors: [User!]!
+  me: Person
+  mentors: [Mentor!]!
 }
 
 input LoginInput {
@@ -21,7 +31,7 @@ input LoginInput {
 }
 
 type Mutation {
-  signIn(input: LoginInput): User
+  signIn(input: LoginInput): Person
   signOut: ID
 }
 
