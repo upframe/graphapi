@@ -2,8 +2,8 @@ import { ApolloServer } from 'apollo-server-lambda'
 import typeDefs from './schema.gql'
 import resolvers from './resolvers'
 import { parseCookies } from './utils/cookie'
-import jwt from 'jsonwebtoken'
 import PrivateDirective from './directives/private'
+import { authenticate } from './auth'
 
 export const graphapi = async (event, context) => {
   const headers = {}
@@ -14,25 +14,12 @@ export const graphapi = async (event, context) => {
     schemaDirectives: {
       private: PrivateDirective,
     },
-    context: ({ event }) => {
-      let uid: string
-      const token = parseCookies(event.headers.Cookie).auth
-      if (token) {
-        try {
-          const payload = jwt.verify(token, process.env.PUBLIC_KEY) as any
-          uid = payload.uid
-        } catch (e) {
-          if (e instanceof jwt.JsonWebTokenError) console.log('invalid token')
-        }
-      }
-
-      return {
-        uid,
-        setHeader(header, value) {
-          headers[header] = value
-        },
-      }
-    },
+    context: ({ event }) => ({
+      uid: authenticate(parseCookies(event.headers.Cookie).auth),
+      setHeader(header, value) {
+        headers[header] = value
+      },
+    }),
     ...(process.env.stage === 'dev' && {
       introspection: true,
       playground: {
