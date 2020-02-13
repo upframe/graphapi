@@ -1,13 +1,18 @@
 directive @private on FIELD_DEFINITION
 
 type User {
-  name: String
-  email: String @private
+  name: String!
+  keycode: String!
+  role: String
+  company: String
+  location: String
+  website: String
+  email: String! @private
 }
 
 type Query {
   me: User
-  mentors: [User]
+  mentors: [User!]!
 }
 
 input LoginInput {

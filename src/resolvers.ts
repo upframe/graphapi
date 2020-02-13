@@ -1,21 +1,21 @@
-import db from './db'
 import * as bcrypt from 'bcrypt'
 import { AuthenticationError } from 'apollo-server-lambda'
 import jwt from 'jsonwebtoken'
+import { User } from './models'
 
 export default {
   Query: {
-    mentors: () => db('users').where({ type: 'mentor', newsfeed: 'Y' }),
+    mentors: async () =>
+      await User.query().where({ type: 'mentor', newsfeed: 'Y' }),
 
     me: async (_, __, { uid }) => {
       if (!uid) throw new AuthenticationError('invalid token')
-      const [user] = await db('users').where({ uid })
-      return user
+      return await User.query().findById(uid)
     },
   },
   Mutation: {
     signIn: async (_, { input: { email, password } }, { setHeader }) => {
-      const [user] = await db('users').select({ email })
+      const [user] = await User.query().where({ email })
 
       if (!user || !bcrypt.compareSync(password, user.password))
         throw new AuthenticationError('invalid credentials')
