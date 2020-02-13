@@ -1,5 +1,8 @@
+directive @private on FIELD_DEFINITION
+
 type User {
   name: String
+  email: String @private
 }
 
 type Query {

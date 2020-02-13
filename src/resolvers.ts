@@ -5,24 +5,17 @@ import jwt from 'jsonwebtoken'
 
 export default {
   Query: {
-    mentors: () =>
-      db('users')
-        .select('name')
-        .where({ type: 'mentor', newsfeed: 'Y' }),
+    mentors: () => db('users').where({ type: 'mentor', newsfeed: 'Y' }),
 
     me: async (_, __, { uid }) => {
       if (!uid) throw new AuthenticationError('invalid token')
-      const [user] = await db('users')
-        .select('name')
-        .where({ uid })
+      const [user] = await db('users').where({ uid })
       return user
     },
   },
   Mutation: {
     signIn: async (_, { input: { email, password } }, { setHeader }) => {
-      const [user] = await db('users')
-        .select('name', 'uid', 'password')
-        .select({ email })
+      const [user] = await db('users').select({ email })
 
       if (!user || !bcrypt.compareSync(password, user.password))
         throw new AuthenticationError('invalid credentials')

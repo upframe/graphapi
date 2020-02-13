@@ -3,6 +3,7 @@ import typeDefs from './schema.gql'
 import resolvers from './resolvers'
 import { parseCookies } from './utils/cookie'
 import jwt from 'jsonwebtoken'
+import PrivateDirective from './directives/private'
 
 export const graphapi = async (event, context) => {
   const headers = {}
@@ -10,6 +11,9 @@ export const graphapi = async (event, context) => {
   const server = new ApolloServer({
     typeDefs: typeDefs,
     resolvers,
+    schemaDirectives: {
+      private: PrivateDirective,
+    },
     context: ({ event }) => {
       let uid: string
       const token = parseCookies(event.headers.Cookie).auth
