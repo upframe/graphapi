@@ -7,18 +7,21 @@ type ProfilePicture {
 }
 
 interface Person {
+  _id: ID
   name: String!
   email: String
   profilePictures: [ProfilePicture]
 }
 
 type User implements Person {
+  _id: ID
   name: String!
   email: String @private
   profilePictures: [ProfilePicture]
 }
 
 type Mentor implements Person {
+  _id: ID
   name: String!
   email: String @private
   keycode: String!
@@ -33,7 +36,7 @@ type Mentor implements Person {
 type Query {
   me: Person
   mentors: [Mentor!]!
-  mentor(keycode: String): Mentor
+  mentor(keycode: String!): Mentor
 }
 
 input LoginInput {

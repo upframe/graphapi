@@ -44,6 +44,8 @@ export default {
       if (type === 'mentor') return 'Mentor'
     },
 
+    _id: ({ keycode }) => keycode,
+
     profilePictures({ profilePictures, profilePic }) {
       return [
         ...(profilePictures
