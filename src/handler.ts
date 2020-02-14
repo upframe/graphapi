@@ -6,6 +6,7 @@ import PrivateDirective from './directives/private'
 import { authenticate } from './auth'
 
 export const graphapi = async (event, context) => {
+  context.callbackWaitsForEmptyEventLoop = false
   const headers = {}
 
   const server = new ApolloServer({

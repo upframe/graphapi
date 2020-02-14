@@ -11,4 +11,5 @@ export default knex({
     password: get('PASS'),
     database: 'api',
   },
+  pool: { min: 0, max: 20 },
 })
