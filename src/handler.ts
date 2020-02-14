@@ -4,6 +4,7 @@ import resolvers from './resolvers'
 import { parseCookies } from './utils/cookie'
 import PrivateDirective from './directives/private'
 import { authenticate } from './auth'
+import mocks from './mocks'
 
 export const graphapi = async (event, context) => {
   context.callbackWaitsForEmptyEventLoop = false
@@ -36,11 +37,15 @@ export const graphapi = async (event, context) => {
         },
       },
     }),
-    ...(!process.env.isOffline && {
+    ...(!process.env.IS_OFFLINE && {
       engine: {
         apiKey: process.env.APOLLO_KEY,
         schemaTag: process.env.stage === 'prod' ? 'prod' : 'beta',
       },
+    }),
+    ...(process.env.IS_OFFLINE && {
+      mocks,
+      mockEntireSchema: false,
     }),
   })
 

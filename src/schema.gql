@@ -1,11 +1,5 @@
 directive @private on FIELD_DEFINITION
 
-type ProfilePicture {
-  size: Int
-  type: String
-  url: String
-}
-
 interface Person {
   _id: ID
   name: String!
@@ -30,7 +24,18 @@ type Mentor implements Person {
   location: String
   website: String
   bio: String
-  profilePictures: [ProfilePicture]
+  profilePictures: [ProfilePicture!]!
+  timeSlots: [Timeslot!]
+}
+
+type ProfilePicture {
+  size: Int
+  type: String
+  url: String
+}
+
+type Timeslot {
+  start: String!
 }
 
 type Query {
