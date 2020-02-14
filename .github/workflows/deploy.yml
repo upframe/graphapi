@@ -25,9 +25,9 @@ jobs:
           ENGINE_API_KEY: ${{ secrets.ENGINE_API_KEY }}
         run: |
           if [ ${GITHUB_REF##*/} = "master" ]; then
-            npx sls deploy --stage prod
             npx apollo service:push --tag=prod
+            npx sls deploy --stage prod
           else
-            npx sls deploy --stage dev
             npx apollo service:push --tag=beta
+            npx sls deploy --stage dev
           fi
