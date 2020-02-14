@@ -36,6 +36,12 @@ export const graphapi = async (event, context) => {
         },
       },
     }),
+    ...(!process.env.isOffline && {
+      engine: {
+        apiKey: process.env.APOLLO_KEY,
+        schemaTag: process.env.stage === 'prod' ? 'prod' : 'beta',
+      },
+    }),
   })
 
   const handler = server.createHandler({

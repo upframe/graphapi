@@ -2,13 +2,12 @@ name: CD
 
 on:
   push:
-    branches: 
+    branches:
       - master
       - staging
 
 jobs:
   build-and-deploy:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -23,9 +22,12 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          ENGINE_API_KEY: ${{ secrets.ENGINE_API_KEY }}
         run: |
           if [ ${GITHUB_REF##*/} = "master" ]; then
             npx sls deploy --stage prod
+            npx apollo service:push --tag=prod
           else
             npx sls deploy --stage dev
+            npx apollo service:push --tag=beta
           fi

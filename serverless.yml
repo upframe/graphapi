@@ -23,6 +23,7 @@ functions:
       stage: ${self:provider.stage}
       PUBLIC_KEY: ${ssm:/API/PublicKey}
       PRIVATE_KEY: ${ssm:/API/PrivateKey~true}
+      APOLLO_KEY: ${ssm:/API/ApolloKey~true}
       PROD_DB_HOST: ${ssm:/API/Prod/DB/Host}
       PROD_DB_USER: ${ssm:/API/Prod/DB/User}
       PROD_DB_PASS: ${ssm:/API/Prod/DB/Password~true}
