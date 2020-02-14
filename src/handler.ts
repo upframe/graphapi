@@ -1,4 +1,4 @@
-import { ApolloServer } from 'apollo-server-lambda'
+import { ApolloServer, makeExecutableSchema } from 'apollo-server-lambda'
 import typeDefs from './schema.gql'
 import resolvers from './resolvers'
 import { parseCookies } from './utils/cookie'
@@ -10,11 +10,15 @@ export const graphapi = async (event, context) => {
   const headers = {}
 
   const server = new ApolloServer({
-    typeDefs: typeDefs,
-    resolvers,
-    schemaDirectives: {
-      private: PrivateDirective,
-    },
+    schema: makeExecutableSchema({
+      typeDefs: typeDefs,
+      // @ts-ignore
+      resolvers,
+      schemaDirectives: {
+        private: PrivateDirective,
+      },
+      inheritResolversFromInterfaces: true,
+    }),
     context: ({ event }) => ({
       uid: authenticate(parseCookies(event.headers.Cookie).auth),
       setHeader(header, value) {

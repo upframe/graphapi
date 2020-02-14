@@ -1,13 +1,21 @@
 directive @private on FIELD_DEFINITION
 
+type ProfilePicture {
+  size: Int
+  type: String
+  url: String
+}
+
 interface Person {
   name: String!
   email: String
+  profilePictures: [ProfilePicture]
 }
 
 type User implements Person {
   name: String!
   email: String @private
+  profilePictures: [ProfilePicture]
 }
 
 type Mentor implements Person {
@@ -18,6 +26,8 @@ type Mentor implements Person {
   company: String
   location: String
   website: String
+  bio: String
+  profilePictures: [ProfilePicture]
 }
 
 type Query {
