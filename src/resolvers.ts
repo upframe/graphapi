@@ -18,6 +18,13 @@ export default {
         .withGraphFetched('profilePictures')
         .findById(uid)
     },
+
+    mentor: async (_, { keycode }) =>
+      (
+        await User.query()
+          .withGraphFetched('profilePictures')
+          .where({ keycode })
+      )[0],
   },
   Mutation: {
     signIn: async (_, { input: { email, password } }, { setHeader }) => {
@@ -45,7 +52,7 @@ export default {
                 const [, size, type] =
                   k.match(/^pic([0-9]+|Max)(Jpeg|Webp)/) ?? []
                 return {
-                  ...(size && { size: parseInt(size, 10) || 0 }),
+                  ...(size && { size: parseInt(size, 10) || null }),
                   ...(type && { type: type.toLowerCase() }),
                   url: v,
                 }

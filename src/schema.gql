@@ -33,6 +33,7 @@ type Mentor implements Person {
 type Query {
   me: Person
   mentors: [Mentor!]!
+  mentor(keycode: String): Mentor
 }
 
 input LoginInput {
