@@ -1,6 +1,6 @@
-import { AuthenticationError } from 'apollo-server-lambda'
 import { User } from './models'
 import { signIn } from './auth'
+import { AuthenticationError, KeycodeError } from './error'
 
 export default {
   Query: {
@@ -19,12 +19,13 @@ export default {
         .findById(uid)
     },
 
-    mentor: async (_, { keycode }) =>
-      (
-        await User.query()
-          .withGraphFetched('profilePictures')
-          .where({ keycode })
-      )[0],
+    mentor: async (_, { keycode }) => {
+      const [mentor] = await User.query()
+        .withGraphFetched('profilePictures')
+        .where({ keycode })
+      if (!mentor) throw KeycodeError(`can't find mentor ${keycode}`)
+      return mentor
+    },
   },
   Mutation: {
     signIn: async (_, { input: { email, password } }, { setHeader }) => {
