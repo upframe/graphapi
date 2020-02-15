@@ -1,6 +1,6 @@
 import { User } from './models'
 import { signIn } from './auth'
-import { AuthenticationError, KeycodeError } from './error'
+import { AuthenticationError, KeycodeError, UserInputError } from './error'
 
 export default {
   Query: {
@@ -31,11 +31,17 @@ export default {
     signIn: async (_, { input: { email, password } }, { setHeader }) => {
       const [user] = await User.query().where({ email })
       const token = signIn(user, password)
-      if (!token) throw new AuthenticationError('invalid credentials')
-      setHeader('Set-Cookie', `auth=${token}; HttpOnly`)
+      if (!token) throw new UserInputError('invalid credentials')
+      setHeader(
+        'Set-Cookie',
+        `auth=${token}; HttpOnly; Max-Age=${60 ** 2 * 24 * 14}`
+      )
       return user
     },
-    signOut: () => {},
+    signOut: (_, __, { uid, setHeader }) => {
+      if (!uid) throw new UserInputError('not logged in')
+      setHeader('Set-Cookie', 'auth=deleted; HttpOnly; Max-Age=-1')
+    },
   },
 
   Person: {

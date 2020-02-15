@@ -51,7 +51,7 @@ input LoginInput {
 
 type Mutation {
   signIn(input: LoginInput): Person
-  signOut: ID
+  signOut: Int
 }
 
 schema {
