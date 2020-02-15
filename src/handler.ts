@@ -1,9 +1,9 @@
 import { ApolloServer, makeExecutableSchema } from 'apollo-server-lambda'
-import typeDefs from './schema.gql'
 import resolvers from './resolvers'
 import { parseCookies } from './utils/cookie'
 import PrivateDirective from './directives/private'
 import { authenticate } from './auth'
+import typeDefs from './schema'
 
 export const graphapi = async (event, context) => {
   context.callbackWaitsForEmptyEventLoop = false
@@ -11,7 +11,7 @@ export const graphapi = async (event, context) => {
 
   const server = new ApolloServer({
     schema: makeExecutableSchema({
-      typeDefs: typeDefs,
+      typeDefs,
       // @ts-ignore
       resolvers,
       schemaDirectives: {

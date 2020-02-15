@@ -49,24 +49,3 @@ type SocialLinks {
   linkedin: String
   twitter: String
 }
-
-type Query {
-  me: Person
-  mentors: [Mentor!]!
-  mentor(keycode: String!): Mentor
-}
-
-input LoginInput {
-  email: String!
-  password: String!
-}
-
-type Mutation {
-  signIn(input: LoginInput): Person
-  signOut: Int
-}
-
-schema {
-  query: Query
-  mutation: Mutation
-}
