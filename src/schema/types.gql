@@ -1,5 +1,3 @@
-directive @private on FIELD_DEFINITION
-
 interface Person {
   _id: ID
   name: String!

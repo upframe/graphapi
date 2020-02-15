@@ -3,7 +3,23 @@ input LoginInput {
   password: String!
 }
 
+input ProfileInput {
+  name: String
+  keycode: String
+  location: String
+  role: String
+  company: String
+  website: String
+  bio: String
+  dribbble: String
+  facebook: String
+  github: String
+  twitter: String
+  tags: [String!]
+}
+
 type Mutation {
   signIn(input: LoginInput): Person
   signOut: Int
+  updateProfile(input: ProfileInput): Mentor
 }

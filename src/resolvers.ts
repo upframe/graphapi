@@ -38,9 +38,19 @@ export default {
       )
       return user
     },
+
     signOut: (_, __, { uid, setHeader }) => {
       if (!uid) throw new UserInputError('not logged in')
       setHeader('Set-Cookie', 'auth=deleted; HttpOnly; Max-Age=-1')
+    },
+
+    updateProfile: async (_, { input }, { uid }) => {
+      if (!uid) throw new UserInputError('not logged in')
+      if ('tags' in input)
+        input.tags = JSON.stringify(
+          input.tags.map(name => ({ id: name, name }))
+        )
+      return await User.query().patchAndFetchById(uid, input)
     },
   },
 
