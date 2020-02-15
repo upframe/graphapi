@@ -30,11 +30,12 @@ export const graphapi = async (event, context) => {
         headers[header] = value
       },
     }),
+    debug: !!process.env.IS_OFFLINE,
     formatError: err => {
       if (err.originalError instanceof ValidationError)
-        throw new UserInputError(
+        return new UserInputError(
           err.message.includes('should match pattern')
-            ? `invalid ${err.message.match(/^([a-z]+):/)[1]}`
+            ? `invalid ${err.message.match(/^(\w+):/)[1]}`
             : err.message
         )
       return err
