@@ -70,5 +70,28 @@ export default {
         ...(profilePic ? [{ url: profilePic }] : []),
       ]
     },
+
+    social: obj =>
+      Object.fromEntries(
+        socialPlatforms.flatMap(name => (obj[name] ? [[name, obj[name]]] : []))
+      ),
+  },
+
+  Mentor: {
+    tags: obj => {
+      try {
+        return JSON.parse(obj.tags).map(({ text }) => text)
+      } catch (e) {
+        return []
+      }
+    },
   },
 }
+
+const socialPlatforms = [
+  'dribbble',
+  'facebook',
+  'github',
+  'linkedin',
+  'twitter',
+]

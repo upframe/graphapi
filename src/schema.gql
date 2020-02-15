@@ -5,6 +5,7 @@ interface Person {
   name: String!
   email: String
   profilePictures: [ProfilePicture]
+  social: SocialLinks
 }
 
 type User implements Person {
@@ -12,6 +13,7 @@ type User implements Person {
   name: String!
   email: String @private
   profilePictures: [ProfilePicture]
+  social: SocialLinks
 }
 
 type Mentor implements Person {
@@ -26,6 +28,8 @@ type Mentor implements Person {
   bio: String
   profilePictures: [ProfilePicture!]!
   timeSlots: [Timeslot!]
+  social: SocialLinks
+  tags: [String!]!
 }
 
 type ProfilePicture {
@@ -36,6 +40,14 @@ type ProfilePicture {
 
 type Timeslot {
   start: String!
+}
+
+type SocialLinks {
+  dribbble: String
+  facebook: String
+  github: String
+  linkedin: String
+  twitter: String
 }
 
 type Query {
