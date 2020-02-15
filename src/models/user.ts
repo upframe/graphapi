@@ -4,6 +4,8 @@ class ProfilePicture extends Model {
   static tableName = 'profilePictures'
 }
 
+const regToStr = (reg: RegExp) => reg.toString().replace(/\/(.*)\//, '$1')
+
 export default class User extends Model {
   uid!: string
   name!: string
@@ -20,6 +22,35 @@ export default class User extends Model {
       join: {
         from: 'users.uid',
         to: 'profilePictures.uid',
+      },
+    },
+  }
+
+  static jsonSchema = {
+    type: 'object',
+    required: ['uid', 'name', 'email', 'password'],
+    properties: {
+      uid: {
+        type: 'string',
+      },
+      name: {
+        type: 'string',
+        minLength: 3,
+      },
+      email: {
+        type: 'string',
+        pattern: regToStr(
+          /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+        ),
+      },
+      website: {
+        type: 'string',
+        pattern: regToStr(
+          /^(http(s?):\/\/)?[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+){0,2}\.[a-z]{2,10}(\/([A-Za-z0-9-._~!$&'()*+,;=:@]|(%[0-9a-fA-Z]{2}))+)*\/?(\?[^?#]*)?(#(([a-zA-Z0-9!$&'()*+,;=\-._~:@/?]|(%[0-9a-fA-Z]{2}))*))?$/
+        ),
+      },
+      password: {
+        type: 'string',
       },
     },
   }

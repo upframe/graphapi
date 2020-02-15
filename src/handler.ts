@@ -1,9 +1,14 @@
-import { ApolloServer, makeExecutableSchema } from 'apollo-server-lambda'
+import {
+  ApolloServer,
+  makeExecutableSchema,
+  UserInputError,
+} from 'apollo-server-lambda'
 import resolvers from './resolvers'
 import { parseCookies } from './utils/cookie'
 import PrivateDirective from './directives/private'
 import { authenticate } from './auth'
 import typeDefs from './schema'
+import { ValidationError } from 'objection'
 
 export const graphapi = async (event, context) => {
   context.callbackWaitsForEmptyEventLoop = false
@@ -25,6 +30,15 @@ export const graphapi = async (event, context) => {
         headers[header] = value
       },
     }),
+    formatError: err => {
+      if (err.originalError instanceof ValidationError)
+        throw new UserInputError(
+          err.message.includes('should match pattern')
+            ? `invalid ${err.message.match(/^([a-z]+):/)[1]}`
+            : err.message
+        )
+      return err
+    },
     ...(process.env.stage === 'dev' && {
       introspection: true,
       playground: {
