@@ -14,6 +14,7 @@ input ProfileInput {
   dribbble: String
   facebook: String
   github: String
+  linkedin: String
   twitter: String
   tags: [String!]
 }

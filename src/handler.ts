@@ -32,12 +32,17 @@ export const graphapi = async (event, context) => {
     }),
     debug: !!process.env.IS_OFFLINE,
     formatError: err => {
-      if (err.originalError instanceof ValidationError)
+      if (err.originalError instanceof ValidationError) {
+        const field = err.message.match(/^(\w+):/)[1]
         return new UserInputError(
           err.message.includes('should match pattern')
-            ? `invalid ${err.message.match(/^(\w+):/)[1]}`
-            : err.message
+            ? `invalid ${field}`
+            : err.message,
+          {
+            field,
+          }
         )
+      }
       return err
     },
     ...(process.env.stage === 'dev' && {

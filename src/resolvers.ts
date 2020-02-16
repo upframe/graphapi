@@ -48,7 +48,7 @@ export default {
       if (!uid) throw new UserInputError('not logged in')
       if ('tags' in input)
         input.tags = JSON.stringify(
-          input.tags.map(name => ({ id: name, name }))
+          input.tags.map(text => ({ id: text, text }))
         )
       return await User.query().patchAndFetchById(uid, input)
     },
