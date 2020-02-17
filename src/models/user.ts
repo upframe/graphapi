@@ -11,6 +11,7 @@ export default class User extends Model {
   name!: string
   email!: string
   password!: string
+  newsfeed: string
 
   static tableName = 'users'
   static idColumn = 'uid'
@@ -51,6 +52,10 @@ export default class User extends Model {
       },
       password: {
         type: 'string',
+      },
+      newsfeed: {
+        type: 'string',
+        enum: ['Y', 'N'],
       },
     },
   }

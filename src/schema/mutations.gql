@@ -23,4 +23,8 @@ type Mutation {
   signIn(input: LoginInput): Person
   signOut: Int
   updateProfile(input: ProfileInput): Mentor
+  requestEmailChange: Int
+  requestPasswordChange: Int
+  deleteAccount: Int
+  setProfileVisibility(visibility: Visibility): Mentor
 }

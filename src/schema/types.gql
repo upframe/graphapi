@@ -14,6 +14,11 @@ type User implements Person {
   social: SocialLinks
 }
 
+enum Visibility {
+  LISTED
+  UNLISTED
+}
+
 type Mentor implements Person {
   _id: ID
   name: String!
@@ -28,6 +33,7 @@ type Mentor implements Person {
   timeSlots: [Timeslot!]
   social: SocialLinks
   tags: [String!]!
+  visibility: Visibility
 }
 
 type ProfilePicture {

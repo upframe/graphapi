@@ -52,6 +52,16 @@ export default {
         )
       return await User.query().patchAndFetchById(uid, input)
     },
+
+    requestEmailChange() {},
+    requestPasswordChange() {},
+    deleteAccount() {},
+    setProfileVisibility: async (_, { visibility }, { uid }) => {
+      if (!uid) throw new UserInputError('not logged in')
+      return await User.query().patchAndFetchById(uid, {
+        newsfeed: visibility === 'LISTED' ? 'Y' : 'N',
+      })
+    },
   },
 
   Person: {
@@ -95,6 +105,7 @@ export default {
         return []
       }
     },
+    visibility: ({ newsfeed }) => (newsfeed === 'Y' ? 'LISTED' : 'UNLISTED'),
   },
 }
 
