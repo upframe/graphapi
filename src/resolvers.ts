@@ -1,6 +1,11 @@
 import { User } from './models'
-import { signIn } from './auth'
-import { AuthenticationError, KeycodeError, UserInputError } from './error'
+import { signIn, checkPassword } from './auth'
+import {
+  AuthenticationError,
+  KeycodeError,
+  UserInputError,
+  ForbiddenError,
+} from './error'
 
 export default {
   Query: {
@@ -40,12 +45,12 @@ export default {
     },
 
     signOut: (_, __, { uid, setHeader }) => {
-      if (!uid) throw new UserInputError('not logged in')
+      if (!uid) throw new AuthenticationError('not logged in')
       setHeader('Set-Cookie', 'auth=deleted; HttpOnly; Max-Age=-1')
     },
 
     updateProfile: async (_, { input }, { uid }) => {
-      if (!uid) throw new UserInputError('not logged in')
+      if (!uid) throw new AuthenticationError('not logged in')
       if ('tags' in input)
         input.tags = JSON.stringify(
           input.tags.map(text => ({ id: text, text }))
@@ -55,7 +60,16 @@ export default {
 
     requestEmailChange() {},
     requestPasswordChange() {},
-    deleteAccount() {},
+
+    deleteAccount: async (_, { password }, { uid, setHeader }) => {
+      if (!uid) throw new AuthenticationError('not logged in')
+      const user = await User.query().findById(uid)
+      if (!checkPassword(user, password))
+        throw new ForbiddenError('wrong password')
+      setHeader('Set-Cookie', 'auth=deleted; HttpOnly; Max-Age=-1')
+      await User.query().deleteById(uid)
+    },
+
     setProfileVisibility: async (_, { visibility }, { uid }) => {
       if (!uid) throw new UserInputError('not logged in')
       return await User.query().patchAndFetchById(uid, {

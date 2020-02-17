@@ -25,6 +25,6 @@ type Mutation {
   updateProfile(input: ProfileInput): Mentor
   requestEmailChange: Int
   requestPasswordChange: Int
-  deleteAccount: Int
+  deleteAccount(password: String!): Int
   setProfileVisibility(visibility: Visibility): Mentor
 }

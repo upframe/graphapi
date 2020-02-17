@@ -14,7 +14,7 @@ export function authenticate(token: string): string {
 }
 
 export function signIn(user: User, password: string): string {
-  if (!user?.password || !bcrypt.compareSync(password, user.password)) return
+  if (!checkPassword(user, password)) return
   return jwt.sign({ uid: user.uid }, process.env.PRIVATE_KEY, {
     issuer: 'upframe',
     subject: user.email,
@@ -22,3 +22,8 @@ export function signIn(user: User, password: string): string {
     expiresIn: '14d',
   })
 }
+
+export const checkPassword = (user: User, password: string): boolean =>
+  !user?.password || !password || !bcrypt.compareSync(password, user.password)
+    ? false
+    : true
