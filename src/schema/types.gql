@@ -33,7 +33,19 @@ type Mentor implements Person {
   timeSlots: [Timeslot!]
   social: SocialLinks
   tags: [String!]!
-  visibility: Visibility
+  visibility: Visibility @private
+  notificationPrefs: NotificationPreferences @private
+}
+
+type NotificationPreferences {
+  receiveEmails: Boolean
+  slotReminder: EmailInterval
+}
+
+enum EmailInterval {
+  MONTHLY
+  WEEKLY
+  OFF
 }
 
 type ProfilePicture {

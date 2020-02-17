@@ -12,6 +12,8 @@ export default class User extends Model {
   email!: string
   password!: string
   newsfeed: string
+  emailNotifications: boolean
+  availabilityReminder: string
 
   static tableName = 'users'
   static idColumn = 'uid'
@@ -56,6 +58,13 @@ export default class User extends Model {
       newsfeed: {
         type: 'string',
         enum: ['Y', 'N'],
+      },
+      emailNotifications: {
+        type: 'boolean',
+      },
+      availabilityReminder: {
+        type: 'string',
+        enum: ['monthly', 'weekly', 'off'],
       },
     },
   }

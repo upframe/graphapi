@@ -71,9 +71,26 @@ export default {
     },
 
     setProfileVisibility: async (_, { visibility }, { uid }) => {
-      if (!uid) throw new UserInputError('not logged in')
+      if (!uid) throw new AuthenticationError('not logged in')
       return await User.query().patchAndFetchById(uid, {
         newsfeed: visibility === 'LISTED' ? 'Y' : 'N',
+      })
+    },
+
+    updateNotificationPreferences: async (
+      _,
+      { input: { receiveEmails, slotReminder } },
+      { uid }
+    ) => {
+      if (!uid) throw new AuthenticationError('not logged in')
+      if (typeof receiveEmails === 'boolean') console.log(receiveEmails)
+      return await User.query().patchAndFetchById(uid, {
+        ...(typeof receiveEmails === 'boolean' && {
+          emailNotifications: receiveEmails,
+        }),
+        ...(slotReminder && {
+          availabilityReminder: slotReminder.toLowerCase(),
+        }),
       })
     },
   },
@@ -120,6 +137,12 @@ export default {
       }
     },
     visibility: ({ newsfeed }) => (newsfeed === 'Y' ? 'LISTED' : 'UNLISTED'),
+    notificationPrefs: ({ emailNotifications, availabilityReminder }) => ({
+      ...(emailNotifications && {
+        receiveEmails: emailNotifications.lastIndexOf(1) !== -1,
+      }),
+      slotReminder: availabilityReminder?.toUpperCase(),
+    }),
   },
 }
 
