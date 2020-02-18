@@ -116,7 +116,10 @@ export default {
       })
       await Promise.all([
         addList.length && Slots.knexQuery().insert(addList),
-        deleted.length && Slots.query().deleteById(deleted),
+        deleted.length &&
+          Slots.knexQuery()
+            .whereIn('sid', deleted)
+            .delete(),
       ])
       return await query(User, info).findById(uid)
     },
