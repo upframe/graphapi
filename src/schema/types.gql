@@ -30,7 +30,6 @@ type Mentor implements Person {
   website: String
   bio: String
   profilePictures: [ProfilePicture!]!
-  timeSlots: [Timeslot!]
   social: SocialLinks
   tags: [String!]!
   visibility: Visibility @private
@@ -41,6 +40,7 @@ type Mentor implements Person {
 type Slot {
   id: ID!
   start: String!
+  duration: Int
 }
 
 type NotificationPreferences {
@@ -58,10 +58,6 @@ type ProfilePicture {
   size: Int
   type: String
   url: String
-}
-
-type Timeslot {
-  start: String!
 }
 
 type SocialLinks {

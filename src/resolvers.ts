@@ -1,4 +1,4 @@
-import { User } from './models'
+import { User, Slots } from './models'
 import { signIn, checkPassword } from './auth'
 import {
   AuthenticationError,
@@ -7,6 +7,7 @@ import {
   ForbiddenError,
 } from './error'
 import query from './utils/buildQuery'
+import uuidv4 from 'uuid/v4'
 
 export default {
   Query: {
@@ -95,6 +96,30 @@ export default {
         }),
       })
     },
+
+    updateSlots: async (
+      _,
+      { slots: { deleted = [], added = [] } },
+      { uid },
+      info
+    ) => {
+      if (!uid) throw new AuthenticationError('not logged in')
+      const addList = added.map(({ start, duration = 30 }) => {
+        return {
+          sid: uuidv4(),
+          mentorUID: uid,
+          start,
+          end: new Date(
+            new Date(start).getTime() + duration * 60 * 1000
+          ).toISOString(),
+        }
+      })
+      await Promise.all([
+        addList.length && Slots.query().insert(addList),
+        deleted.length && Slots.query().deleteById(deleted),
+      ])
+      return await query(User, info).findById(uid)
+    },
   },
 
   Person: {
@@ -138,15 +163,24 @@ export default {
         return []
       }
     },
+
     visibility: ({ newsfeed }) => (newsfeed === 'Y' ? 'LISTED' : 'UNLISTED'),
+
     notificationPrefs: ({ emailNotifications, availabilityReminder }) => ({
       ...(emailNotifications && {
         receiveEmails: emailNotifications.lastIndexOf(1) !== -1,
       }),
       slotReminder: availabilityReminder?.toUpperCase(),
     }),
+
     slots: ({ timeSlots }) => {
-      return (timeSlots ?? []).map(({ sid, start }) => ({ id: sid, start }))
+      return (timeSlots ?? []).map(({ sid, start, end }) => ({
+        id: sid,
+        start,
+        duration: !end
+          ? 30
+          : (new Date(end).getTime() - new Date(start).getTime()) / (1000 * 60),
+      }))
     },
   },
 }

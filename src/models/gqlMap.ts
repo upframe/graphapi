@@ -1,5 +1,5 @@
 import { Model } from 'objection'
-import { User } from '../models'
+import { User } from '.'
 
 export default new Map<typeof Model, MapInfo>([
   [

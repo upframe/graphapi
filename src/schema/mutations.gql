@@ -24,6 +24,16 @@ input NotificationSettingsInput {
   slotReminder: EmailInterval
 }
 
+input SlotInput {
+  start: String!
+  duration: Int
+}
+
+input SlotUpdateInput {
+  deleted: [ID!]
+  added: [SlotInput!]
+}
+
 type Mutation {
   signIn(input: LoginInput): Person
   signOut: Int
@@ -33,4 +43,5 @@ type Mutation {
   deleteAccount(password: String!): Int
   setProfileVisibility(visibility: Visibility): Mentor
   updateNotificationPreferences(input: NotificationSettingsInput): Mentor
+  updateSlots(slots: SlotUpdateInput): Mentor
 }
