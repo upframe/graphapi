@@ -29,19 +29,6 @@ export default {
       if (!mentor) throw KeycodeError(`can't find mentor ${keycode}`)
       return mentor
     },
-
-    slots: async (_, { keycode, after, before }, __, info) => {
-      let q = keycode
-        ? User.knexQuery()
-            .select('uid', 'timeSlots.*')
-            .leftJoin('timeSlots', { 'timeSlots.mentorUID': 'users.uid' })
-            .where({ keycode })
-        : query(Slots, info)
-
-      if (after) q = q.where('start', '>=', after)
-      if (before) q = q.where('start', '<=', before)
-      return await q
-    },
   },
   Mutation: {
     signIn: async (_, { input: { email, password } }, { setHeader }, info) => {
@@ -189,7 +176,17 @@ export default {
       slotReminder: availabilityReminder?.toUpperCase(),
     }),
 
-    slots: ({ timeSlots }) => timeSlots,
+    slots: ({ timeSlots }, { after, before }) => {
+      if (after) {
+        after = new Date(after)
+        timeSlots = timeSlots.filter(({ start }) => new Date(start) >= after)
+      }
+      if (before) {
+        before = new Date(before)
+        timeSlots = timeSlots.filter(({ start }) => new Date(start) <= before)
+      }
+      return timeSlots
+    },
   },
 
   Slot: {

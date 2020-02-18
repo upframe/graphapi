@@ -34,7 +34,7 @@ type Mentor implements Person {
   tags: [String!]!
   visibility: Visibility @private
   notificationPrefs: NotificationPreferences @private
-  slots: [Slot!]!
+  slots(after: String, before: String): [Slot!]!
 }
 
 type Slot {

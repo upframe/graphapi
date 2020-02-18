@@ -2,5 +2,4 @@ type Query {
   me: Person
   mentors: [Mentor!]!
   mentor(keycode: String!): Mentor
-  slots(keycode: String, after: String, before: String): [Slot!]!
 }
