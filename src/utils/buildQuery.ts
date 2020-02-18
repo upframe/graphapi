@@ -1,0 +1,74 @@
+import { Model } from 'objection'
+import { User } from '../models'
+
+interface Mapping {
+  [gql: string]: string | Mapping
+}
+interface Relations {
+  [gql: string]: string
+}
+interface MapInfo {
+  required?: string[]
+  map: Mapping
+  relations?: Relations
+}
+
+const gqlSqlMap = new Map<typeof Model, MapInfo>([
+  [
+    User,
+    {
+      required: ['uid', 'type'],
+      map: {
+        name: 'name',
+        email: 'email',
+        keycode: 'keycode',
+        location: 'location',
+        website: 'website',
+        bio: 'bio',
+        tags: 'tags',
+        visibility: 'newsfeed',
+        social: {
+          dribbble: 'dribbble',
+          facebook: 'facebook',
+          github: 'github',
+          linkedin: 'linkedin',
+          twitter: 'twitter',
+        },
+        notificationPrefs: {
+          receiveEmails: 'emailNotifications',
+          slotReminder: 'availabilityReminder',
+        },
+      },
+      relations: {
+        profilePictures: 'profilePictures',
+        slots: 'timeSlots',
+      },
+    },
+  ],
+])
+
+interface Fields {
+  [field: string]: boolean | Fields
+}
+const resolveColumns = (model: Mapping, fields: Fields) =>
+  Object.entries(fields).flatMap(([k, v]) =>
+    !(k in model)
+      ? []
+      : typeof v === 'boolean'
+      ? model[k]
+      : resolveColumns(model[k] as Mapping, v)
+  )
+const resolveRelations = (relations: Relations, fields: Fields) =>
+  Object.keys(fields).flatMap(field => relations[field] ?? [])
+
+export default function buildQuery(
+  model: typeof Model,
+  fields: Fields
+): ReturnType<typeof Model.query> {
+  const { map, relations, required } = gqlSqlMap.get(model)
+  const columns = resolveColumns(map, fields)
+  const graphs = relations ? resolveRelations(relations, fields) : []
+  let query = model.query().select([...(required ?? []), ...columns])
+  for (let graph of graphs) query = query.withGraphFetched(graph)
+  return query
+}
