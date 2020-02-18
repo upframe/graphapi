@@ -1,53 +1,6 @@
 import { Model } from 'objection'
-import { User } from '../models'
 import getQueryFields from './queryFields'
-
-interface Mapping {
-  [gql: string]: string | Mapping
-}
-interface Relations {
-  [gql: string]: string
-}
-interface MapInfo {
-  required?: string[]
-  map: Mapping
-  relations?: Relations
-}
-
-const gqlSqlMap = new Map<typeof Model, MapInfo>([
-  [
-    User,
-    {
-      required: ['uid', 'type'],
-      map: {
-        name: 'name',
-        email: 'email',
-        keycode: 'keycode',
-        location: 'location',
-        website: 'website',
-        bio: 'bio',
-        tags: 'tags',
-        visibility: 'newsfeed',
-        profilePictures: 'profilePic',
-        social: {
-          dribbble: 'dribbble',
-          facebook: 'facebook',
-          github: 'github',
-          linkedin: 'linkedin',
-          twitter: 'twitter',
-        },
-        notificationPrefs: {
-          receiveEmails: 'emailNotifications',
-          slotReminder: 'availabilityReminder',
-        },
-      },
-      relations: {
-        profilePictures: 'profilePictures',
-        slots: 'timeSlots',
-      },
-    },
-  ],
-])
+import gqlSqlMap, { Mapping, Relations } from '../models/gqlMap'
 
 interface Fields {
   [field: string]: boolean | Fields
