@@ -6,35 +6,34 @@ import {
   UserInputError,
   ForbiddenError,
 } from './error'
+import query from './utils/buildQuery'
 
 export default {
   Query: {
-    mentors: async () =>
-      await User.query()
-        .withGraphFetched('profilePictures')
-        .where({
-          type: 'mentor',
-          newsfeed: 'Y',
-        }),
+    mentors: async (_, __, ___, info) =>
+      await query(User, info).where({
+        type: 'mentor',
+        newsfeed: 'Y',
+      }),
 
-    me: async (_, __, { uid }) => {
+    me: async (_, __, { uid }, info) => {
       if (!uid) throw new AuthenticationError('not logged in')
-      return await User.query()
-        .withGraphFetched('profilePictures')
-        .findById(uid)
+      return await query(User, info).findById(uid)
     },
 
-    mentor: async (_, { keycode }) => {
-      const [mentor] = await User.query()
-        .withGraphFetched('profilePictures')
-        .where({ keycode })
+    mentor: async (_, { keycode }, __, info) => {
+      const [mentor] = await query(User, info).where({
+        keycode,
+      })
       if (!mentor) throw KeycodeError(`can't find mentor ${keycode}`)
       return mentor
     },
   },
   Mutation: {
-    signIn: async (_, { input: { email, password } }, { setHeader }) => {
-      const [user] = await User.query().where({ email })
+    signIn: async (_, { input: { email, password } }, { setHeader }, info) => {
+      const [user] = await query(User, info, 'email', 'password').where({
+        email,
+      })
       const token = signIn(user, password)
       if (!token) throw new UserInputError('invalid credentials')
       setHeader(
@@ -49,13 +48,13 @@ export default {
       setHeader('Set-Cookie', 'auth=deleted; HttpOnly; Max-Age=-1')
     },
 
-    updateProfile: async (_, { input }, { uid }) => {
+    updateProfile: async (_, { input }, { uid }, info) => {
       if (!uid) throw new AuthenticationError('not logged in')
       if ('tags' in input)
         input.tags = JSON.stringify(
           input.tags.map(text => ({ id: text, text }))
         )
-      return await User.query().patchAndFetchById(uid, input)
+      return await query(User, info).patchAndFetchById(uid, input)
     },
 
     requestEmailChange() {},
@@ -63,16 +62,18 @@ export default {
 
     deleteAccount: async (_, { password }, { uid, setHeader }) => {
       if (!uid) throw new AuthenticationError('not logged in')
-      const user = await User.query().findById(uid)
+      const user = await User.query()
+        .select('uid', 'password')
+        .findById(uid)
       if (!checkPassword(user, password))
         throw new ForbiddenError('wrong password')
       setHeader('Set-Cookie', 'auth=deleted; HttpOnly; Max-Age=-1')
       await User.query().deleteById(uid)
     },
 
-    setProfileVisibility: async (_, { visibility }, { uid }) => {
+    setProfileVisibility: async (_, { visibility }, { uid }, info) => {
       if (!uid) throw new AuthenticationError('not logged in')
-      return await User.query().patchAndFetchById(uid, {
+      return await query(User, info).patchAndFetchById(uid, {
         newsfeed: visibility === 'LISTED' ? 'Y' : 'N',
       })
     },
@@ -80,11 +81,12 @@ export default {
     updateNotificationPreferences: async (
       _,
       { input: { receiveEmails, slotReminder } },
-      { uid }
+      { uid },
+      info
     ) => {
       if (!uid) throw new AuthenticationError('not logged in')
       if (typeof receiveEmails === 'boolean') console.log(receiveEmails)
-      return await User.query().patchAndFetchById(uid, {
+      return await query(User, info).patchAndFetchById(uid, {
         ...(typeof receiveEmails === 'boolean' && {
           emailNotifications: receiveEmails,
         }),
@@ -143,6 +145,9 @@ export default {
       }),
       slotReminder: availabilityReminder?.toUpperCase(),
     }),
+    slots: ({ timeSlots }) => {
+      return (timeSlots ?? []).map(({ sid, start }) => ({ id: sid, start }))
+    },
   },
 }
 

@@ -1,4 +1,5 @@
 import { Model } from 'objection'
+import Slots from './slots'
 
 class ProfilePicture extends Model {
   static tableName = 'profilePictures'
@@ -25,6 +26,14 @@ export default class User extends Model {
       join: {
         from: 'users.uid',
         to: 'profilePictures.uid',
+      },
+    },
+    timeSlots: {
+      relation: Model.HasManyRelation,
+      modelClass: Slots,
+      join: {
+        from: 'users.uid',
+        to: 'timeSlots.mentorUID',
       },
     },
   }
