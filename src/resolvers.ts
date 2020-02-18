@@ -115,7 +115,7 @@ export default {
         }
       })
       await Promise.all([
-        addList.length && Slots.query().insert(addList),
+        addList.length && Slots.knexQuery().insert(addList),
         deleted.length && Slots.query().deleteById(deleted),
       ])
       return await query(User, info).findById(uid)
