@@ -1,5 +1,5 @@
 import { Model } from 'objection'
-import { User } from '.'
+import { User, Slots } from '.'
 
 export default new Map<typeof Model, MapInfo>([
   [
@@ -31,6 +31,16 @@ export default new Map<typeof Model, MapInfo>([
       relations: {
         profilePictures: 'profilePictures',
         slots: 'timeSlots',
+      },
+    },
+  ],
+  [
+    Slots,
+    {
+      required: ['sid', 'mentorUID'],
+      map: {
+        start: 'start',
+        duration: 'end',
       },
     },
   ],
