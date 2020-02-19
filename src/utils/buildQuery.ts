@@ -24,8 +24,8 @@ export function buildQuery(
   additional: string[] = []
 ): ReturnType<typeof Model.query> {
   const { map, relations, required } = gqlSqlMap.get(model)
-  const columns = resolveColumns(map, fields)
-  const graphs = relations ? resolveRelations(relations, fields) : []
+  const columns = fields ? resolveColumns(map, fields) : []
+  const graphs = fields && relations ? resolveRelations(relations, fields) : []
   let query = model
     .query()
     .select([...(required ?? []), ...columns, ...additional])
@@ -37,4 +37,4 @@ export default (
   model: typeof Model,
   info: any,
   ...additional: (string | string[])[]
-) => buildQuery(model, getQueryFields(info), additional.flat())
+) => buildQuery(model, info ? getQueryFields(info) : null, additional.flat())

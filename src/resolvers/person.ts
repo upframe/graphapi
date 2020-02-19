@@ -4,7 +4,7 @@ export default {
     if (type === 'mentor') return 'Mentor'
   },
 
-  _id: ({ keycode }) => keycode,
+  id: ({ uid }) => uid,
 
   profilePictures({ profilePictures, profilePic }) {
     return [

@@ -5,7 +5,7 @@ export default new Map<typeof Model, MapInfo>([
   [
     User,
     {
-      required: ['uid', 'type'],
+      required: ['uid', 'type', 'keycode'],
       map: {
         name: 'name',
         email: 'email',

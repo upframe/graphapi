@@ -34,6 +34,13 @@ input SlotUpdateInput {
   added: [SlotInput!]
 }
 
+input MsgExtInput {
+  to: ID!
+  fromName: String!
+  fromEmail: String!
+  message: String!
+}
+
 type Mutation {
   signIn(input: LoginInput): Person
   signOut: Int
@@ -44,4 +51,5 @@ type Mutation {
   setProfileVisibility(visibility: Visibility): Mentor
   updateNotificationPreferences(input: NotificationSettingsInput): Mentor
   updateSlots(slots: SlotUpdateInput): Mentor
+  messageExt(input: MsgExtInput): Int
 }

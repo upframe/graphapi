@@ -1,5 +1,5 @@
 interface Person {
-  _id: ID
+  id: ID!
   name: String!
   email: String
   profilePictures: [ProfilePicture]
@@ -7,7 +7,7 @@ interface Person {
 }
 
 type User implements Person {
-  _id: ID
+  id: ID!
   name: String!
   email: String @private
   profilePictures: [ProfilePicture]
@@ -20,7 +20,7 @@ enum Visibility {
 }
 
 type Mentor implements Person {
-  _id: ID
+  id: ID!
   name: String!
   email: String @private
   keycode: String!

@@ -1,5 +1,5 @@
 type Query {
   me: Person
   mentors: [Mentor!]!
-  mentor(keycode: String!): Mentor
+  mentor(keycode: String, id: ID): Mentor
 }

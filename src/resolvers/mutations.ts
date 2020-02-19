@@ -3,6 +3,7 @@ import { User, Slots } from '../models'
 import { signIn, checkPassword } from '../auth'
 import { AuthenticationError, UserInputError, ForbiddenError } from '../error'
 import uuidv4 from 'uuid/v4'
+import { send } from '../email'
 
 export default {
   signIn: async (_, { input: { email, password } }, { setHeader }, info) => {
@@ -94,5 +95,24 @@ export default {
           .delete(),
     ])
     return await query(User, info).findById(uid)
+  },
+
+  messageExt: async (_, { input }) => {
+    const receiver = await query(User, null, 'email', 'name').findById(input.to)
+    if (!receiver?.email) throw new UserInputError('unknown receier')
+    if (
+      !new RegExp(User.jsonSchema.properties.email.pattern).test(
+        input.fromEmail
+      )
+    )
+      throw new UserInputError(`invalid email ${input.fromEmail}`)
+    if (input.fromName.length < 3) throw new UserInputError(`invalid name`)
+    if (input.message.length < 10)
+      throw new UserInputError('must provide message')
+    send(
+      receiver,
+      { name: input.fromName, email: input.fromEmail },
+      input.message
+    )
   },
 }
