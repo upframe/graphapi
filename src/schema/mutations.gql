@@ -61,4 +61,5 @@ type Mutation {
   messageExt(input: MsgExtInput!): Int
   requestSlot(input: RequestSlotInput!): Int
   acceptMeetup(meetupId: ID!): Meetup
+  cancelMeetup(meetupId: ID!): Int
 }

@@ -183,4 +183,23 @@ export default {
 
     return { ...meetup, mentor, mentee }
   },
+
+  cancelMeetup: async (_, { meetupId }, { uid }) => {
+    const meetup = await Meetups.query().findById(meetupId)
+    if (!meetup) throw new UserInputError('unknown meetup')
+    if (uid !== meetup.mentorUID && uid !== meetup.menteeUID)
+      throw new ForbiddenError(
+        "Can't cancel meetup. Please make sure that you are logged in with the correct account."
+      )
+
+    await Promise.all([
+      Meetups.query().deleteById(meetupId),
+      meetup.status === 'confirmed' &&
+        Slots.query().insert({
+          sid: meetup.sid,
+          mentorUID: meetup.mentorUID,
+          start: meetup.start,
+        }),
+    ])
+  },
 }
