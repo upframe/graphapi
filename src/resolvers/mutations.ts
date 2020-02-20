@@ -163,13 +163,17 @@ export default {
       throw new UserInputError('meetup already confirmed')
 
     const [parts] = await Promise.all([
-      querySubsets(User, ['mentor', 'mentee'], info).whereIn('uid', [
-        meetup.mentorUID,
-        meetup.menteeUID,
-      ]),
+      querySubsets(
+        User,
+        ['mentor', 'mentee'],
+        info,
+        'name',
+        'email'
+      ).whereIn('uid', [meetup.mentorUID, meetup.menteeUID]),
       Meetups.query()
         .findById(meetupId)
         .patch({ status: 'confirmed' }),
+      Slots.query().deleteById(meetup.sid),
     ])
 
     const mentor = parts.find(({ uid }) => uid === meetup.mentorUID)

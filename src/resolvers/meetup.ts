@@ -6,5 +6,5 @@ export default {
     mentor || (await query(User, info).findById(mentorUID)),
 
   mentee: async ({ menteeUID, mentee }, _, __, info) =>
-    (await mentee) || query(User, info).findById(menteeUID),
+    mentee || (await query(User, info).findById(menteeUID)),
 }
