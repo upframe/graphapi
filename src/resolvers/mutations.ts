@@ -1,9 +1,9 @@
 import query from '../utils/buildQuery'
-import { User, Slots } from '../models'
+import { User, Slots, Meetups } from '../models'
 import { signIn, checkPassword } from '../auth'
 import { AuthenticationError, UserInputError, ForbiddenError } from '../error'
 import uuidv4 from 'uuid/v4'
-import { send } from '../email'
+import { sendMessage, sendMeetupRequest } from '../email'
 
 export default {
   signIn: async (_, { input: { email, password } }, { setHeader }, info) => {
@@ -100,19 +100,49 @@ export default {
   messageExt: async (_, { input }) => {
     const receiver = await query(User, null, 'email', 'name').findById(input.to)
     if (!receiver?.email) throw new UserInputError('unknown receier')
-    if (
-      !new RegExp(User.jsonSchema.properties.email.pattern).test(
-        input.fromEmail
-      )
-    )
-      throw new UserInputError(`invalid email ${input.fromEmail}`)
-    if (input.fromName.length < 3) throw new UserInputError(`invalid name`)
+    if (!new RegExp(User.jsonSchema.properties.email.pattern).test(input.email))
+      throw new UserInputError(`invalid email ${input.email}`)
+    if (input.name.length < 3) throw new UserInputError(`invalid name`)
     if (input.message.length < 10)
       throw new UserInputError('must provide message')
-    send(
+    sendMessage(
       receiver,
-      { name: input.fromName, email: input.fromEmail },
+      { name: input.name, email: input.email },
       input.message
     )
+  },
+
+  requestSlot: async (_, { input }) => {
+    if (!new RegExp(User.jsonSchema.properties.email.pattern).test(input.email))
+      throw new UserInputError(`invalid email ${input.email}`)
+    if (input.name.length < 3) throw new UserInputError(`invalid name`)
+    const slot = await Slots.query().findById(input.slotId)
+    if (!slot) throw new UserInputError('unknown slot')
+    const mentor = await User.query()
+      .select('uid', 'name', 'email', 'keycode')
+      .findById(slot.mentorUID)
+    let [mentee]: User[] = await User.query()
+      .select('uid', 'name', 'email')
+      .where({
+        email: input.email,
+      })
+    if (!mentee)
+      mentee = await User.query().insertAndFetch({
+        uid: uuidv4(),
+        email: input.email,
+        name: input.name,
+        type: 'user',
+      })
+    const meetup = {
+      mid: uuidv4(),
+      sid: slot.sid,
+      menteeUID: mentee.uid,
+      mentorUID: mentor.uid,
+      message: input.message,
+      status: 'pending',
+      start: slot.start,
+    }
+    await Meetups.query().insert(meetup)
+    sendMeetupRequest(mentor, mentee, meetup)
   },
 }

@@ -36,20 +36,28 @@ input SlotUpdateInput {
 
 input MsgExtInput {
   to: ID!
-  fromName: String!
-  fromEmail: String!
+  name: String!
+  email: String!
+  message: String!
+}
+
+input RequestSlotInput {
+  slotId: ID!
+  name: String!
+  email: String!
   message: String!
 }
 
 type Mutation {
-  signIn(input: LoginInput): Person
+  signIn(input: LoginInput!): Person
   signOut: Int
-  updateProfile(input: ProfileInput): Mentor
+  updateProfile(input: ProfileInput!): Mentor
   requestEmailChange: Int
   requestPasswordChange: Int
   deleteAccount(password: String!): Int
-  setProfileVisibility(visibility: Visibility): Mentor
-  updateNotificationPreferences(input: NotificationSettingsInput): Mentor
-  updateSlots(slots: SlotUpdateInput): Mentor
-  messageExt(input: MsgExtInput): Int
+  setProfileVisibility(visibility: Visibility!): Mentor
+  updateNotificationPreferences(input: NotificationSettingsInput!): Mentor
+  updateSlots(slots: SlotUpdateInput!): Mentor
+  messageExt(input: MsgExtInput!): Int
+  requestSlot(input: RequestSlotInput!): Int
 }

@@ -11,10 +11,12 @@ export default class User extends Model {
   uid!: string
   name!: string
   email!: string
-  password!: string
+  password: string
+  keycode: String
   newsfeed: string
   emailNotifications: boolean
   availabilityReminder: string
+  type: string
 
   static tableName = 'users'
   static idColumn = 'uid'
@@ -40,7 +42,7 @@ export default class User extends Model {
 
   static jsonSchema = {
     type: 'object',
-    required: ['uid', 'name', 'email', 'password'],
+    required: ['uid', 'name', 'email'],
     properties: {
       uid: {
         type: 'string',
@@ -63,6 +65,7 @@ export default class User extends Model {
       },
       password: {
         type: 'string',
+        minLength: 8,
       },
       newsfeed: {
         type: 'string',
@@ -74,6 +77,10 @@ export default class User extends Model {
       availabilityReminder: {
         type: 'string',
         enum: ['monthly', 'weekly', 'off'],
+      },
+      type: {
+        type: 'string',
+        enum: ['user', 'mentor'],
       },
     },
   }

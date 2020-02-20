@@ -1,6 +1,7 @@
 import mailgun from 'mailgun-js'
 import { User } from './models'
 import AWS from 'aws-sdk'
+import Meetup from './models/meetups'
 
 const mail = mailgun({
   domain: 'upframe.io',
@@ -45,9 +46,16 @@ async function getTemplate(
   return file
 }
 
-getTemplate('message', { MENTOR: '', MESSAGE: '', USER: '' }).then(console.log)
+function send(receiver: User, subject: string, template) {
+  mail.messages().send({
+    from: 'Upframe team@upframe.io',
+    to: `${receiver.name.split(' ')[0]} ${receiver.email}`,
+    subject,
+    html: template,
+  })
+}
 
-export async function send(
+export async function sendMessage(
   receiver: User,
   from: Partial<User>,
   message: string
@@ -55,15 +63,48 @@ export async function send(
   const senderName = from.name.split(' ')[0]
   const receiverName = from.name.split(' ')[0]
   const subject = `${senderName} sent you a message`
-  mail.messages().send({
-    from: 'Upframe team@upframe.io',
-    to: `${receiverName} ${receiver.email}`,
+  send(
+    receiver,
     subject,
-    html: await getTemplate('message', {
+    await getTemplate('message', {
       MENTOR: receiverName,
       USER: senderName,
       MESSAGE: message,
       EMAIL: `${from.email}?subject=Re: ${subject}&Body=\n\n---\n${message}`,
-    }),
-  })
+    })
+  )
+}
+
+export async function sendMeetupRequest(
+  mentor: User,
+  mentee: User,
+  meetup: Partial<Meetup>
+) {
+  const senderName = mentee.name.split(' ')[0]
+  const receiverName = mentee.name.split(' ')[0]
+  const subject = `${senderName} invited you to a meetup`
+  send(
+    mentor,
+    subject,
+    await getTemplate('mentorRequest', {
+      MENTOR: receiverName,
+      USER: senderName,
+      MESSAGE: meetup.message,
+      MID: meetup.mid,
+      EMAIL: mentee.email,
+      LOCATION: `https://talky.io/${mentor.keycode}`,
+      DATE: new Date(meetup.start).toLocaleString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        timeZone: 'Europe/Berlin',
+      }),
+      TIME: new Date(meetup.start).toLocaleString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: 'Europe/Berlin',
+      }),
+    })
+  )
 }
