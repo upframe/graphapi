@@ -14,11 +14,6 @@ type User implements Person {
   social: SocialLinks
 }
 
-enum Visibility {
-  LISTED
-  UNLISTED
-}
-
 type Mentor implements Person {
   id: ID!
   name: String!
@@ -35,6 +30,17 @@ type Mentor implements Person {
   visibility: Visibility @private
   notificationPrefs: NotificationPreferences @private
   slots(after: String, before: String): [Slot!]!
+}
+
+type Meetup {
+  start: String
+  mentor: Mentor
+  mentee: Person
+}
+
+enum Visibility {
+  LISTED
+  UNLISTED
 }
 
 type Slot {

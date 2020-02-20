@@ -12,7 +12,7 @@ export default class User extends Model {
   name!: string
   email!: string
   password: string
-  keycode: String
+  keycode: string
   newsfeed: string
   emailNotifications: boolean
   availabilityReminder: string

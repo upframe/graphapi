@@ -60,4 +60,5 @@ type Mutation {
   updateSlots(slots: SlotUpdateInput!): Mentor
   messageExt(input: MsgExtInput!): Int
   requestSlot(input: RequestSlotInput!): Int
+  acceptMeetup(meetupId: ID!): Meetup
 }

@@ -8,6 +8,7 @@ export default class Meetup extends Model {
   start!: string
   message: string
   status: string
+  location: string
 
   static tableName = 'meetups'
   static idColumn = 'mid'

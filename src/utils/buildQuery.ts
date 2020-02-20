@@ -1,6 +1,7 @@
 import { Model } from 'objection'
 import getQueryFields from './queryFields'
 import gqlSqlMap, { Mapping, Relations } from '../models/gqlMap'
+import merge from 'lodash/merge'
 
 interface Fields {
   [field: string]: boolean | Fields
@@ -38,3 +39,29 @@ export default (
   info: any,
   ...additional: (string | string[])[]
 ) => buildQuery(model, info ? getQueryFields(info) : null, additional.flat())
+
+export const querySubset = (
+  model: typeof Model,
+  field: string,
+  info: any,
+  ...additional: (string | string[])[]
+) =>
+  buildQuery(
+    model,
+    info ? getQueryFields(info)[field] : null,
+    additional.flat()
+  )
+
+export const querySubsets = (
+  model: typeof Model,
+  fields: string[],
+  info: any,
+  ...additional: (string | string[])[]
+) => {
+  const req = getQueryFields(info)
+  return buildQuery(
+    model,
+    !info ? null : merge({}, ...fields.map(field => req[field])),
+    additional.flat()
+  )
+}

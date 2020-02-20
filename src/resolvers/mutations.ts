@@ -1,9 +1,13 @@
-import query from '../utils/buildQuery'
+import query, { querySubsets } from '../utils/buildQuery'
 import { User, Slots, Meetups } from '../models'
 import { signIn, checkPassword } from '../auth'
 import { AuthenticationError, UserInputError, ForbiddenError } from '../error'
 import uuidv4 from 'uuid/v4'
-import { sendMessage, sendMeetupRequest } from '../email'
+import {
+  sendMessage,
+  sendMeetupRequest,
+  sendMeetupConfirmation,
+} from '../email'
 
 export default {
   signIn: async (_, { input: { email, password } }, { setHeader }, info) => {
@@ -141,8 +145,38 @@ export default {
       message: input.message,
       status: 'pending',
       start: slot.start,
+      location: `https://talky.io/${mentor.keycode}`,
     }
     await Meetups.query().insert(meetup)
     sendMeetupRequest(mentor, mentee, meetup)
+  },
+
+  acceptMeetup: async (_, { meetupId }, { uid }, info) => {
+    if (!uid) throw new AuthenticationError('Not logged in.')
+    const meetup = await Meetups.query().findById(meetupId)
+    if (!meetup?.mid) throw new UserInputError('unknown meetup')
+    if (meetup.mentorUID !== uid)
+      throw new ForbiddenError(
+        "Can't accept meetup. Please make sure that you are logged in with the correct account."
+      )
+    if (meetup.status === 'confirmed')
+      throw new UserInputError('meetup already confirmed')
+
+    const [parts] = await Promise.all([
+      querySubsets(User, ['mentor', 'mentee'], info).whereIn('uid', [
+        meetup.mentorUID,
+        meetup.menteeUID,
+      ]),
+      Meetups.query()
+        .findById(meetupId)
+        .patch({ status: 'confirmed' }),
+    ])
+
+    const mentor = parts.find(({ uid }) => uid === meetup.mentorUID)
+    const mentee = parts.find(({ uid }) => uid === meetup.menteeUID)
+
+    sendMeetupConfirmation(mentor, mentee, meetup)
+
+    return { ...meetup, mentor, mentee }
   },
 }

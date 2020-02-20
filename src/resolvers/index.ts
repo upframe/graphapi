@@ -3,6 +3,7 @@ import Mutation from './mutations'
 import Person from './person'
 import Mentor from './mentor'
 import Slot from './slot'
+import Meetup from './meetup'
 
 export default {
   Query,
@@ -10,4 +11,5 @@ export default {
   Person,
   Mentor,
   Slot,
+  Meetup,
 }

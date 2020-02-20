@@ -92,7 +92,37 @@ export async function sendMeetupRequest(
       MESSAGE: meetup.message,
       MID: meetup.mid,
       EMAIL: mentee.email,
-      LOCATION: `https://talky.io/${mentor.keycode}`,
+      LOCATION: meetup.location,
+      DATE: new Date(meetup.start).toLocaleString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        timeZone: 'Europe/Berlin',
+      }),
+      TIME: new Date(meetup.start).toLocaleString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: 'Europe/Berlin',
+      }),
+    })
+  )
+}
+
+export async function sendMeetupConfirmation(
+  mentor: User,
+  mentee: User,
+  meetup: Meetup
+) {
+  send(
+    mentee,
+    `${mentor.name} accepted to meetup with you`,
+    await getTemplate('meetupConfirmation', {
+      MENTOR: mentor.name,
+      USER: mentee.name,
+      MESSAGE: meetup.message,
+      KEYCODE: mentor.keycode,
+      LOCATION: meetup.location,
       DATE: new Date(meetup.start).toLocaleString('en-US', {
         weekday: 'long',
         month: 'long',
