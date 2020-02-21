@@ -8,6 +8,7 @@ import {
   sendMeetupRequest,
   sendMeetupConfirmation,
 } from '../email'
+import { addEvent, deleteEvent } from '../calendar'
 
 export default {
   signIn: async (_, { input: { email, password } }, { setHeader }, info) => {
@@ -180,6 +181,11 @@ export default {
     const mentee = parts.find(({ uid }) => uid === meetup.menteeUID)
 
     sendMeetupConfirmation(mentor, mentee, meetup)
+    const googleId = await addEvent(meetup, mentor, mentee)
+
+    await Meetups.query()
+      .patch({ googleId })
+      .where({ mid: meetup.mid })
 
     return { ...meetup, mentor, mentee }
   },
@@ -200,6 +206,7 @@ export default {
           mentorUID: meetup.mentorUID,
           start: meetup.start,
         }),
+      meetup.status === 'confirmed' && deleteEvent(meetup.googleId),
     ])
   },
 }

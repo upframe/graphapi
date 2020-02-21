@@ -9,6 +9,7 @@ export default class Meetup extends Model {
   message: string
   status: string
   location: string
+  googleId: string
 
   static tableName = 'meetups'
   static idColumn = 'mid'

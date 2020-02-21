@@ -25,6 +25,10 @@ functions:
       PRIVATE_KEY: ${ssm:/API/PrivateKey~true}
       APOLLO_KEY: ${ssm:/API/ApolloKey~true}
       MAILGUN_KEY: ${ssm:/API/MailgunKey~true}
+      OAUTH_CLIENT_ID: ${ssm:/API/OAuth/ClientId}
+      OAUTH_CLIENT_SECRET: ${ssm:/API/OAuth/ClientSecret~true}
+      CALENDAR_ID: ${ssm:/API/CalendarId}
+      CALENDAR_REFRESH_TOKEN: ${ssm:/API/CalendarRefreshToken~true}
       PROD_DB_HOST: ${ssm:/API/Prod/DB/Host}
       PROD_DB_USER: ${ssm:/API/Prod/DB/User}
       PROD_DB_PASS: ${ssm:/API/Prod/DB/Password~true}
