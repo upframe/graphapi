@@ -59,5 +59,6 @@ export async function deleteEvent(eventId: string) {
     auth,
     calendarId: process.env.CALENDAR_ID,
     eventId,
+    sendUpdates: 'all',
   })
 }
