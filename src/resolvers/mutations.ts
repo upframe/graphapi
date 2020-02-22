@@ -8,7 +8,7 @@ import {
   sendMeetupRequest,
   sendMeetupConfirmation,
 } from '../email'
-import { addEvent, deleteEvent, getToken } from '../calendar'
+import { addEvent, deleteEvent, auth } from '../calendar'
 
 export default {
   signIn: async (_, { input: { email, password } }, { setHeader }, info) => {
@@ -210,18 +210,40 @@ export default {
     ])
   },
 
-  connectCalendar: async (_, { code }, { uid }) => {
+  connectCalendar: async (_, { code }, { uid }, info) => {
     if (!uid) throw new AuthenticationError('not logged in')
     try {
-      const { tokens } = await getToken(code)
+      const { tokens } = await auth.getToken(code)
       await User.query()
         .findById(uid)
         .patch({
           googleAccessToken: tokens.access_token,
           googleRefreshToken: tokens.refresh_token,
         })
+      return await query(User, info).findById(uid)
     } catch (e) {
       throw new ForbiddenError('')
     }
+  },
+
+  disconnectCalendar: async (_, __, { uid }, info) => {
+    if (!uid) throw new AuthenticationError('not logged in')
+
+    const { googleRefreshToken, ...user } = await query(
+      User,
+      info,
+      'googleRefreshToken'
+    ).findById(uid)
+
+    if (!googleRefreshToken) throw new UserInputError('calendar not connected')
+
+    await Promise.all([
+      auth.revokeToken(googleRefreshToken),
+      User.query()
+        .findById(uid)
+        .patch({ googleRefreshToken: null, googleAccessToken: null }),
+    ])
+
+    return user
   },
 }

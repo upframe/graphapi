@@ -62,5 +62,6 @@ type Mutation {
   requestSlot(input: RequestSlotInput!): Int
   acceptMeetup(meetupId: ID!): Meetup
   cancelMeetup(meetupId: ID!): Int
-  connectCalendar(code: ID!): Int
+  connectCalendar(code: ID!): Mentor
+  disconnectCalendar: Mentor
 }

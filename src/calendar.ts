@@ -1,7 +1,7 @@
 import { google } from 'googleapis'
 import { Meetups, User } from './models'
 
-const auth = new google.auth.OAuth2(
+export const auth = new google.auth.OAuth2(
   process.env.OAUTH_CLIENT_ID,
   process.env.OAUTH_CLIENT_SECRET,
   process.env.IS_OFFLINE
@@ -73,5 +73,3 @@ export const generateAuthUrl = () =>
     access_type: 'offline',
     scope: 'https://www.googleapis.com/auth/calendar',
   })
-
-export const getToken = (code: string) => auth.getToken(code)
