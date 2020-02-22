@@ -1,6 +1,6 @@
 import { User } from '../models'
 import query from '../utils/buildQuery'
-import { AuthenticationError, KeycodeError } from '../error'
+import { AuthenticationError, KeycodeError, UserInputError } from '../error'
 import { generateAuthUrl } from '../calendar'
 
 export default {
@@ -15,11 +15,16 @@ export default {
     return await query(User, info).findById(uid)
   },
 
-  mentor: async (_, { keycode }, __, info) => {
-    const [mentor] = await query(User, info).where({
-      keycode,
-    })
-    if (!mentor) throw KeycodeError(`can't find mentor ${keycode}`)
+  mentor: async (_, { keycode, id }, __, info) => {
+    if (!id && !keycode) throw new UserInputError('must provide keycode or id')
+    const mentor = id
+      ? await query(User, info).findById(id)
+      : (
+          await query(User, info).where({
+            keycode,
+          })
+        )[0]
+    if (!mentor) throw KeycodeError(`can't find mentor ${keycode ?? id}`)
     return mentor
   },
 
