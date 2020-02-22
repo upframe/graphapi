@@ -35,10 +35,13 @@ functions:
       DEV_DB_HOST: ${ssm:/API/Dev/DB/Host}
       DEV_DB_USER: ${ssm:/API/Dev/DB/User}
       DEV_DB_PASS: ${ssm:/API/Dev/DB/Password~true}
+      GCAL_REDIRECT_DEV: ${ssm:/API/Dev/GCalRedirect}
+      GCAL_REDIRECT_PROD: ${ssm:/API/Prod/GCalRedirect}
 
 plugins:
   - serverless-webpack
   - serverless-offline
+  - serverless-dotenv-plugin
 
 custom:
   serverless-offline:

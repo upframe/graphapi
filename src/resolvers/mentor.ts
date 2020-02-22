@@ -27,4 +27,7 @@ export default {
     }
     return timeSlots
   },
+
+  calendarConnected: ({ googleRefreshToken, googleAccessToken }) =>
+    !!(googleRefreshToken ?? googleAccessToken),
 }

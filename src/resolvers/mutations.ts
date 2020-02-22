@@ -8,7 +8,7 @@ import {
   sendMeetupRequest,
   sendMeetupConfirmation,
 } from '../email'
-import { addEvent, deleteEvent } from '../calendar'
+import { addEvent, deleteEvent, getToken } from '../calendar'
 
 export default {
   signIn: async (_, { input: { email, password } }, { setHeader }, info) => {
@@ -208,5 +208,20 @@ export default {
         }),
       meetup.status === 'confirmed' && deleteEvent(meetup.googleId),
     ])
+  },
+
+  connectCalendar: async (_, { code }, { uid }) => {
+    if (!uid) throw new AuthenticationError('not logged in')
+    try {
+      const { tokens } = await getToken(code)
+      await User.query()
+        .findById(uid)
+        .patch({
+          googleAccessToken: tokens.access_token,
+          googleRefreshToken: tokens.refresh_token,
+        })
+    } catch (e) {
+      throw new ForbiddenError('')
+    }
   },
 }

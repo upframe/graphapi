@@ -17,6 +17,8 @@ export default class User extends Model {
   emailNotifications: boolean
   availabilityReminder: string
   type: string
+  googleAccessToken: string
+  googleRefreshToken: string
 
   static tableName = 'users'
   static idColumn = 'uid'

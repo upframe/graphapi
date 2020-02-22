@@ -30,6 +30,7 @@ type Mentor implements Person {
   visibility: Visibility @private
   notificationPrefs: NotificationPreferences @private
   slots(after: String, before: String): [Slot!]!
+  calendarConnected: Boolean @private
 }
 
 type Meetup {

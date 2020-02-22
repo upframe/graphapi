@@ -16,6 +16,7 @@ export default new Map<typeof Model, MapInfo>([
         tags: 'tags',
         visibility: 'newsfeed',
         profilePictures: 'profilePic',
+        calendarConnected: 'googleRefreshToken',
         social: {
           dribbble: 'dribbble',
           facebook: 'facebook',

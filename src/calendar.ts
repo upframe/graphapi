@@ -3,7 +3,12 @@ import { Meetups, User } from './models'
 
 const auth = new google.auth.OAuth2(
   process.env.OAUTH_CLIENT_ID,
-  process.env.OAUTH_CLIENT_SECRET
+  process.env.OAUTH_CLIENT_SECRET,
+  process.env.IS_OFFLINE
+    ? process.env.GCAL_RDIRECT
+    : `https://${
+        process.env[`GCAL_REDIRECT_${process.env.stage.toUpperCase()}`]
+      }`
 )
 
 auth.setCredentials({
@@ -62,3 +67,11 @@ export async function deleteEvent(eventId: string) {
     sendUpdates: 'all',
   })
 }
+
+export const generateAuthUrl = () =>
+  auth.generateAuthUrl({
+    access_type: 'offline',
+    scope: 'https://www.googleapis.com/auth/calendar',
+  })
+
+export const getToken = (code: string) => auth.getToken(code)

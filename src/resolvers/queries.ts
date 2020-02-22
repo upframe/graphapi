@@ -1,6 +1,7 @@
 import { User } from '../models'
 import query from '../utils/buildQuery'
 import { AuthenticationError, KeycodeError } from '../error'
+import { generateAuthUrl } from '../calendar'
 
 export default {
   mentors: async (_, __, ___, info) =>
@@ -20,5 +21,10 @@ export default {
     })
     if (!mentor) throw KeycodeError(`can't find mentor ${keycode}`)
     return mentor
+  },
+
+  calendarConnectUrl: (_, __, { uid }) => {
+    if (!uid) throw new AuthenticationError('not logged in')
+    return generateAuthUrl()
   },
 }
