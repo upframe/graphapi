@@ -23,20 +23,22 @@ export async function getClient(
   userId: string = 'upframe',
   refreshToken?: string
 ) {
+  if (userId === 'upframe' && !refreshToken)
+    refreshToken = process.env.CALENDAR_REFRESH_TOKEN
+
   if (!(userId in clients)) {
     const auth = createClient()
-    if (refreshToken) auth.setCredentials({ refresh_token: refreshToken })
-    else {
-      const { googleRefreshToken, googleAccessToken } = await User.query()
+    if (!refreshToken) {
+      const { googleRefreshToken } = await User.query()
         .select('googleRefreshToken', 'googleAccessToken')
         .findById(userId)
       if (!googleRefreshToken)
         throw new Error(`no tokens available for ${userId}`)
-      auth.setCredentials({
-        refresh_token: googleRefreshToken,
-        access_token: googleAccessToken,
-      })
+      refreshToken = googleRefreshToken
     }
+    auth.setCredentials({
+      refresh_token: refreshToken,
+    })
     clients[userId] = {
       auth,
       calendar: google.calendar({ version: 'v3', auth }),
@@ -44,8 +46,6 @@ export async function getClient(
   }
   return clients[userId]
 }
-
-getClient('upframe', process.env.CALENDAR_REFRESH_TOKEN)
 
 export async function addEvent(
   meetup: Meetups,

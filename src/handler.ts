@@ -2,6 +2,7 @@ import {
   ApolloServer,
   makeExecutableSchema,
   UserInputError,
+  ForbiddenError,
 } from 'apollo-server-lambda'
 import resolvers from './resolvers'
 import { parseCookies } from './utils/cookie'
@@ -9,10 +10,12 @@ import PrivateDirective from './directives/private'
 import { authenticate } from './auth'
 import typeDefs from './schema'
 import { ValidationError } from 'objection'
+import { User } from './models'
 
 export const graphapi = async (event, context) => {
   context.callbackWaitsForEmptyEventLoop = false
   const headers = {}
+  const waitFor: Promise<any>[] = []
 
   const server = new ApolloServer({
     schema: makeExecutableSchema({
@@ -42,6 +45,22 @@ export const graphapi = async (event, context) => {
             field,
           }
         )
+      }
+      if (err.message === 'invalid_grant') {
+        const googleRefreshToken = decodeURIComponent(
+          (Object.fromEntries(
+            err.extensions?.exception?.config?.body
+              ?.split('&')
+              ?.map(v => v.split('=')) ?? []
+          ).refresh_token as string) ?? ''
+        )
+        if (googleRefreshToken)
+          waitFor.push(
+            User.query()
+              .patch({ googleRefreshToken: null, googleAccessToken: null })
+              .where({ googleRefreshToken })
+          )
+        return new ForbiddenError('google oauth access denied')
       }
       return err
     },
@@ -74,7 +93,7 @@ export const graphapi = async (event, context) => {
   return await new Promise((resolve, reject) => {
     const callback = (error, body) => {
       body.headers = { ...body.headers, ...headers }
-      return error ? reject(error) : resolve(body)
+      Promise.all(waitFor).then(() => (error ? reject(error) : resolve(body)))
     }
     handler(event, context, callback)
   })

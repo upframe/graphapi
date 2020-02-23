@@ -21,6 +21,8 @@ export const Calendar = {
     })
     return data.items
   },
+
+  color: ({ backgroundColor }) => backgroundColor,
 }
 
 export const Event = {
