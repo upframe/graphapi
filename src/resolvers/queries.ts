@@ -28,8 +28,8 @@ export default {
     return mentor
   },
 
-  calendarConnectUrl: (_, __, { uid }) => {
+  calendarConnectUrl: async (_, __, { uid }) => {
     if (!uid) throw new AuthenticationError('not logged in')
-    return generateAuthUrl()
+    return await generateAuthUrl()
   },
 }

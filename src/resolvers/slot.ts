@@ -1,9 +1,7 @@
 export default {
   id: ({ sid }) => sid,
-  duration: ({ start, end }) =>
-    !end
-      ? 30
-      : Math.round(
-          (new Date(end).getTime() - new Date(start).getTime()) / (1000 * 60)
-        ),
+  end: ({ end, start }) =>
+    end && end > start
+      ? end
+      : new Date(new Date(start).getTime() + 30 * 60 * 1000).toISOString(),
 }

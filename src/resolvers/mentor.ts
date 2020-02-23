@@ -1,3 +1,5 @@
+import { getClient } from '../calendar'
+
 export default {
   tags: obj => {
     try {
@@ -30,4 +32,17 @@ export default {
 
   calendarConnected: ({ googleRefreshToken, googleAccessToken }) =>
     !!(googleRefreshToken ?? googleAccessToken),
+
+  calendars: async ({ uid, googleRefreshToken }, { ids }) => {
+    if (!googleRefreshToken) return
+    const client = await getClient(uid, googleRefreshToken)
+    if (ids) {
+      const res = await Promise.all(
+        ids.map(calendarId => client.calendar.calendars.get({ calendarId }))
+      )
+      return res.map(({ data }) => ({ ...data, uid }))
+    }
+    const { data } = await client.calendar.calendarList.list()
+    return data.items.map(cal => ({ ...cal, uid }))
+  },
 }

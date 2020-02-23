@@ -1,21 +1,51 @@
-import { google } from 'googleapis'
+import { google, calendar_v3 } from 'googleapis'
 import { Meetups, User } from './models'
 
-export const auth = new google.auth.OAuth2(
-  process.env.OAUTH_CLIENT_ID,
-  process.env.OAUTH_CLIENT_SECRET,
-  process.env.IS_OFFLINE
-    ? process.env.GCAL_RDIRECT
-    : `https://${
-        process.env[`GCAL_REDIRECT_${process.env.stage.toUpperCase()}`]
-      }`
-)
+const createClient = () =>
+  new google.auth.OAuth2(
+    process.env.OAUTH_CLIENT_ID,
+    process.env.OAUTH_CLIENT_SECRET,
+    process.env.IS_OFFLINE
+      ? process.env.GCAL_REDIRECT
+      : `https://${
+          process.env[`GCAL_REDIRECT_${process.env.stage.toUpperCase()}`]
+        }`
+  )
 
-auth.setCredentials({
-  refresh_token: process.env.CALENDAR_REFRESH_TOKEN,
-})
+const clients: {
+  [userId: string]: {
+    auth: ReturnType<typeof createClient>
+    calendar: calendar_v3.Calendar
+  }
+} = {}
 
-const calendar = google.calendar({ version: 'v3', auth })
+export async function getClient(
+  userId: string = 'upframe',
+  refreshToken?: string
+) {
+  if (!(userId in clients)) {
+    const auth = createClient()
+    if (refreshToken) auth.setCredentials({ refresh_token: refreshToken })
+    else {
+      const { googleRefreshToken, googleAccessToken } = await User.query()
+        .select('googleRefreshToken', 'googleAccessToken')
+        .findById(userId)
+      if (!googleRefreshToken)
+        throw new Error(`no tokens available for ${userId}`)
+      auth.setCredentials({
+        refresh_token: googleRefreshToken,
+        access_token: googleAccessToken,
+      })
+    }
+    clients[userId] = {
+      auth,
+      calendar: google.calendar({ version: 'v3', auth }),
+    }
+  }
+  return clients[userId]
+}
+
+getClient('upframe', process.env.CALENDAR_REFRESH_TOKEN)
 
 export async function addEvent(
   meetup: Meetups,
@@ -50,8 +80,7 @@ export async function addEvent(
     ],
   }
 
-  const { data } = await calendar.events.insert({
-    auth,
+  const { data } = await (await getClient()).calendar.events.insert({
     calendarId: process.env.CALENDAR_ID,
     requestBody: event,
   })
@@ -60,16 +89,15 @@ export async function addEvent(
 }
 
 export async function deleteEvent(eventId: string) {
-  await calendar.events.delete({
-    auth,
+  await (await getClient()).calendar.events.delete({
     calendarId: process.env.CALENDAR_ID,
     eventId,
     sendUpdates: 'all',
   })
 }
 
-export const generateAuthUrl = () =>
-  auth.generateAuthUrl({
+export const generateAuthUrl = async () =>
+  (await getClient()).auth.generateAuthUrl({
     access_type: 'offline',
     scope: 'https://www.googleapis.com/auth/calendar',
   })

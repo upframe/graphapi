@@ -8,7 +8,7 @@ import {
   sendMeetupRequest,
   sendMeetupConfirmation,
 } from '../email'
-import { addEvent, deleteEvent, auth } from '../calendar'
+import { addEvent, deleteEvent, getClient } from '../calendar'
 
 export default {
   signIn: async (_, { input: { email, password } }, { setHeader }, info) => {
@@ -212,8 +212,14 @@ export default {
 
   connectCalendar: async (_, { code }, { uid }, info) => {
     if (!uid) throw new AuthenticationError('not logged in')
+    const { googleRefreshToken } = await User.query()
+      .select('googleRefreshToken')
+      .findById(uid)
+    if (googleRefreshToken)
+      throw new UserInputError('must first disconnect connected calendar')
+
     try {
-      const { tokens } = await auth.getToken(code)
+      const { tokens } = await (await getClient()).auth.getToken(code)
       await User.query()
         .findById(uid)
         .patch({
@@ -238,7 +244,7 @@ export default {
     if (!googleRefreshToken) throw new UserInputError('calendar not connected')
 
     await Promise.all([
-      auth.revokeToken(googleRefreshToken),
+      (await getClient()).auth.revokeToken(googleRefreshToken),
       User.query()
         .findById(uid)
         .patch({ googleRefreshToken: null, googleAccessToken: null }),

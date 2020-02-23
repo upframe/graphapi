@@ -12,5 +12,5 @@ export default knex({
     database: 'api',
   },
   pool: { min: 0, max: 20 },
-  debug: !!process.env.IS_OFFLINE,
+  // debug: !!process.env.IS_OFFLINE,
 })

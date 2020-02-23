@@ -30,7 +30,23 @@ type Mentor implements Person {
   visibility: Visibility @private
   notificationPrefs: NotificationPreferences @private
   slots(after: String, before: String): [Slot!]!
+  calendars(ids: [ID!]): [Calendar!] @private
   calendarConnected: Boolean @private
+}
+
+type Calendar {
+  id: ID!
+  name: String
+  description: String
+  events(max: Int = 100, start: String = "today"): [Event!]
+}
+
+type Event {
+  id: ID!
+  name: String
+  description: String
+  start: String
+  end: String
 }
 
 type Meetup {
@@ -48,7 +64,7 @@ enum Visibility {
 type Slot {
   id: ID!
   start: String!
-  duration: Int
+  end: String
 }
 
 type NotificationPreferences {

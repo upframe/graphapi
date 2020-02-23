@@ -4,6 +4,7 @@ import Person from './person'
 import Mentor from './mentor'
 import Slot from './slot'
 import Meetup from './meetup'
+import { Calendar, Event } from './calendar'
 
 export default {
   Query,
@@ -12,4 +13,6 @@ export default {
   Mentor,
   Slot,
   Meetup,
+  Calendar,
+  Event,
 }
