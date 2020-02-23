@@ -47,13 +47,17 @@ export async function getClient(
   return clients[userId]
 }
 
-export async function addEvent(
+export async function addMeetup(
   meetup: Meetups,
   mentor: User,
-  mentee: User
+  mentee: User,
+  eventId: string
 ): Promise<string> {
   const event = {
-    summary: `Upframe Meetup w/ ${mentor.name.split(' ')[0]}`,
+    id: eventId.replace(/[^\w]/g, ''),
+    summary: `Upframe Meetup ${mentor.name.split(' ')[0]} & ${
+      mentee.name.split(' ')[0]
+    }`,
     location: meetup.location,
     description: `
     Upframe Mentoring Call
@@ -74,10 +78,25 @@ export async function addEvent(
       ).toISOString(),
       timeZone: 'Europe/Berlin',
     },
+    transparency: 'opaque',
+
     attendees: [
-      { email: mentor.email, displayName: mentor.name },
+      ...(mentor.upframeCalendarId
+        ? []
+        : [{ email: mentor.email, displayName: mentor.name }]),
       { email: mentee.email, displayName: mentee.name },
     ],
+  }
+
+  if (mentor.upframeCalendarId) {
+    await (
+      await getClient(mentor.uid, mentor.googleRefreshToken)
+    ).calendar.events.patch({
+      calendarId: mentor.upframeCalendarId,
+      eventId: event.id,
+      requestBody: event,
+    })
+    delete event.attendees
   }
 
   const { data } = await (await getClient()).calendar.events.insert({
@@ -88,12 +107,32 @@ export async function addEvent(
   return data.id
 }
 
-export async function deleteEvent(eventId: string) {
-  await (await getClient()).calendar.events.delete({
-    calendarId: process.env.CALENDAR_ID,
-    eventId,
-    sendUpdates: 'all',
-  })
+export async function deleteMeetup(meetup: Meetups, user: User) {
+  const ops: Promise<any>[] = [
+    (await getClient()).calendar.events.delete({
+      calendarId: process.env.CALENDAR_ID,
+      eventId: meetup.mid,
+      sendUpdates: 'all',
+    }),
+  ]
+
+  if (user.upframeCalendarId)
+    ops.push(
+      (
+        await getClient(user.uid, user.googleRefreshToken)
+      ).calendar.events.patch({
+        calendarId: user.upframeCalendarId,
+        eventId: meetup.sid.replace(/[^\w]/g, ''),
+        requestBody: {
+          summary: 'Upframe Slot',
+          description: '',
+          attendees: [],
+          transparency: 'transparent',
+        },
+      })
+    )
+
+  await Promise.all(ops)
 }
 
 export const generateAuthUrl = async () =>

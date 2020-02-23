@@ -8,7 +8,7 @@ import {
   sendMeetupRequest,
   sendMeetupConfirmation,
 } from '../email'
-import { addEvent, deleteEvent, getClient } from '../calendar'
+import { addMeetup, deleteMeetup, getClient } from '../calendar'
 
 export default {
   signIn: async (_, { input: { email, password } }, { setHeader }, info) => {
@@ -99,7 +99,41 @@ export default {
           .whereIn('sid', deleted)
           .delete(),
     ])
-    return await query(User, info).findById(uid)
+    const { googleRefreshToken, upframeCalendarId, ...user } = await query(
+      User,
+      info,
+      'googleRefreshToken',
+      'upframeCalendarId'
+    ).findById(uid)
+
+    if (!googleRefreshToken) return user
+
+    const client = await getClient(uid, googleRefreshToken)
+    await Promise.all([
+      ...addList.map(
+        ({ sid, start, end }) =>
+          client.calendar.events.insert({
+            calendarId: upframeCalendarId,
+            requestBody: {
+              id: sid.replace(/[^\w]/g, ''),
+              summary: 'Upframe Slot',
+              start: { dateTime: start },
+              end: { dateTime: end },
+              transparency: 'transparent',
+            },
+          }) as Promise<any>
+      ),
+      ...deleted.map(id =>
+        client.calendar.events
+          .delete({
+            calendarId: upframeCalendarId,
+            eventId: id.replace(/[^\w]/g, ''),
+          })
+          .catch(() => Promise.resolve())
+      ),
+    ])
+
+    return user
   },
 
   messageExt: async (_, { input }) => {
@@ -124,7 +158,14 @@ export default {
     const slot = await Slots.query().findById(input.slotId)
     if (!slot) throw new UserInputError('unknown slot')
     const mentor = await User.query()
-      .select('uid', 'name', 'email', 'keycode')
+      .select(
+        'uid',
+        'name',
+        'email',
+        'keycode',
+        'upframeCalendarId',
+        'googleRefreshToken'
+      )
       .findById(slot.mentorUID)
     let [mentee]: User[] = await User.query()
       .select('uid', 'name', 'email')
@@ -150,6 +191,18 @@ export default {
     }
     await Meetups.query().insert(meetup)
     sendMeetupRequest(mentor, mentee, meetup)
+
+    if (mentor.googleRefreshToken)
+      (
+        await getClient(mentor.uid, mentor.googleRefreshToken)
+      ).calendar.events.patch({
+        calendarId: mentor.upframeCalendarId,
+        eventId: slot.sid.replace(/[^\w]/g, ''),
+        requestBody: {
+          summary: 'Upframe Slot (requested)',
+          description: `<p>Slot was requested by <a href="mailto:${mentee.email}">${mentee.name}</a></p><p><i>${input.message}</i></p><p><a href="https://upframe.io/meetup/confirm/${meetup.mid}">accept</a> | <a href="https://upframe.io/meetup/cancel/${meetup.mid}">refuse</a></p>`,
+        },
+      })
   },
 
   acceptMeetup: async (_, { meetupId }, { uid }, info) => {
@@ -169,7 +222,9 @@ export default {
         ['mentor', 'mentee'],
         info,
         'name',
-        'email'
+        'email',
+        'googleRefreshToken',
+        'upframeCalendarId'
       ).whereIn('uid', [meetup.mentorUID, meetup.menteeUID]),
       Meetups.query()
         .findById(meetupId)
@@ -181,7 +236,7 @@ export default {
     const mentee = parts.find(({ uid }) => uid === meetup.menteeUID)
 
     sendMeetupConfirmation(mentor, mentee, meetup)
-    const googleId = await addEvent(meetup, mentor, mentee)
+    const googleId = await addMeetup(meetup, mentor, mentee, meetup.sid)
 
     await Meetups.query()
       .patch({ googleId })
@@ -198,15 +253,22 @@ export default {
         "Can't cancel meetup. Please make sure that you are logged in with the correct account."
       )
 
+    const user = await User.query()
+      .select('uid', 'upframeCalendarId', 'googleRefreshToken')
+      .findById(uid)
+
     await Promise.all([
-      Meetups.query().deleteById(meetupId),
-      meetup.status === 'confirmed' &&
-        Slots.query().insert({
-          sid: meetup.sid,
-          mentorUID: meetup.mentorUID,
-          start: meetup.start,
-        }),
-      meetup.status === 'confirmed' && deleteEvent(meetup.googleId),
+      Meetups.query().deleteById(meetupId) as Promise<any>,
+      ...(meetup.status === 'confirmed'
+        ? [
+            Slots.query().insert({
+              sid: meetup.sid,
+              mentorUID: meetup.mentorUID,
+              start: meetup.start,
+            }),
+            deleteMeetup(meetup, user),
+          ]
+        : []),
     ])
   },
 
@@ -220,11 +282,18 @@ export default {
 
     try {
       const { tokens } = await (await getClient()).auth.getToken(code)
+
+      const client = await getClient(uid, tokens.refresh_token)
+      const { data } = await client.calendar.calendars.insert({
+        requestBody: { summary: 'Uprame' },
+      })
+
       await User.query()
         .findById(uid)
         .patch({
           googleAccessToken: tokens.access_token,
           googleRefreshToken: tokens.refresh_token,
+          upframeCalendarId: data.id,
         })
       return await query(User, info).findById(uid)
     } catch (e) {
@@ -235,13 +304,19 @@ export default {
   disconnectCalendar: async (_, __, { uid }, info) => {
     if (!uid) throw new AuthenticationError('not logged in')
 
-    const { googleRefreshToken, ...user } = await query(
+    const { googleRefreshToken, upframeCalendarId, ...user } = await query(
       User,
       info,
-      'googleRefreshToken'
+      'googleRefreshToken',
+      'upframeCalendarId'
     ).findById(uid)
 
     if (!googleRefreshToken) throw new UserInputError('calendar not connected')
+
+    if (upframeCalendarId)
+      (await getClient(uid)).calendar.calendars.delete({
+        calendarId: upframeCalendarId,
+      })
 
     await Promise.all([
       (await getClient()).auth.revokeToken(googleRefreshToken),

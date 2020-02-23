@@ -19,6 +19,7 @@ export default class User extends Model {
   type: string
   googleAccessToken: string
   googleRefreshToken: string
+  upframeCalendarId: string
 
   static tableName = 'users'
   static idColumn = 'uid'
