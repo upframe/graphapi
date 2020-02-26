@@ -1,6 +1,6 @@
 import query, { querySubsets } from '../utils/buildQuery'
 import { User, Slots, Meetups } from '../models'
-import { signIn, checkPassword } from '../auth'
+import { signIn, checkPassword, hashPassword } from '../auth'
 import { AuthenticationError, UserInputError, ForbiddenError } from '../error'
 import uuidv4 from 'uuid/v4'
 import {
@@ -27,6 +27,39 @@ export default {
   signOut: (_, __, { uid, setHeader }) => {
     if (!uid) throw new AuthenticationError('not logged in')
     setHeader('Set-Cookie', 'auth=deleted; HttpOnly; Max-Age=-1')
+  },
+
+  createAccount: async (
+    _,
+    { input: { devPass, name, email, password } },
+    { setHeader }
+  ) => {
+    if (devPass !== process.env.DEV_PASSWORD)
+      throw new ForbiddenError('incorrect dev password')
+    const [existing] = await User.query()
+      .where({ email })
+      .orWhere({ name })
+    if (existing)
+      throw new UserInputError(
+        `user with ${
+          existing.email === email ? `email "${email}"` : `name "${name}"`
+        } already exists`
+      )
+    password = hashPassword(password)
+    const user = await User.query().insertAndFetch({
+      uid: uuidv4(),
+      name,
+      email,
+      password,
+      type: 'mentor',
+      newsfeed: 'N',
+      keycode: name.toLowerCase().replace(/\s/g, '.'),
+    })
+    setHeader(
+      'Set-Cookie',
+      `auth=${signIn(user, password)}; HttpOnly; Max-Age=${60 ** 2 * 24 * 14}`
+    )
+    return user
   },
 
   updateProfile: async (_, { input }, { uid }, info) => {

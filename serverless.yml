@@ -37,6 +37,7 @@ functions:
       DEV_DB_PASS: ${ssm:/API/Dev/DB/Password~true}
       GCAL_REDIRECT_DEV: ${ssm:/API/Dev/GCalRedirect}
       GCAL_REDIRECT_PROD: ${ssm:/API/Prod/GCalRedirect}
+      DEV_PASSWORD: ${ssm:/API/DevPassword~true}
 
 plugins:
   - serverless-webpack

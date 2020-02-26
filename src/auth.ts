@@ -27,3 +27,6 @@ export const checkPassword = (user: User, password: string): boolean =>
   !user?.password || !password || !bcrypt.compareSync(password, user.password)
     ? false
     : true
+
+export const hashPassword = (password: string): string =>
+  bcrypt.hashSync(password, bcrypt.genSaltSync(10))
