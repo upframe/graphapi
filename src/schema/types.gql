@@ -32,6 +32,7 @@ type Mentor implements Person {
   slots(after: String, before: String): [Slot!]!
   calendars(ids: [ID!]): [Calendar!] @private
   calendarConnected: Boolean @private
+  categories: [String!]!
 }
 
 type Calendar {

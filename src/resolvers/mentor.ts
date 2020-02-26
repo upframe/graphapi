@@ -45,4 +45,6 @@ export default {
     const { data } = await client.calendar.calendarList.list()
     return data.items.map(cal => ({ ...cal, uid }))
   },
+
+  categories: ({ category }) => category?.split(',') ?? [],
 }

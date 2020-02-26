@@ -18,6 +18,7 @@ export default new Map<typeof Model, MapInfo>([
         profilePictures: 'profilePic',
         calendarConnected: 'googleRefreshToken',
         calendars: 'googleRefreshToken',
+        categories: 'category',
         social: {
           dribbble: 'dribbble',
           facebook: 'facebook',
