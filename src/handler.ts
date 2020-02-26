@@ -64,17 +64,19 @@ export const graphapi = async (event, context) => {
       }
       return err
     },
-    ...(process.env.stage === 'dev' && {
-      introspection: true,
-      playground: {
-        endpoint: process.env.IS_OFFLINE ? '/' : `/${process.env.stage}`,
-        settings: {
-          'request.credentials': 'same-origin',
-          // @ts-ignore
-          'schema.polling.enable': false,
-        },
-      },
-    }),
+    ...(process.env.stage === 'dev'
+      ? {
+          introspection: true,
+          playground: {
+            endpoint: '/',
+            settings: {
+              'request.credentials': 'same-origin',
+              // @ts-ignore
+              'schema.polling.enable': false,
+            },
+          },
+        }
+      : { introspection: false, playground: false }),
     ...(!process.env.IS_OFFLINE && {
       engine: {
         apiKey: process.env.APOLLO_KEY,
