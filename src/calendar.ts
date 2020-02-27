@@ -139,4 +139,5 @@ export const generateAuthUrl = async () =>
   (await getClient()).auth.generateAuthUrl({
     access_type: 'offline',
     scope: 'https://www.googleapis.com/auth/calendar',
+    prompt: 'consent',
   })

@@ -11,28 +11,30 @@ import {
 import { addMeetup, deleteMeetup, getClient } from '../calendar'
 
 export default {
-  signIn: async (_, { input: { email, password } }, { setHeader }, info) => {
+  signIn: async (_, { input: { email, password } }, ctx, info) => {
     const [user] = await query(User, info, 'email', 'password').where({
       email,
     })
     const token = signIn(user, password)
     if (!token) throw new UserInputError('invalid credentials')
-    setHeader(
+    ctx.setHeader(
       'Set-Cookie',
       `auth=${token}; HttpOnly; Max-Age=${60 ** 2 * 24 * 14}`
     )
+    ctx.uid = user.uid
     return user
   },
 
-  signOut: (_, __, { uid, setHeader }) => {
-    if (!uid) throw new AuthenticationError('not logged in')
-    setHeader('Set-Cookie', 'auth=deleted; HttpOnly; Max-Age=-1')
+  signOut: (_, __, ctx) => {
+    if (!ctx.uid) throw new AuthenticationError('not logged in')
+    ctx.setHeader('Set-Cookie', 'auth=deleted; HttpOnly; Max-Age=-1')
+    ctx.uid = null
   },
 
   createAccount: async (
     _,
     { input: { devPass, name, email, password } },
-    { setHeader }
+    ctx
   ) => {
     if (devPass !== process.env.DEV_PASSWORD)
       throw new ForbiddenError('incorrect dev password')
@@ -55,10 +57,11 @@ export default {
       newsfeed: 'N',
       keycode: name.toLowerCase().replace(/\s/g, '.'),
     })
-    setHeader(
+    ctx.setHeader(
       'Set-Cookie',
       `auth=${signIn(user, password)}; HttpOnly; Max-Age=${60 ** 2 * 24 * 14}`
     )
+    ctx.uid = user.uid
     return user
   },
 
