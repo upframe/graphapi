@@ -14,11 +14,20 @@ functions:
       - http:
           path: /
           method: post
-          cors: true
+          cors:
+            origins:
+              - https://beta.upframe.io
+              - https://upframe.io
+            allowCredentials: true
       - http:
           path: /
           method: get
-          cors: true
+          cors:
+            origins:
+              - https://beta.upframe.io
+              - https://upframe.io
+            allowCredentials: true
+
     environment:
       stage: ${self:provider.stage}
       PUBLIC_KEY: ${ssm:/API/PublicKey}

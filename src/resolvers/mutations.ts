@@ -330,7 +330,8 @@ export default {
         })
       return await query(User, info).findById(uid)
     } catch (e) {
-      throw new ForbiddenError('')
+      console.log(e)
+      throw e
     }
   },
 

@@ -33,8 +33,11 @@ export const graphapi = async (event, context) => {
         headers[header] = value
       },
     }),
-    debug: !!process.env.IS_OFFLINE,
+    debug:
+      event.headers.debug === process.env.DEV_PASSWORD ||
+      !!process.env.IS_OFFLINE,
     formatError: err => {
+      console.log(err)
       if (err.originalError instanceof ValidationError) {
         const field = err.message.match(/^(\w+):/)[1]
         return new UserInputError(
