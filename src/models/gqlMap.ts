@@ -19,6 +19,8 @@ export default new Map<typeof Model, MapInfo>([
         calendarConnected: 'googleRefreshToken',
         calendars: 'googleRefreshToken',
         categories: 'category',
+        role: 'role',
+        company: 'company',
         social: {
           dribbble: 'dribbble',
           facebook: 'facebook',

@@ -321,7 +321,7 @@ export default {
 
       const client = await getClient(uid, tokens.refresh_token)
       const { data } = await client.calendar.calendars.insert({
-        requestBody: { summary: 'Uprame' },
+        requestBody: { summary: 'Upframe' },
       })
 
       await User.query()
