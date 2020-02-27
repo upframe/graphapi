@@ -1,5 +1,5 @@
 require('dotenv').config()
-require('ts-node/register')
+require('ts-node').register({ compilerOptions: { module: 'commonjs' } })
 
 module.exports = {
   client: 'pg',
