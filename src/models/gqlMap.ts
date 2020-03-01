@@ -21,6 +21,10 @@ export default new Map<typeof Model, MapInfo>([
           'location'
         ),
         bio: 'biography',
+        notificationPrefs: {
+          receiveEmails: 'allow_emails',
+          slotReminder: Mentor,
+        },
         ...external(SocialMedia)('social'),
         ...external(Mentor)('visibility', 'title', 'company'),
       },
@@ -33,6 +37,9 @@ export default new Map<typeof Model, MapInfo>([
       map: {
         ...ident('id', 'title', 'company'),
         visibility: 'listed',
+        notificationPrefs: {
+          slotReminder: 'slot_reminder_email',
+        },
       },
     },
   ],

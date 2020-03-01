@@ -23,29 +23,44 @@ const resolveColumns = (
 
   const resolveFields = (
     map: Mapping,
-    field: string | string[] = typeof fields === 'string'
-      ? fields
-      : Object.keys(fields)
+    field: string | string[] | Fields,
+    ...path: string[]
   ) => {
     if (Array.isArray(field))
       return field.flatMap(field => resolveFields(map, field))
+
+    if (typeof field === 'object')
+      return Object.entries(field).flatMap(([k, v]) =>
+        typeof v === 'boolean'
+          ? resolveFields(map, k, ...path)
+          : resolveFields(map[k] as Mapping, v, ...path, k)
+      )
+
     if (!(field in map)) return []
     if (typeof map[field] === 'function') {
-      let res = resolveColumns(map[field] as typeof Model, { [field]: true })
+      const buildField = (...path: string[]) => ({
+        [path.shift()]: path.length ? buildField(...path) : true,
+      })
+      let res = resolveColumns(
+        map[field] as typeof Model,
+        buildField(...path, field)
+      )
       tables = Array.from(new Set([...tables, ...res.tables]))
       return res.columns
     }
 
-    if (typeof map[field] === 'string')
+    if (typeof map[field] === 'string') {
+      if (map[field] !== field) console.log(`${map[field]} -> ${field}`)
       return `${model.tableName}.${map[field]}${
         map[field] !== field ? ` as ${field}` : ''
       }`
-    return Object.keys(map[field]).map(child =>
-      resolveFields(map[field] as Mapping, child)
+    }
+    return Object.keys(map[field] ?? []).map(child =>
+      resolveFields(map[field] as Mapping, child, ...path, field)
     )
   }
 
-  return { columns: Array.from(new Set(resolveFields(map))), tables }
+  return { columns: Array.from(new Set(resolveFields(map, fields))), tables }
 }
 
 export function buildQuery(
