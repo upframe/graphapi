@@ -1,51 +1,38 @@
-import { Model } from 'objection'
-import { User, Slots } from '.'
+import { Model, User, Mentor, SocialMedia } from '.'
+
+const ident = (...fields: string[]) =>
+  Object.fromEntries(fields.map(v => [v, v]))
+const external = (model: typeof Model) => (...fields: string[]) =>
+  Object.fromEntries(fields.map(v => [v, model]))
 
 export default new Map<typeof Model, MapInfo>([
   [
     User,
     {
-      required: ['uid', 'type', 'keycode'],
+      required: ['id', 'role', 'handle'],
       map: {
-        name: 'name',
-        email: 'email',
-        keycode: 'keycode',
-        location: 'location',
-        website: 'website',
-        bio: 'bio',
-        tags: 'tags',
-        visibility: 'newsfeed',
-        profilePictures: 'profilePic',
-        calendarConnected: 'googleRefreshToken',
-        calendars: 'googleRefreshToken',
-        categories: 'category',
-        role: 'role',
-        company: 'company',
-        social: {
-          dribbble: 'dribbble',
-          facebook: 'facebook',
-          github: 'github',
-          linkedin: 'linkedin',
-          twitter: 'twitter',
-        },
-        notificationPrefs: {
-          receiveEmails: 'emailNotifications',
-          slotReminder: 'availabilityReminder',
-        },
-      },
-      relations: {
-        profilePictures: 'profilePictures',
-        slots: 'timeSlots',
+        ...ident(
+          'id',
+          'handle',
+          'name',
+          'email',
+          'password',
+          'role',
+          'location'
+        ),
+        bio: 'biography',
+        ...external(SocialMedia)('social'),
+        ...external(Mentor)('visibility', 'title', 'company'),
       },
     },
   ],
   [
-    Slots,
+    Mentor,
     {
-      required: ['sid', 'mentorUID'],
+      required: ['id'],
       map: {
-        start: 'start',
-        duration: 'end',
+        ...ident('id', 'title', 'company'),
+        visibility: 'listed',
       },
     },
   ],
@@ -54,11 +41,7 @@ export default new Map<typeof Model, MapInfo>([
 interface MapInfo {
   required?: string[]
   map: Mapping
-  relations?: Relations
 }
 export interface Mapping {
-  [gql: string]: string | Mapping
-}
-export interface Relations {
-  [gql: string]: string
+  [gql: string]: string | Mapping | typeof Model
 }

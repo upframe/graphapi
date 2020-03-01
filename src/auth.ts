@@ -15,7 +15,7 @@ export function authenticate(token: string): string {
 
 export function signIn(user: User, password: string): string {
   if (!user?.email || !checkPassword(user, password)) return
-  return jwt.sign({ uid: user.uid }, process.env.PRIVATE_KEY, {
+  return jwt.sign({ uid: user.id }, process.env.PRIVATE_KEY, {
     issuer: 'upframe',
     subject: user.email,
     algorithm: 'RS256',

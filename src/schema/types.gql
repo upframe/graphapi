@@ -1,5 +1,6 @@
 interface Person {
   id: ID!
+  handle: String
   name: String!
   email: String
   profilePictures: [ProfilePicture]
@@ -8,6 +9,7 @@ interface Person {
 
 type User implements Person {
   id: ID!
+  handle: String
   name: String!
   email: String @private
   profilePictures: [ProfilePicture]
@@ -16,10 +18,10 @@ type User implements Person {
 
 type Mentor implements Person {
   id: ID!
+  handle: String!
   name: String!
   email: String @private
-  keycode: String!
-  role: String
+  title: String
   company: String
   location: String
   website: String
