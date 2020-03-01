@@ -65,6 +65,13 @@ export const graphapi = async (event, context) => {
           )
         return new ForbiddenError('google oauth access denied')
       }
+      if (
+        !process.env.IS_OFFLINE &&
+        event.headers.debug !== process.env.DEV_PASSWORD &&
+        err.extensions?.exception?.name === 'DBError'
+      ) {
+        err.message = null
+      }
       return err
     },
     ...(process.env.stage === 'dev'

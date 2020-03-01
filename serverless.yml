@@ -51,7 +51,6 @@ functions:
 plugins:
   - serverless-webpack
   - serverless-offline
-  - serverless-dotenv-plugin
 
 custom:
   serverless-offline:

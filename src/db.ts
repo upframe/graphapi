@@ -3,14 +3,19 @@ import knex from 'knex'
 const get = (name: string) =>
   process.env[`${process.env.IS_OFFLINE ? 'DEV' : 'PROD'}_DB_${name}`]
 
+const port = parseInt(process.env.DB_PORT ?? get('PORT'))
+
+// webpack.DefinePlugin replaces variables at compile time, it doesn't inject them.
+// So do not try to dynamically access variables from .env, but explicitly read them!
 export default knex({
-  client: 'mysql',
+  client: 'pg',
   connection: {
-    host: get('HOST'),
-    user: get('USER'),
-    password: get('PASS'),
-    database: 'api',
+    host: process.env.DB_HOST ?? get('HOST'),
+    ...(!isNaN(port) && { port }),
+    user: process.env.DB_USER ?? get('USER'),
+    password: process.env.DB_PASS ?? get('PASS'),
+    database: process.env.DB_NAME ?? get('NAME') ?? 'api',
   },
   pool: { min: 0, max: 20 },
-  // debug: !!process.env.IS_OFFLINE,
+  debug: !!process.env.IS_OFFLINE,
 })
