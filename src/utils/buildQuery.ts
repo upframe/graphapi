@@ -33,7 +33,9 @@ const resolveColumns = (
       return Object.entries(field).flatMap(([k, v]) =>
         typeof v === 'boolean'
           ? resolveFields(map, k, ...path)
-          : resolveFields(map[k] as Mapping, v, ...path, k)
+          : typeof map[k] === 'function'
+          ? resolveFields(map, k, ...path)
+          : resolveFields((map[k] as Mapping) ?? {}, v, ...path, k)
       )
 
     if (!(field in map)) return []
@@ -49,12 +51,11 @@ const resolveColumns = (
       return res.columns
     }
 
-    if (typeof map[field] === 'string') {
-      if (map[field] !== field) console.log(`${map[field]} -> ${field}`)
+    if (typeof map[field] === 'string')
       return `${model.tableName}.${map[field]}${
         map[field] !== field ? ` as ${field}` : ''
       }`
-    }
+
     return Object.keys(map[field] ?? []).map(child =>
       resolveFields(map[field] as Mapping, child, ...path, field)
     )
