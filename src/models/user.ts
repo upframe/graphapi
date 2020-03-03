@@ -1,53 +1,68 @@
 import { Model } from 'objection'
-import Slots from './slots'
-
-class ProfilePicture extends Model {
-  static tableName = 'profilePictures'
-}
+import Mentor from './mentor'
+import SocialMedia from './socialmedia'
+import Tags from './tags'
 
 const regToStr = (reg: RegExp) => reg.toString().replace(/\/(.*)\//, '$1')
 
 export default class User extends Model {
-  uid!: string
+  static tableName = 'users'
+  static idColumn = 'id'
+
+  id!: string
+  handle!: string
   name!: string
   email!: string
   password: string
-  keycode: string
-  newsfeed: string
-  emailNotifications: boolean
-  availabilityReminder: string
-  type: string
-  googleAccessToken: string
-  googleRefreshToken: string
-  upframeCalendarId: string
-
-  static tableName = 'users'
-  static idColumn = 'uid'
+  role: string
+  location: string
+  biography: string
+  allow_emails: string
 
   static relationMappings = {
-    profilePictures: {
+    mentors: {
       relation: Model.HasOneRelation,
-      modelClass: ProfilePicture,
+      modelClass: Mentor,
       join: {
-        from: 'users.uid',
-        to: 'profilePictures.uid',
+        from: 'users.id',
+        to: 'mentors.id',
       },
     },
-    timeSlots: {
-      relation: Model.HasManyRelation,
-      modelClass: Slots,
+    socialmedia: {
+      relation: Model.ManyToManyRelation,
+      modelClass: SocialMedia,
       join: {
-        from: 'users.uid',
-        to: 'timeSlots.mentorUID',
+        from: 'users.id',
+        through: {
+          from: 'user_handles.user_id',
+          to: 'user_handles.platform_id',
+          extra: ['handle'],
+        },
+        to: 'socialmedia.id',
+      },
+    },
+    tags: {
+      relation: Model.ManyToManyRelation,
+      modelClass: Tags,
+      join: {
+        from: 'users.id',
+        through: {
+          from: 'user_tags.user_id',
+          to: 'user_tags.tag_id',
+        },
+        to: 'tags.id',
       },
     },
   }
 
   static jsonSchema = {
     type: 'object',
-    required: ['uid', 'name', 'email'],
+    required: ['id', 'handle', 'name', 'email'],
     properties: {
-      uid: {
+      id: {
+        type: 'string',
+      },
+      handle: {
         type: 'string',
       },
       name: {
@@ -60,30 +75,28 @@ export default class User extends Model {
           /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
         ),
       },
-      website: {
-        type: 'string',
-        pattern: regToStr(
-          /^(http(s?):\/\/)?[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+){0,2}\.[a-z]{2,10}(\/([\w-.~!$&'()*+,;=:@]|(%[0-9a-fA-F]{2}))+)*\/?(\?[^?#]*)?(#(([\w!$&'()*+,;=\-.~:@/?]|(%[0-9a-fA-F]{2}))*))?$/
-        ),
-      },
+      // website: {
+      //   type: 'string',
+      //   pattern: regToStr(
+      //     /^(http(s?):\/\/)?[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+){0,2}\.[a-z]{2,10}(\/([\w-.~!$&'()*+,;=:@]|(%[0-9a-fA-F]{2}))+)*\/?(\?[^?#]*)?(#(([\w!$&'()*+,;=\-.~:@/?]|(%[0-9a-fA-F]{2}))*))?$/
+      //   ),
+      // },
       password: {
         type: 'string',
         minLength: 8,
       },
-      newsfeed: {
-        type: 'string',
-        enum: ['Y', 'N'],
-      },
-      emailNotifications: {
-        type: 'boolean',
-      },
-      availabilityReminder: {
-        type: 'string',
-        enum: ['monthly', 'weekly', 'off'],
-      },
-      type: {
+      role: {
         type: 'string',
         enum: ['user', 'mentor'],
+      },
+      locaation: {
+        type: 'string',
+      },
+      biography: {
+        type: 'string',
+      },
+      allow_emails: {
+        type: 'boolean',
       },
     },
   }
