@@ -12,18 +12,19 @@ input createAccountInput {
 
 input ProfileInput {
   name: String
-  keycode: String
+  handle: String
   location: String
-  role: String
+  title: String
   company: String
   website: String
-  bio: String
-  dribbble: String
-  facebook: String
-  github: String
-  linkedin: String
-  twitter: String
+  biography: String
+  social: [SocialInput]
   tags: [String!]
+}
+
+input SocialInput {
+  platform: Int
+  handle: String
 }
 
 input NotificationSettingsInput {

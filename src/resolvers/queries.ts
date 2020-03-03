@@ -1,35 +1,33 @@
 import { User } from '../models'
 import query from '../utils/buildQuery'
-import { AuthenticationError, KeycodeError, UserInputError } from '../error'
+import { AuthenticationError, handleError, UserInputError } from '../error'
 import { generateAuthUrl } from '../calendar'
 
 export default {
   mentors: async (_, __, ___, info) =>
-    await query(User, info).where({
-      type: 'mentor',
-      newsfeed: 'Y',
-    }),
+    await query(User, info, 'visibility')
+      .where({
+        role: 'mentor',
+        listed: true,
+      })
+      .orderByRaw('RANDOM()'),
 
-  me: async (_, __, { uid }, info) => {
-    if (!uid) throw new AuthenticationError('not logged in')
-    return await query(User, info).findById(uid)
+  me: async (_, __, { id }, info) => {
+    if (!id) throw new AuthenticationError('not logged in')
+    return await query(User, info).findById(id)
   },
 
-  mentor: async (_, { keycode, id }, __, info) => {
-    if (!id && !keycode) throw new UserInputError('must provide keycode or id')
-    const mentor = id
-      ? await query(User, info).findById(id)
-      : (
-          await query(User, info).where({
-            keycode,
-          })
-        )[0]
-    if (!mentor) throw KeycodeError(`can't find mentor ${keycode ?? id}`)
+  mentor: async (_, { handle, id }, __, info) => {
+    if (!id && !handle) throw new UserInputError('must provide handle or id')
+    let q = query(User, info)
+    q = id ? q.findById(id) : q.where({ 'users.handle': handle }).first()
+    const mentor = await q
+    if (!mentor) throw handleError(`can't find mentor ${handle ?? id}`)
     return mentor
   },
 
-  calendarConnectUrl: async (_, __, { uid }) => {
-    if (!uid) throw new AuthenticationError('not logged in')
+  calendarConnectUrl: async (_, __, { id }) => {
+    if (!id) throw new AuthenticationError('not logged in')
     return await generateAuthUrl()
   },
 }

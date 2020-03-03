@@ -28,7 +28,7 @@ export const graphapi = async (event, context) => {
       inheritResolversFromInterfaces: true,
     }),
     context: ({ event }) => ({
-      uid: authenticate(parseCookies(event.headers.Cookie).auth),
+      ...authenticate(parseCookies(event.headers.Cookie).auth),
       setHeader(header, value) {
         headers[header] = value
       },

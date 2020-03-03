@@ -121,7 +121,7 @@ export async function sendMeetupConfirmation(
       MENTOR: mentor.name,
       USER: mentee.name,
       MESSAGE: meetup.message,
-      KEYCODE: mentor.keycode,
+      handle: mentor.handle,
       LOCATION: meetup.location,
       DATE: new Date(meetup.start).toLocaleString('en-US', {
         weekday: 'long',

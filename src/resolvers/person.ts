@@ -1,40 +1,26 @@
+import { SocialMedia } from '../models'
+
 export default {
-  __resolveType({ type }) {
-    if (type === 'user') return 'User'
-    if (type === 'mentor') return 'Mentor'
+  __resolveType({ role }) {
+    if (role === 'user') return 'User'
+    if (role === 'mentor') return 'Mentor'
   },
 
-  id: ({ uid }) => uid,
-
-  profilePictures({ profilePictures, profilePic }) {
-    return [
-      ...(profilePictures
-        ? Object.entries(profilePictures)
-            .filter(([k, v]) => v && k.startsWith('pic'))
-            .map(([k, v]) => {
-              const [, size, type] =
-                k.match(/^pic([0-9]+|Max)(Jpeg|Webp)/) ?? []
-              return {
-                ...(size && { size: parseInt(size, 10) || null }),
-                ...(type && { type: type.toLowerCase() }),
-                url: v,
-              }
-            })
-        : []),
-      ...(profilePic ? [{ url: profilePic }] : []),
-    ]
+  social: async ({ socialmedia }, { includeEmpty }) => {
+    if (includeEmpty)
+      return (await SocialMedia.query()).map(v => ({
+        ...v,
+        ...socialmedia.find(({ id }) => id === v.id),
+      }))
+    return socialmedia
   },
 
-  social: obj =>
-    Object.fromEntries(
-      socialPlatforms.flatMap(name => (obj[name] ? [[name, obj[name]]] : []))
-    ),
+  tags: ({ tags = [] }) => tags.map(({ name }) => name),
+
+  notificationPrefs: ({ allow_emails, ...parent }) => ({
+    receiveEmails: allow_emails,
+    ...parent,
+  }),
+
+  profilePictures: () => [],
 }
-
-const socialPlatforms = [
-  'dribbble',
-  'facebook',
-  'github',
-  'linkedin',
-  'twitter',
-]

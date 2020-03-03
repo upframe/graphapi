@@ -12,7 +12,7 @@ const data = rows
   .map(row => row.map((v, i) => [columns[i], v]))
   .map(Object.fromEntries)
   .filter(({ type }) => type === 'mentor')
-  .map(obj => ({ ...obj, uid: uuid() }))
+  .map(obj => ({ ...obj, id: uuid() }))
 
 const profession = Array.from(
   new Set(
@@ -46,7 +46,7 @@ export async function seed(knex: Knex): Promise<any> {
   await knex('users').insert(
     data.map(
       ({
-        uid,
+        id,
         keycode,
         name,
         email,
@@ -55,7 +55,7 @@ export async function seed(knex: Knex): Promise<any> {
         bio,
         emailNotifications,
       }) => ({
-        id: uid,
+        id: id,
         handle: keycode,
         name,
         email,
@@ -70,8 +70,8 @@ export async function seed(knex: Knex): Promise<any> {
 
   await knex('mentors').del()
   await knex('mentors').insert(
-    data.map(({ uid, newsfeed, role, company, availabilityReminder }) => ({
-      id: uid,
+    data.map(({ id, newsfeed, role, company, availabilityReminder }) => ({
+      id: id,
       listed: newsfeed === 'Y',
       ...(role && { title: role }),
       ...(company && { company }),
@@ -85,12 +85,12 @@ export async function seed(knex: Knex): Promise<any> {
 
   await knex('user_profession').del()
   await knex('user_profession').insert(
-    data.flatMap(({ uid, category }) =>
+    data.flatMap(({ id, category }) =>
       category
         .split(',')
         .filter(v => v !== 'NULL')
         .map(v => profession.indexOf(v) + 1)
-        .map(profession_id => ({ user_id: uid, profession_id }))
+        .map(profession_id => ({ user_id: id, profession_id }))
     )
   )
 
@@ -100,10 +100,10 @@ export async function seed(knex: Knex): Promise<any> {
 
   await knex('user_tags').del()
   await knex('user_tags').insert(
-    data.flatMap(({ uid, tags: userTags }) =>
+    data.flatMap(({ id, tags: userTags }) =>
       JSON.parse(userTags || '[]')
         .map(({ text }) => text.toLowerCase())
-        .map(tag => ({ user_id: uid, tag_id: tags.indexOf(tag) + 1 }))
+        .map(tag => ({ user_id: id, tag_id: tags.indexOf(tag) + 1 }))
     )
   )
 
@@ -112,10 +112,10 @@ export async function seed(knex: Knex): Promise<any> {
 
   await knex('user_handles').del()
   await knex('user_handles').insert(
-    data.flatMap(({ uid, ...user }) =>
+    data.flatMap(({ id, ...user }) =>
       social_media
         .map(({ name }, i) => ({
-          user_id: uid,
+          user_id: id,
           platform_id: i + 1,
           handle: user[name.toLowerCase()],
         }))

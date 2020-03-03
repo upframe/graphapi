@@ -90,7 +90,7 @@ export async function addMeetup(
 
   if (mentor.upframeCalendarId) {
     await (
-      await getClient(mentor.uid, mentor.googleRefreshToken)
+      await getClient(mentor.id, mentor.googleRefreshToken)
     ).calendar.events.patch({
       calendarId: mentor.upframeCalendarId,
       eventId: event.id,
@@ -118,18 +118,18 @@ export async function deleteMeetup(meetup: Meetups, user: User) {
 
   if (user.upframeCalendarId)
     ops.push(
-      (
-        await getClient(user.uid, user.googleRefreshToken)
-      ).calendar.events.patch({
-        calendarId: user.upframeCalendarId,
-        eventId: meetup.sid.replace(/[^\w]/g, ''),
-        requestBody: {
-          summary: 'Upframe Slot',
-          description: '',
-          attendees: [],
-          transparency: 'transparent',
-        },
-      })
+      (await getClient(user.id, user.googleRefreshToken)).calendar.events.patch(
+        {
+          calendarId: user.upframeCalendarId,
+          eventId: meetup.sid.replace(/[^\w]/g, ''),
+          requestBody: {
+            summary: 'Upframe Slot',
+            description: '',
+            attendees: [],
+            transparency: 'transparent',
+          },
+        }
+      )
     )
 
   await Promise.all(ops)

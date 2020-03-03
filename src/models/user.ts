@@ -17,7 +17,7 @@ export default class User extends Model {
   role: string
   location: string
   biography: string
-  allow_emails: string
+  allow_emails: boolean
 
   static relationMappings = {
     mentors: {

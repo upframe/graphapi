@@ -5,6 +5,10 @@ import Mentor from './mentor'
 import Slot from './slot'
 import Meetup from './meetup'
 import { Calendar, Event } from './calendar'
+import {
+  NotificationPreferences,
+  MentorNotificationPreferences,
+} from './notificationPreferences'
 
 export default {
   Query,
@@ -15,4 +19,6 @@ export default {
   Meetup,
   Calendar,
   Event,
+  NotificationPreferences,
+  MentorNotificationPreferences,
 }

@@ -6,7 +6,7 @@ export default class PrivateDirective extends SchemaDirectiveVisitor {
     const { resolve = defaultFieldResolver } = field
     field.resolve = async function(...args) {
       const [parent, , ctx] = args
-      if (!ctx.uid || parent.id !== ctx.uid) throw new ForbiddenError('PRIVATE')
+      if (!ctx.id || parent.id !== ctx.id) throw new ForbiddenError('PRIVATE')
       return await resolve.apply(this, args)
     }
   }

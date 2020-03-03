@@ -4,7 +4,11 @@ interface Person {
   name: String!
   email: String
   profilePictures: [ProfilePicture]
-  social: SocialLinks
+  social(includeEmpty: Boolean = false): [SocialHandle!]
+  notificationPrefs: NotificationPreferences @private
+  biography: String
+  tags: [String!]
+  website: String
 }
 
 type User implements Person {
@@ -13,7 +17,11 @@ type User implements Person {
   name: String!
   email: String @private
   profilePictures: [ProfilePicture]
-  social: SocialLinks
+  social(includeEmpty: Boolean = false): [SocialHandle!]
+  notificationPrefs: UserNotificationPreferences @private
+  biography: String
+  tags: [String!]
+  website: String
 }
 
 type Mentor implements Person {
@@ -25,12 +33,12 @@ type Mentor implements Person {
   company: String
   location: String
   website: String
-  bio: String
+  biography: String
   profilePictures: [ProfilePicture!]!
-  social: SocialLinks
-  tags: [String!]!
+  social(includeEmpty: Boolean = false): [SocialHandle!]
+  tags: [String!]
   visibility: Visibility @private
-  notificationPrefs: NotificationPreferences @private
+  notificationPrefs: MentorNotificationPreferences @private
   slots(after: String, before: String): [Slot!]!
   calendars(ids: [ID!]): [Calendar!] @private
   calendarConnected: Boolean @private
@@ -71,7 +79,15 @@ type Slot {
   end: String
 }
 
-type NotificationPreferences {
+interface NotificationPreferences {
+  receiveEmails: Boolean
+}
+
+type UserNotificationPreferences implements NotificationPreferences {
+  receiveEmails: Boolean
+}
+
+type MentorNotificationPreferences implements NotificationPreferences {
   receiveEmails: Boolean
   slotReminder: EmailInterval
 }
@@ -88,10 +104,9 @@ type ProfilePicture {
   url: String
 }
 
-type SocialLinks {
-  dribbble: String
-  facebook: String
-  github: String
-  linkedin: String
-  twitter: String
+type SocialHandle {
+  id: Int!
+  name: String
+  url: String
+  handle: String
 }

@@ -1,5 +1,5 @@
 import query, { querySubsets } from '../utils/buildQuery'
-import { User, Slots, Meetups } from '../models'
+import { User, Mentor, Slots, Meetups, UserHandles } from '../models'
 import { signIn, checkPassword, hashPassword } from '../auth'
 import { AuthenticationError, UserInputError, ForbiddenError } from '../error'
 import uuidv4 from 'uuid/v4'
@@ -9,6 +9,8 @@ import {
   sendMeetupConfirmation,
 } from '../email'
 import { addMeetup, deleteMeetup, getClient } from '../calendar'
+import knex from '../db'
+import { filterKeys } from '../utils/object'
 
 export default {
   signIn: async (_, { input: { email, password } }, ctx, info) => {
@@ -21,14 +23,14 @@ export default {
       'Set-Cookie',
       `auth=${token}; HttpOnly; Max-Age=${60 ** 2 * 24 * 14}`
     )
-    ctx.uid = user.uid
+    ctx.id = user.id
     return user
   },
 
   signOut: (_, __, ctx) => {
-    if (!ctx.uid) throw new AuthenticationError('not logged in')
+    if (!ctx.id) throw new AuthenticationError('not logged in')
     ctx.setHeader('Set-Cookie', 'auth=deleted; HttpOnly; Max-Age=-1')
-    ctx.uid = null
+    ctx.id = null
   },
 
   createAccount: async (
@@ -49,79 +51,130 @@ export default {
       )
     password = hashPassword(password)
     const user = await User.query().insertAndFetch({
-      uid: uuidv4(),
+      id: uuidv4(),
       name,
       email,
       password,
       type: 'mentor',
       newsfeed: 'N',
-      keycode: name.toLowerCase().replace(/\s/g, '.'),
+      handle: name.toLowerCase().replace(/\s/g, '.'),
     })
     ctx.setHeader(
       'Set-Cookie',
       `auth=${signIn(user, password)}; HttpOnly; Max-Age=${60 ** 2 * 24 * 14}`
     )
-    ctx.uid = user.uid
+    ctx.id = user.id
     return user
   },
 
-  updateProfile: async (_, { input }, { uid }, info) => {
-    if (!uid) throw new AuthenticationError('not logged in')
-    if ('tags' in input)
-      input.tags = JSON.stringify(input.tags.map(text => ({ id: text, text })))
-    return await query(User, info).patchAndFetchById(uid, input)
+  updateProfile: async (_, { input }, { id }, info) => {
+    if (!id) throw new AuthenticationError('not logged in')
+    console.log({ id, input })
+
+    const handles = (input.social ?? [])
+      .filter(({ platform, handle }) => platform && handle)
+      .map(({ platform, handle }) => ({
+        user_id: id,
+        platform_id: platform,
+        handle,
+      }))
+    const removedHandles = (input.social ?? [])
+      .filter(({ platform, handle }) => platform && !handle)
+      .map(({ platform }) => platform)
+
+    await Promise.all([
+      handles.length &&
+        knex.raw(
+          `${knex('user_handles')
+            .insert(handles)
+            .toString()} ON CONFLICT (user_id, platform_id) DO UPDATE SET handle=excluded.handle`
+        ),
+      removedHandles.length &&
+        UserHandles.query()
+          .delete()
+          .whereInComposite(
+            ['user_id', 'platform_id'],
+            removedHandles.map(v => [id, v])
+          ),
+    ])
+
+    return await User.query()
+      .upsertGraphAndFetch({
+        id,
+        ...filterKeys(input, [
+          'name',
+          'handle',
+          'location',
+          'website',
+          'biography',
+        ]),
+        // @ts-ignore
+        mentors: { id, ...filterKeys(input, ['title', 'company']) },
+      })
+      .withGraphFetched('socialmedia')
   },
 
   requestEmailChange() {},
   requestPasswordChange() {},
 
-  deleteAccount: async (_, { password }, { uid, setHeader }) => {
-    if (!uid) throw new AuthenticationError('not logged in')
+  deleteAccount: async (_, { password }, { id, setHeader }) => {
+    if (!id) throw new AuthenticationError('not logged in')
     const user = await User.query()
-      .select('uid', 'password')
-      .findById(uid)
+      .select('id', 'password')
+      .findById(id)
     if (!checkPassword(user, password))
       throw new ForbiddenError('wrong password')
     setHeader('Set-Cookie', 'auth=deleted; HttpOnly; Max-Age=-1')
-    await User.query().deleteById(uid)
+    await User.query().deleteById(id)
   },
 
-  setProfileVisibility: async (_, { visibility }, { uid }, info) => {
-    if (!uid) throw new AuthenticationError('not logged in')
-    return await query(User, info).patchAndFetchById(uid, {
-      newsfeed: visibility === 'LISTED' ? 'Y' : 'N',
+  setProfileVisibility: async (_, { visibility }, { id, role }, info) => {
+    if (!id) throw new AuthenticationError('not logged in')
+    if (role !== 'mentor')
+      throw new UserInputError(`can't set visibility of ${role} account`)
+    await Mentor.query().patchAndFetchById(id, {
+      listed: visibility === 'LISTED',
     })
+    return await query(User, info).findById(id)
   },
 
   updateNotificationPreferences: async (
     _,
     { input: { receiveEmails, slotReminder } },
-    { uid },
-    info
+    { id, role }
   ) => {
-    if (!uid) throw new AuthenticationError('not logged in')
-    if (typeof receiveEmails === 'boolean') console.log(receiveEmails)
-    return await query(User, info).patchAndFetchById(uid, {
+    if (!id) throw new AuthenticationError('not logged in')
+    if (slotReminder && role !== 'mentor')
+      throw new UserInputError(`can't set slot reminder as ${role}`)
+
+    const user = await User.query().upsertGraphAndFetch({
+      id,
       ...(typeof receiveEmails === 'boolean' && {
-        emailNotifications: receiveEmails,
+        allow_emails: receiveEmails,
       }),
-      ...(slotReminder && {
-        availabilityReminder: slotReminder.toLowerCase(),
-      }),
+      // @ts-ignore
+      mentors: {
+        id,
+        ...(slotReminder && {
+          slot_reminder_email: slotReminder.toLowerCase(),
+        }),
+      },
     })
+
+    return user
   },
 
   updateSlots: async (
     _,
     { slots: { deleted = [], added = [] } },
-    { uid },
+    { id },
     info
   ) => {
-    if (!uid) throw new AuthenticationError('not logged in')
+    if (!id) throw new AuthenticationError('not logged in')
     const addList = added.map(({ start, duration = 30 }) => {
       return {
         sid: uuidv4(),
-        mentorUID: uid,
+        mentorUID: id,
         start,
         end: new Date(
           new Date(start).getTime() + duration * 60 * 1000
@@ -140,11 +193,11 @@ export default {
       info,
       'googleRefreshToken',
       'upframeCalendarId'
-    ).findById(uid)
+    ).findById(id)
 
     if (!googleRefreshToken) return user
 
-    const client = await getClient(uid, googleRefreshToken)
+    const client = await getClient(id, googleRefreshToken)
     await Promise.all([
       ...addList.map(
         ({ sid, start, end }) =>
@@ -195,22 +248,22 @@ export default {
     if (!slot) throw new UserInputError('unknown slot')
     const mentor = await User.query()
       .select(
-        'uid',
+        'id',
         'name',
         'email',
-        'keycode',
+        'handle',
         'upframeCalendarId',
         'googleRefreshToken'
       )
       .findById(slot.mentorUID)
     let [mentee]: User[] = await User.query()
-      .select('uid', 'name', 'email')
+      .select('id', 'name', 'email')
       .where({
         email: input.email,
       })
     if (!mentee)
       mentee = await User.query().insertAndFetch({
-        uid: uuidv4(),
+        id: uuidv4(),
         email: input.email,
         name: input.name,
         type: 'user',
@@ -218,19 +271,19 @@ export default {
     const meetup = {
       mid: uuidv4(),
       sid: slot.sid,
-      menteeUID: mentee.uid,
-      mentorUID: mentor.uid,
+      menteeUID: mentee.id,
+      mentorUID: mentor.id,
       message: input.message,
       status: 'pending',
       start: slot.start,
-      location: `https://talky.io/${mentor.keycode}`,
+      location: `https://talky.io/${mentor.handle}`,
     }
     await Meetups.query().insert(meetup)
     sendMeetupRequest(mentor, mentee, meetup)
 
     if (mentor.googleRefreshToken)
       (
-        await getClient(mentor.uid, mentor.googleRefreshToken)
+        await getClient(mentor.id, mentor.googleRefreshToken)
       ).calendar.events.patch({
         calendarId: mentor.upframeCalendarId,
         eventId: slot.sid.replace(/[^\w]/g, ''),
@@ -241,11 +294,11 @@ export default {
       })
   },
 
-  acceptMeetup: async (_, { meetupId }, { uid }, info) => {
-    if (!uid) throw new AuthenticationError('Not logged in.')
+  acceptMeetup: async (_, { meetupId }, { id }, info) => {
+    if (!id) throw new AuthenticationError('Not logged in.')
     const meetup = await Meetups.query().findById(meetupId)
     if (!meetup?.mid) throw new UserInputError('unknown meetup')
-    if (meetup.mentorUID !== uid)
+    if (meetup.mentorUID !== id)
       throw new ForbiddenError(
         "Can't accept meetup. Please make sure that you are logged in with the correct account."
       )
@@ -261,15 +314,15 @@ export default {
         'email',
         'googleRefreshToken',
         'upframeCalendarId'
-      ).whereIn('uid', [meetup.mentorUID, meetup.menteeUID]),
+      ).whereIn('id', [meetup.mentorUID, meetup.menteeUID]),
       Meetups.query()
         .findById(meetupId)
         .patch({ status: 'confirmed' }),
       Slots.query().deleteById(meetup.sid),
     ])
 
-    const mentor = parts.find(({ uid }) => uid === meetup.mentorUID)
-    const mentee = parts.find(({ uid }) => uid === meetup.menteeUID)
+    const mentor = parts.find(({ id }) => id === meetup.mentorUID)
+    const mentee = parts.find(({ id }) => id === meetup.menteeUID)
 
     sendMeetupConfirmation(mentor, mentee, meetup)
     const googleId = await addMeetup(meetup, mentor, mentee, meetup.sid)
@@ -281,17 +334,17 @@ export default {
     return { ...meetup, mentor, mentee }
   },
 
-  cancelMeetup: async (_, { meetupId }, { uid }) => {
+  cancelMeetup: async (_, { meetupId }, { id }) => {
     const meetup = await Meetups.query().findById(meetupId)
     if (!meetup) throw new UserInputError('unknown meetup')
-    if (uid !== meetup.mentorUID && uid !== meetup.menteeUID)
+    if (id !== meetup.mentorUID && id !== meetup.menteeUID)
       throw new ForbiddenError(
         "Can't cancel meetup. Please make sure that you are logged in with the correct account."
       )
 
     const user = await User.query()
-      .select('uid', 'upframeCalendarId', 'googleRefreshToken')
-      .findById(uid)
+      .select('id', 'upframeCalendarId', 'googleRefreshToken')
+      .findById(id)
 
     await Promise.all([
       Meetups.query().deleteById(meetupId) as Promise<any>,
@@ -308,57 +361,57 @@ export default {
     ])
   },
 
-  connectCalendar: async (_, { code }, { uid }, info) => {
-    if (!uid) throw new AuthenticationError('not logged in')
+  connectCalendar: async (_, { code }, { id }, info) => {
+    if (!id) throw new AuthenticationError('not logged in')
     const { googleRefreshToken } = await User.query()
       .select('googleRefreshToken')
-      .findById(uid)
+      .findById(id)
     if (googleRefreshToken)
       throw new UserInputError('must first disconnect connected calendar')
 
     try {
       const { tokens } = await (await getClient()).auth.getToken(code)
 
-      const client = await getClient(uid, tokens.refresh_token)
+      const client = await getClient(id, tokens.refresh_token)
       const { data } = await client.calendar.calendars.insert({
         requestBody: { summary: 'Upframe' },
       })
 
       await User.query()
-        .findById(uid)
+        .findById(id)
         .patch({
           googleAccessToken: tokens.access_token,
           googleRefreshToken: tokens.refresh_token,
           upframeCalendarId: data.id,
         })
-      return await query(User, info).findById(uid)
+      return await query(User, info).findById(id)
     } catch (e) {
       console.log(e)
       throw e
     }
   },
 
-  disconnectCalendar: async (_, __, { uid }, info) => {
-    if (!uid) throw new AuthenticationError('not logged in')
+  disconnectCalendar: async (_, __, { id }, info) => {
+    if (!id) throw new AuthenticationError('not logged in')
 
     const { googleRefreshToken, upframeCalendarId, ...user } = await query(
       User,
       info,
       'googleRefreshToken',
       'upframeCalendarId'
-    ).findById(uid)
+    ).findById(id)
 
     if (!googleRefreshToken) throw new UserInputError('calendar not connected')
 
     if (upframeCalendarId)
-      (await getClient(uid)).calendar.calendars.delete({
+      (await getClient(id)).calendar.calendars.delete({
         calendarId: upframeCalendarId,
       })
 
     await Promise.all([
       (await getClient()).auth.revokeToken(googleRefreshToken),
       User.query()
-        .findById(uid)
+        .findById(id)
         .patch({ googleRefreshToken: null, googleAccessToken: null }),
     ])
 

@@ -1,4 +1,4 @@
-import { Model, User, Mentor, SocialMedia } from '.'
+import { Model, User, Mentor, SocialMedia, Tags } from '.'
 
 const ident = (...fields: string[]) =>
   Object.fromEntries(fields.map(v => [v, v]))
@@ -18,15 +18,17 @@ export default new Map<typeof Model, MapInfo>([
           'email',
           'password',
           'role',
-          'location'
+          'location',
+          'website'
         ),
-        bio: 'biography',
+        biography: 'biography',
         notificationPrefs: {
           receiveEmails: 'allow_emails',
           slotReminder: Mentor,
         },
-        ...external(SocialMedia)('social'),
         ...external(Mentor)('visibility', 'title', 'company'),
+        ...external(SocialMedia)('social'),
+        ...external(Tags)('tags'),
       },
     },
   ],

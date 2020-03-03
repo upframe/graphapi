@@ -1,6 +1,6 @@
 type Query {
   me: Person
   mentors: [Mentor!]!
-  mentor(keycode: String, id: ID): Mentor
+  mentor(handle: String, id: ID): Mentor
   calendarConnectUrl: String
 }
