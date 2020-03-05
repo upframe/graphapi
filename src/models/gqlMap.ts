@@ -26,7 +26,13 @@ export default new Map<typeof Model, MapInfo>([
           receiveEmails: 'allow_emails',
           slotReminder: Mentor,
         },
-        ...external(Mentor)('visibility', 'title', 'company'),
+        ...external(Mentor)(
+          'visibility',
+          'title',
+          'company',
+          'calendarConnected',
+          'calendars'
+        ),
         ...external(SocialMedia)('social'),
         ...external(Tags)('tags'),
         ...external(Slots)('slots'),
@@ -48,6 +54,7 @@ export default new Map<typeof Model, MapInfo>([
         notificationPrefs: {
           slotReminder: 'slot_reminder_email',
         },
+        calendars: 'google_refresh_token',
         ...external(Slots)('slots'),
       },
     },

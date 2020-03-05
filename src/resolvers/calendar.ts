@@ -10,10 +10,10 @@ const buildDate = (date: string): string => {
 export const Calendar = {
   name: ({ summary }) => summary,
 
-  events: async ({ id, calendarId }, { max, start }) => {
-    const client = await getClient(id)
+  events: async ({ user_id, id }, { max, start }) => {
+    const client = await getClient(user_id)
     const { data } = await client.calendar.events.list({
-      calendarId,
+      calendarId: id,
       maxResults: max,
       timeMin: buildDate(start),
       singleEvents: true,

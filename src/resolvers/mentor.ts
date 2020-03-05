@@ -32,20 +32,25 @@ export default {
     )
   },
 
-  calendarConnected: ({ googleRefreshToken, googleAccessToken }) =>
-    !!(googleRefreshToken ?? googleAccessToken),
+  calendarConnected: ({
+    mentors,
+    google_refresh_token = mentors?.google_refresh_token,
+  }) => !!google_refresh_token,
 
-  calendars: async ({ id, googleRefreshToken }, { ids }) => {
-    if (!googleRefreshToken) return
-    const client = await getClient(id, googleRefreshToken)
+  calendars: async (
+    { id, mentors, google_refresh_token = mentors?.google_refresh_token },
+    { ids }
+  ) => {
+    if (!google_refresh_token) return
+    const client = await getClient(id, google_refresh_token)
     if (ids) {
       const res = await Promise.all(
         ids.map(calendarId => client.calendar.calendars.get({ calendarId }))
       )
-      return res.map(({ data }) => ({ ...data, id }))
+      return res.map(({ data }) => ({ ...data, user_id: id }))
     }
     const { data } = await client.calendar.calendarList.list()
-    return data.items.map(cal => ({ ...cal, id }))
+    return data.items.map(cal => ({ ...cal, user_id: id }))
   },
 
   categories: ({ category }) => category?.split(',') ?? [],

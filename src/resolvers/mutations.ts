@@ -67,9 +67,8 @@ export default {
     // return user
   },
 
-  updateProfile: async (_, { input }, { id }, info) => {
+  updateProfile: async (_, { input }, { id }) => {
     if (!id) throw new AuthenticationError('not logged in')
-    console.log({ id, input })
 
     const handles = (input.social ?? [])
       .filter(({ platform, handle }) => platform && handle)
@@ -365,10 +364,10 @@ export default {
 
   connectCalendar: async (_, { code }, { id }, info) => {
     if (!id) throw new AuthenticationError('not logged in')
-    const { googleRefreshToken } = await User.query()
-      .select('googleRefreshToken')
+    const { google_refresh_token } = await Mentor.query()
+      .select('google_refresh_token')
       .findById(id)
-    if (googleRefreshToken)
+    if (google_refresh_token)
       throw new UserInputError('must first disconnect connected calendar')
 
     try {
@@ -379,12 +378,12 @@ export default {
         requestBody: { summary: 'Upframe' },
       })
 
-      await User.query()
+      await Mentor.query()
         .findById(id)
         .patch({
-          googleAccessToken: tokens.access_token,
-          googleRefreshToken: tokens.refresh_token,
-          upframeCalendarId: data.id,
+          google_access_token: tokens.access_token,
+          google_refresh_token: tokens.refresh_token,
+          google_calendar_id: data.id,
         })
       return await query(User, info).findById(id)
     } catch (e) {
@@ -396,25 +395,24 @@ export default {
   disconnectCalendar: async (_, __, { id }, info) => {
     if (!id) throw new AuthenticationError('not logged in')
 
-    const { googleRefreshToken, upframeCalendarId, ...user } = await query(
-      User,
-      info,
-      'googleRefreshToken',
-      'upframeCalendarId'
+    const { google_refresh_token, google_calendar_id, ...user } = await query(
+      Mentor,
+      info
     ).findById(id)
 
-    if (!googleRefreshToken) throw new UserInputError('calendar not connected')
+    if (!google_refresh_token)
+      throw new UserInputError('calendar not connected')
 
-    if (upframeCalendarId)
+    if (google_calendar_id)
       (await getClient(id)).calendar.calendars.delete({
-        calendarId: upframeCalendarId,
+        calendarId: google_refresh_token,
       })
 
     await Promise.all([
-      (await getClient()).auth.revokeToken(googleRefreshToken),
-      User.query()
+      (await getClient()).auth.revokeToken(google_refresh_token),
+      Mentor.query()
         .findById(id)
-        .patch({ googleRefreshToken: null, googleAccessToken: null }),
+        .patch({ google_refresh_token: null, google_access_token: null }),
     ])
 
     return user
