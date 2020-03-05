@@ -8,9 +8,9 @@ import {
   sendMeetupRequest,
   sendMeetupConfirmation,
 } from '../email'
-import { addMeetup, deleteMeetup, getClient } from '../calendar'
+import { addMeetup, deleteMeetup, getClient } from '../gcal'
 import knex from '../db'
-import { filterKeys } from '../utils/object'
+import * as obj from '../utils/object'
 
 export default {
   signIn: async (_, { input: { email, password } }, ctx, info) => {
@@ -38,33 +38,33 @@ export default {
     { input: { devPass, name, email, password } },
     ctx
   ) => {
-    if (devPass !== process.env.DEV_PASSWORD)
-      throw new ForbiddenError('incorrect dev password')
-    const [existing] = await User.query()
-      .where({ email })
-      .orWhere({ name })
-    if (existing)
-      throw new UserInputError(
-        `user with ${
-          existing.email === email ? `email "${email}"` : `name "${name}"`
-        } already exists`
-      )
-    password = hashPassword(password)
-    const user = await User.query().insertAndFetch({
-      id: uuidv4(),
-      name,
-      email,
-      password,
-      type: 'mentor',
-      newsfeed: 'N',
-      handle: name.toLowerCase().replace(/\s/g, '.'),
-    })
-    ctx.setHeader(
-      'Set-Cookie',
-      `auth=${signIn(user, password)}; HttpOnly; Max-Age=${60 ** 2 * 24 * 14}`
-    )
-    ctx.id = user.id
-    return user
+    // if (devPass !== process.env.DEV_PASSWORD)
+    //   throw new ForbiddenError('incorrect dev password')
+    // const [existing] = await User.query()
+    //   .where({ email })
+    //   .orWhere({ name })
+    // if (existing)
+    //   throw new UserInputError(
+    //     `user with ${
+    //       existing.email === email ? `email "${email}"` : `name "${name}"`
+    //     } already exists`
+    //   )
+    // password = hashPassword(password)
+    // const user = await User.query().insertAndFetch({
+    //   id: uuidv4(),
+    //   name,
+    //   email,
+    //   password,
+    //   type: 'mentor',
+    //   newsfeed: 'N',
+    //   handle: name.toLowerCase().replace(/\s/g, '.'),
+    // })
+    // ctx.setHeader(
+    //   'Set-Cookie',
+    //   `auth=${signIn(user, password)}; HttpOnly; Max-Age=${60 ** 2 * 24 * 14}`
+    // )
+    // ctx.id = user.id
+    // return user
   },
 
   updateProfile: async (_, { input }, { id }, info) => {
@@ -101,7 +101,7 @@ export default {
     return await User.query()
       .upsertGraphAndFetch({
         id,
-        ...filterKeys(input, [
+        ...obj.filterKeys(input, [
           'name',
           'handle',
           'location',
@@ -109,7 +109,7 @@ export default {
           'biography',
         ]),
         // @ts-ignore
-        mentors: { id, ...filterKeys(input, ['title', 'company']) },
+        mentors: { id, ...obj.filterKeys(input, ['title', 'company']) },
       })
       .withGraphFetched('socialmedia')
   },
@@ -171,57 +171,59 @@ export default {
     info
   ) => {
     if (!id) throw new AuthenticationError('not logged in')
-    const addList = added.map(({ start, duration = 30 }) => {
-      return {
-        sid: uuidv4(),
-        mentorUID: id,
-        start,
-        end: new Date(
-          new Date(start).getTime() + duration * 60 * 1000
-        ).toISOString(),
-      }
+
+    const addList = added.map(({ start, end }, i) => {
+      start = new Date(start)
+      end = new Date(end ? end : start.getTime() + 30 * 60 * 1000)
+      Object.entries({ start, end }).map(([k, v]) => {
+        if (isNaN(v.getTime()))
+          throw new UserInputError(
+            `invalid ${k} time "${start}" in added[${i}]`
+          )
+      })
+      if (end.getTime() <= start.getTime())
+        throw new UserInputError(
+          `end time must be after start time in added[${i}]`
+        )
+      return { start, end, mentor_id: id, id: uuidv4() }
     })
+
     await Promise.all([
-      addList.length && Slots.knexQuery().insert(addList),
+      addList.length && Slots.query().insert(addList),
       deleted.length &&
-        Slots.knexQuery()
-          .whereIn('sid', deleted)
+        Slots.query()
+          .whereIn('id', deleted)
           .delete(),
     ])
-    const { googleRefreshToken, upframeCalendarId, ...user } = await query(
-      User,
-      info,
-      'googleRefreshToken',
-      'upframeCalendarId'
-    ).findById(id)
 
-    if (!googleRefreshToken) return user
+    const user = await query(User, info).findById(id)
 
-    const client = await getClient(id, googleRefreshToken)
-    await Promise.all([
-      ...addList.map(
-        ({ sid, start, end }) =>
-          client.calendar.events.insert({
-            calendarId: upframeCalendarId,
-            requestBody: {
-              id: sid.replace(/[^\w]/g, ''),
-              summary: 'Upframe Slot',
-              start: { dateTime: start },
-              end: { dateTime: end },
-              transparency: 'transparent',
-            },
-          }) as Promise<any>
-      ),
-      ...deleted.map(id =>
-        client.calendar.events
-          .delete({
-            calendarId: upframeCalendarId,
-            eventId: id.replace(/[^\w]/g, ''),
-          })
-          .catch(() => Promise.resolve())
-      ),
-    ])
-
+    if (user.google_refresh_token) {
+      const client = await getClient(id, user.google_refresh_token)
+      await Promise.all([
+        ...addList.map(
+          ({ id, start, end }) =>
+            client.calendar.events.insert({
+              calendarId: user.google_calendar_id,
+              requestBody: {
+                id: id.replace(/[^\w]/g, ''),
+                summary: 'Upframe Slot',
+                start: { dateTime: start },
+                end: { dateTime: end },
+                transparency: 'transparent',
+              },
+            }) as Promise<any>
+        ),
+        ...deleted.map(id =>
+          client.calendar.events
+            .delete({
+              calendarId: user.google_calendar_id,
+              eventId: id.replace(/[^\w]/g, ''),
+            })
+            .catch(() => Promise.resolve())
+        ),
+      ])
+    }
     return user
   },
 

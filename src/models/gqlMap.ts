@@ -36,7 +36,12 @@ export default new Map<typeof Model, MapInfo>([
   [
     Mentor,
     {
-      required: ['id'],
+      required: [
+        'id',
+        'google_refresh_token',
+        'google_access_token',
+        'google_calendar_id',
+      ],
       map: {
         ...ident('id', 'title', 'company'),
         visibility: 'listed',
