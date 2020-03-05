@@ -34,7 +34,7 @@ input NotificationSettingsInput {
 
 input SlotInput {
   start: String!
-  duration: Int
+  end: String
 }
 
 input SlotUpdateInput {

@@ -2,6 +2,7 @@ import { Model } from 'objection'
 import Mentor from './mentor'
 import SocialMedia from './socialmedia'
 import Tags from './tags'
+import Slots from './slots'
 
 const regToStr = (reg: RegExp) => reg.toString().replace(/\/(.*)\//, '$1')
 
@@ -51,6 +52,14 @@ export default class User extends Model {
           to: 'user_tags.tag_id',
         },
         to: 'tags.id',
+      },
+    },
+    time_slots: {
+      relation: Model.HasManyRelation,
+      modelClass: Slots,
+      join: {
+        from: 'users.id',
+        to: 'time_slots.mentor_id',
       },
     },
   }

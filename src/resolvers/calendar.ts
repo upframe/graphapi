@@ -1,4 +1,4 @@
-import { getClient } from '../calendar'
+import { getClient } from '../gcal'
 
 const buildDate = (date: string): string => {
   if (date === 'now') return new Date().toISOString()

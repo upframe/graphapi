@@ -1,4 +1,5 @@
-import { getClient } from '../calendar'
+import { getClient } from '../gcal'
+import * as obj from '../utils/object'
 
 export default {
   visibility: ({ mentors, visibility = mentors?.visibility }) =>
@@ -18,17 +19,17 @@ export default {
     ...parent,
   }),
 
-  slots: ({ timeSlots }, { after, before }) => {
-    return []
-    // if (after) {
-    //   after = new Date(after)
-    //   timeSlots = timeSlots.filter(({ start }) => new Date(start) >= after)
-    // }
-    // if (before) {
-    //   before = new Date(before)
-    //   timeSlots = timeSlots.filter(({ start }) => new Date(start) <= before)
-    // }
-    // return timeSlots
+  slots: ({ time_slots }, { after, before }) => {
+    if (after)
+      time_slots = time_slots.filter(({ start }) => start >= new Date(after))
+    if (before)
+      time_slots = time_slots.filter(({ start }) => start <= new Date(before))
+
+    return time_slots.map(slot =>
+      obj.mapValues(slot, (v, k) =>
+        ['start', 'end'].includes(k) ? (v as Date).toISOString() : v
+      )
+    )
   },
 
   calendarConnected: ({ googleRefreshToken, googleAccessToken }) =>

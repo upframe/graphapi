@@ -1,7 +1,7 @@
 import { User } from '../models'
 import query from '../utils/buildQuery'
 import { AuthenticationError, handleError, UserInputError } from '../error'
-import { generateAuthUrl } from '../calendar'
+import { generateAuthUrl } from '../gcal'
 
 export default {
   mentors: async (_, __, ___, info) =>

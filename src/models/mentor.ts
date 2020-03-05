@@ -1,5 +1,6 @@
 import { Model } from 'objection'
 import User from './user'
+import Slots from './slots'
 
 export default class Mentor extends Model {
   static tableName = 'mentors'
@@ -21,6 +22,14 @@ export default class Mentor extends Model {
       join: {
         from: 'mentors.id',
         to: 'users.id',
+      },
+    },
+    slots: {
+      relation: Model.HasManyRelation,
+      modelClass: Slots,
+      join: {
+        from: 'mentors.id',
+        to: 'time_slots.mentor_id',
       },
     },
   }

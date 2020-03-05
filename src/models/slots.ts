@@ -1,11 +1,11 @@
 import { Model } from 'objection'
 
 export default class Slots extends Model {
-  sid!: string
-  mentorUID!: string
+  id!: string
+  mentor_id!: string
   start!: string
   end: string
 
-  static tableName = 'timeSlots'
-  static idColumn = 'sid'
+  static tableName = 'time_slots'
+  static idColumn = 'id'
 }
