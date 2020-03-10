@@ -8,6 +8,7 @@ import SocialMedia from './socialmedia'
 import UserHandles from './userHandles'
 import Tags from './tags'
 import UserTags from './userTags'
+import ProfilePicture from './profilePicture'
 
 Model.knex(knex)
 
@@ -21,4 +22,5 @@ export {
   UserHandles,
   Tags,
   UserTags,
+  ProfilePicture,
 }

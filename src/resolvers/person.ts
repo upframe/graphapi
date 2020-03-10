@@ -22,5 +22,11 @@ export default {
     ...parent,
   }),
 
-  profilePictures: () => [],
+  profilePictures: ({ profile_pictures }) =>
+    profile_pictures ?? [
+      {
+        url:
+          'https://connect-api-profile-pictures.s3.eu-west-2.amazonaws.com/default.png',
+      },
+    ],
 }

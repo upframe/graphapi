@@ -1,5 +1,6 @@
 import { Model } from 'objection'
 import User from './user'
+import UserTags from './userTags'
 
 export default class Tags extends Model {
   static tableName = 'tags'
@@ -19,6 +20,14 @@ export default class Tags extends Model {
           to: 'user_tags.user_id',
         },
         to: 'users.id',
+      },
+    },
+    user_tags: {
+      relation: Model.HasManyRelation,
+      modelClass: UserTags,
+      join: {
+        from: 'tags.id',
+        to: 'user_tags.tag_id',
       },
     },
   }
