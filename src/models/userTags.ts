@@ -1,10 +1,10 @@
 import { Model } from 'objection'
-import User from './user'
 import Tags from './tags'
+import User from './user'
 
 export default class UserTags extends Model {
   static tableName = 'user_tags'
-  static idColumn = ['user_id', 'platform_id']
+  static idColumn = ['user_id', 'tag_id']
 
   user_id!: string
   tag_id!: number
