@@ -1,4 +1,4 @@
-import { SocialMedia } from '../models'
+import { SocialMedia } from '../../models'
 
 export default {
   __resolveType({ role }) {

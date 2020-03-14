@@ -1,5 +1,5 @@
-import { getClient } from '../gcal'
-import * as obj from '../utils/object'
+import { getClient } from '../../gcal'
+import * as obj from '../../utils/object'
 
 export default {
   visibility: ({ mentors, visibility = mentors?.visibility }) =>
