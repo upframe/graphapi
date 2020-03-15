@@ -54,7 +54,11 @@ export default {
       (await getClient()).auth.revokeToken(google_refresh_token),
       Mentor.query()
         .findById(id)
-        .patch({ google_refresh_token: null, google_access_token: null }),
+        .patch({
+          google_refresh_token: null,
+          google_access_token: null,
+          google_calendar_id: null,
+        }),
     ])
 
     return user

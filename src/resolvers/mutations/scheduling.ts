@@ -2,7 +2,7 @@ import uuidv4 from 'uuid/v4'
 import query, { querySubsets } from '../../utils/buildQuery'
 import { User, Slots, Meetups, Mentor } from '../../models'
 import { sendMeetupRequest, sendMeetupConfirmation } from '../../email'
-import { addMeetup, getClient } from '../../gcal'
+import { addMeetup, deleteMeetup, getClient } from '../../gcal'
 import {
   AuthenticationError,
   UserInputError,
@@ -157,7 +157,7 @@ export default {
     await Meetups.query()
       .findById(meetupId)
       .patch({
-        gcal_event_id: await addMeetup(slot, mentor, mentee),
+        ...(await addMeetup(slot, mentor, mentee)),
       })
 
     return {
@@ -183,11 +183,12 @@ export default {
       .select('id', 'google_calendar_id', 'google_refresh_token')
       .findById(id)
 
-    const client = await getClient(mentor.id, mentor.google_refresh_token)
     await Promise.all([
       Meetups.query().deleteById(meetupId),
       mentor.google_refresh_token &&
-        client.calendar.events.patch({
+        (
+          await getClient(mentor.id, mentor.google_refresh_token)
+        ).calendar.events.patch({
           calendarId: mentor.google_calendar_id,
           eventId: meetup.id.replace(/[^\w]/g, ''),
           requestBody: {
@@ -195,13 +196,7 @@ export default {
             description: ``,
           },
         }),
-      meetup.meetups.status === 'confirmed' &&
-        mentor.google_refresh_token &&
-        client.calendar.events.delete({
-          calendarId: mentor.google_calendar_id,
-          eventId: meetup.meetups.gcal_event_id,
-          sendUpdates: 'all',
-        }),
+      deleteMeetup(meetup, mentor),
     ])
   },
 }

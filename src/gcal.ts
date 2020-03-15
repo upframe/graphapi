@@ -1,5 +1,5 @@
 import { google, calendar_v3 } from 'googleapis'
-import { User, Mentor, Slots } from './models'
+import { User, Mentor, Slots, Meetups } from './models'
 
 const createClient = () =>
   new google.auth.OAuth2(
@@ -51,7 +51,7 @@ export async function addMeetup(
   slot: Slots,
   mentor: User & Mentor,
   mentee: User
-): Promise<string> {
+): Promise<Partial<Meetups>> {
   const event = {
     id: slot.id.replace(/[^\w]/g, ''),
     summary: `Upframe Meetup ${mentor.name.split(' ')[0]} & ${
@@ -87,14 +87,15 @@ export async function addMeetup(
     ],
   }
 
+  let gcal_user_event_id: string
   if (mentor.google_calendar_id) {
-    await (
+    const { data } = await (
       await getClient(mentor.id, mentor.google_refresh_token)
     ).calendar.events.patch({
       calendarId: mentor.google_calendar_id,
-      eventId: event.id,
       requestBody: event,
     })
+    gcal_user_event_id = data.id
     delete event.attendees
   }
 
@@ -103,7 +104,25 @@ export async function addMeetup(
     requestBody: event,
   })
 
-  return data.id
+  return { gcal_upframe_event_id: data.id, gcal_user_event_id }
+}
+
+export async function deleteMeetup(slot: Slots, mentor: Mentor) {
+  await Promise.all([
+    (await getClient()).calendar.events.delete({
+      calendarId: process.env.CALENDAR_ID,
+      eventId: slot.meetups.gcal_upframe_event_id,
+      sendUpdates: mentor.google_refresh_token ? 'none' : 'all',
+    }),
+    mentor.google_calendar_id &&
+      (
+        await getClient(mentor.id, mentor.google_refresh_token)
+      ).calendar.events.delete({
+        calendarId: mentor.google_calendar_id,
+        eventId: slot.meetups.gcal_user_event_id,
+        sendUpdates: 'all',
+      }),
+  ])
 }
 
 export const generateAuthUrl = async () =>

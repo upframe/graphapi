@@ -6,7 +6,8 @@ export default class Meetup extends Model {
   mentee_id: string
   message: string
   location: string
-  gcal_event_id: string
+  gcal_user_event_id: string
+  gcal_upframe_event_id: string
 
   static tableName = 'meetups'
   static idColumn = 'slot_id'
