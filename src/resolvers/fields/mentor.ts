@@ -20,12 +20,12 @@ export default {
     ...parent,
   }),
 
-  slots: async ({ id }, { after, before }) => {
+  slots: async ({ id }, { after, before, includeBooked }) => {
     let slots = await Slots.query()
       .where({ mentor_id: id })
       .withGraphFetched('meetups')
 
-    slots = slots.filter(({ meetups }) => meetups === null)
+    if (!includeBooked) slots = slots.filter(({ meetups }) => meetups === null)
 
     if (after)
       slots = slots.filter(({ start }) => new Date(start) >= new Date(after))

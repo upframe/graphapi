@@ -2,8 +2,8 @@ import { SocialMedia } from '../../models'
 
 export default {
   __resolveType({ role }) {
-    if (role === 'user') return 'User'
     if (role === 'mentor') return 'Mentor'
+    return 'User'
   },
 
   social: async ({ socialmedia }, { includeEmpty }) => {

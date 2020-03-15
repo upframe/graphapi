@@ -2,8 +2,8 @@ import { Model } from 'objection'
 import Mentor from './mentor'
 import SocialMedia from './socialmedia'
 import Tags from './tags'
-import Slots from './slots'
 import ProfilePicture from './profilePicture'
+import Slots from './slots'
 
 const regToStr = (reg: RegExp) => reg.toString().replace(/\/(.*)\//, '$1')
 
@@ -20,6 +20,8 @@ export default class User extends Model {
   location: string
   biography: string
   allow_emails: boolean
+
+  mentors?: Mentor
 
   static relationMappings = {
     mentors: {
@@ -105,7 +107,7 @@ export default class User extends Model {
       },
       role: {
         type: 'string',
-        enum: ['user', 'mentor'],
+        enum: ['user', 'mentor', 'nologin'],
       },
       locaation: {
         type: 'string',

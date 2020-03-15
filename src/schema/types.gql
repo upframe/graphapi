@@ -39,7 +39,7 @@ type Mentor implements Person {
   tags: [String!]
   visibility: Visibility @private
   notificationPrefs: MentorNotificationPreferences @private
-  slots(after: String, before: String): [Slot!]!
+  slots(after: String, before: String, includeBooked: Boolean = false): [Slot!]!
   calendars(ids: [ID!]): [Calendar!] @private
   calendarConnected: Boolean @private
   categories: [String!]!

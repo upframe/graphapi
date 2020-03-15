@@ -1,7 +1,8 @@
 import mailgun from 'mailgun-js'
-import { User } from './models'
+import { User, Meetups, Slots } from './models'
 import AWS from 'aws-sdk'
-import Meetup from './models/meetups'
+
+type Meetup = Partial<Meetups> & { slot: Partial<Slots> }
 
 const mail = mailgun({
   domain: 'upframe.io',
@@ -78,7 +79,7 @@ export async function sendMessage(
 export async function sendMeetupRequest(
   mentor: User,
   mentee: User,
-  meetup: Partial<Meetup>
+  meetup: Meetup
 ) {
   const senderName = mentee.name.split(' ')[0]
   const receiverName = mentee.name.split(' ')[0]
@@ -90,16 +91,16 @@ export async function sendMeetupRequest(
       MENTOR: receiverName,
       USER: senderName,
       MESSAGE: meetup.message,
-      MID: meetup.mid,
+      MID: meetup.slot_id,
       EMAIL: mentee.email,
       LOCATION: meetup.location,
-      DATE: new Date(meetup.start).toLocaleString('en-US', {
+      DATE: new Date(meetup.slot.start).toLocaleString('en-US', {
         weekday: 'long',
         month: 'long',
         day: 'numeric',
         timeZone: 'Europe/Berlin',
       }),
-      TIME: new Date(meetup.start).toLocaleString('en-US', {
+      TIME: new Date(meetup.slot.start).toLocaleString('en-US', {
         hour: 'numeric',
         minute: '2-digit',
         hour12: false,
@@ -112,7 +113,7 @@ export async function sendMeetupRequest(
 export async function sendMeetupConfirmation(
   mentor: User,
   mentee: User,
-  meetup: Meetup
+  slot: Slots
 ) {
   send(
     mentee,
@@ -120,16 +121,16 @@ export async function sendMeetupConfirmation(
     await getTemplate('meetupConfirmation', {
       MENTOR: mentor.name,
       USER: mentee.name,
-      MESSAGE: meetup.message,
+      MESSAGE: slot.meetups.message,
       handle: mentor.handle,
-      LOCATION: meetup.location,
-      DATE: new Date(meetup.start).toLocaleString('en-US', {
+      LOCATION: slot.meetups.location,
+      DATE: new Date(slot.start).toLocaleString('en-US', {
         weekday: 'long',
         month: 'long',
         day: 'numeric',
         timeZone: 'Europe/Berlin',
       }),
-      TIME: new Date(meetup.start).toLocaleString('en-US', {
+      TIME: new Date(slot.start).toLocaleString('en-US', {
         hour: 'numeric',
         minute: '2-digit',
         hour12: false,

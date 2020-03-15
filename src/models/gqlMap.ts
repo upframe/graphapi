@@ -49,7 +49,14 @@ export default new Map<typeof Model, MapInfo>([
         'google_calendar_id',
       ],
       map: {
-        ...ident('id', 'title', 'company'),
+        ...ident(
+          'id',
+          'title',
+          'company',
+          'google_refresh_token',
+          'google_access_token',
+          'google_calendar_id'
+        ),
         visibility: 'listed',
         notificationPrefs: {
           slotReminder: 'slot_reminder_email',

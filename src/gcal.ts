@@ -1,5 +1,5 @@
 import { google, calendar_v3 } from 'googleapis'
-import { Meetups, User, Mentor } from './models'
+import { User, Mentor, Slots } from './models'
 
 const createClient = () =>
   new google.auth.OAuth2(
@@ -30,7 +30,7 @@ export async function getClient(
     const auth = createClient()
     if (!refreshToken) {
       const { google_refresh_token } = await Mentor.query()
-        .select('googleRefreshToken', 'googleAccessToken')
+        .select('google_refresh_token', 'google_access_token')
         .findById(userId)
       if (!google_refresh_token)
         throw new Error(`no tokens available for ${userId}`)
@@ -48,33 +48,32 @@ export async function getClient(
 }
 
 export async function addMeetup(
-  meetup: Meetups,
+  slot: Slots,
   mentor: User & Mentor,
-  mentee: User,
-  eventId: string
+  mentee: User
 ): Promise<string> {
   const event = {
-    id: eventId.replace(/[^\w]/g, ''),
+    id: slot.id.replace(/[^\w]/g, ''),
     summary: `Upframe Meetup ${mentor.name.split(' ')[0]} & ${
       mentee.name.split(' ')[0]
     }`,
-    location: meetup.location,
+    location: slot.meetups.location,
     description: `
     Upframe Mentoring Call
     
     <b>Mentor</b>: <a href="https://upframe.io/${mentor.handle}">${mentor.name}</a>
     <b>Mentee</b>: ${mentee.name}
 
-    You can join the call on <a href="${meetup.location}">talky.io</a>.
-    <blockquote>${meetup.message}</blockquote>
+    You can join the call on <a href="${slot.meetups.location}">talky.io</a>.
+    <blockquote>${slot.meetups.message}</blockquote>
     `,
     start: {
-      dateTime: meetup.start,
+      dateTime: slot.start,
       timeZone: 'Europe/Berlin',
     },
     end: {
       dateTime: new Date(
-        new Date(meetup.start).getTime() + 30 * 60 * 1000
+        new Date(slot.start).getTime() + 30 * 60 * 1000
       ).toISOString(),
       timeZone: 'Europe/Berlin',
     },
@@ -105,34 +104,6 @@ export async function addMeetup(
   })
 
   return data.id
-}
-
-export async function deleteMeetup(meetup: Meetups, user: User & Mentor) {
-  const ops: Promise<any>[] = [
-    (await getClient()).calendar.events.delete({
-      calendarId: process.env.CALENDAR_ID,
-      eventId: meetup.mid,
-      sendUpdates: 'all',
-    }),
-  ]
-
-  if (user.google_calendar_id)
-    ops.push(
-      (
-        await getClient(user.id, user.google_refresh_token)
-      ).calendar.events.patch({
-        calendarId: user.google_calendar_id,
-        eventId: meetup.sid.replace(/[^\w]/g, ''),
-        requestBody: {
-          summary: 'Upframe Slot',
-          description: '',
-          attendees: [],
-          transparency: 'transparent',
-        },
-      })
-    )
-
-  await Promise.all(ops)
 }
 
 export const generateAuthUrl = async () =>

@@ -6,7 +6,7 @@ import {
 } from 'apollo-server-lambda'
 
 export const handleError = (msg = 'handle error') =>
-  new ApolloError(msg, 'handle_ERROR')
+  new ApolloError(msg, 'KEYCODE_ERROR')
 
 export const CredentialsError = (msg = 'invalid credentials') =>
   new ApolloError(msg, 'CREDENTIALS_ERROR')

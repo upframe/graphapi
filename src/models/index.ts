@@ -1,7 +1,5 @@
 import { Model } from 'objection'
 import knex from '../db'
-import User from './user'
-import Mentor from './mentor'
 import Slots from './slots'
 import Meetups from './meetups'
 import SocialMedia from './socialmedia'
@@ -9,6 +7,8 @@ import UserHandles from './userHandles'
 import Tags from './tags'
 import UserTags from './userTags'
 import ProfilePicture from './profilePicture'
+import User from './user'
+import Mentor from './mentor'
 
 Model.knex(knex)
 
