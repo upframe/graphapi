@@ -1,26 +1,34 @@
 import { Model } from 'objection'
+import Slots from './slots'
 
 export default class Meetup extends Model {
-  mid!: string
-  sid!: string
-  mentorUID!: string
-  menteeUID!: string
-  start!: string
-  message: string
+  slot_id!: string
   status: string
+  mentee_id: string
+  message: string
   location: string
-  googleId: string
 
   static tableName = 'meetups'
-  static idColumn = 'mid'
+  static idColumn = 'slot_id'
+
+  static relationMappings = {
+    slots: {
+      relation: Model.BelongsToOneRelation,
+      modelClass: Slots,
+      join: {
+        from: 'meetups.slot_id',
+        to: 'slots.id',
+      },
+    },
+  }
 
   jsonSchema: {
     type: 'object'
-    required: ['mid', 'sid', 'mentorUID', 'menteeUID', 'start']
+    required: ['slot_id']
     properties: {
       status: {
         type: 'string'
-        enum: ['confirmed', 'refused', 'pending']
+        enum: ['pending', 'confirmed', 'cancelled']
       }
     }
   }

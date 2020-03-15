@@ -24,7 +24,7 @@ export default class Mentor extends Model {
         to: 'users.id',
       },
     },
-    slots: {
+    time_slots: {
       relation: Model.HasManyRelation,
       modelClass: Slots,
       join: {

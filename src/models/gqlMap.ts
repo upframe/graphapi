@@ -1,12 +1,4 @@
-import {
-  Model,
-  User,
-  Mentor,
-  SocialMedia,
-  Tags,
-  Slots,
-  ProfilePicture,
-} from '.'
+import { Model, User, Mentor, SocialMedia, Tags, ProfilePicture } from '.'
 
 const ident = (...fields: string[]) =>
   Object.fromEntries(fields.map(v => [v, v]))
@@ -27,9 +19,9 @@ export default new Map<typeof Model, MapInfo>([
           'password',
           'role',
           'location',
-          'website'
+          'website',
+          'biography'
         ),
-        biography: 'biography',
         notificationPrefs: {
           receiveEmails: 'allow_emails',
           slotReminder: Mentor,
@@ -43,7 +35,6 @@ export default new Map<typeof Model, MapInfo>([
         ),
         ...external(SocialMedia)('social'),
         ...external(Tags)('tags'),
-        ...external(Slots)('slots'),
         ...external(ProfilePicture)('profilePictures'),
       },
     },
@@ -64,7 +55,6 @@ export default new Map<typeof Model, MapInfo>([
           slotReminder: 'slot_reminder_email',
         },
         calendars: 'google_refresh_token',
-        ...external(Slots)('slots'),
       },
     },
   ],

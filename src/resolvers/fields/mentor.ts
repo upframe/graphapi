@@ -1,5 +1,6 @@
 import { getClient } from '../../gcal'
 import * as obj from '../../utils/object'
+import { Slots } from '../../models'
 
 export default {
   visibility: ({ mentors, visibility = mentors?.visibility }) =>
@@ -19,13 +20,19 @@ export default {
     ...parent,
   }),
 
-  slots: ({ time_slots }, { after, before }) => {
-    if (after)
-      time_slots = time_slots.filter(({ start }) => start >= new Date(after))
-    if (before)
-      time_slots = time_slots.filter(({ start }) => start <= new Date(before))
+  slots: async ({ id }, { after, before }) => {
+    let slots = await Slots.query()
+      .where({ mentor_id: id })
+      .withGraphFetched('meetups')
 
-    return time_slots.map(slot =>
+    slots = slots.filter(({ meetups }) => meetups === null)
+
+    if (after)
+      slots = slots.filter(({ start }) => new Date(start) >= new Date(after))
+    if (before)
+      slots = slots.filter(({ start }) => new Date(start) <= new Date(before))
+
+    return slots.map(slot =>
       obj.mapValues(slot, (v, k) =>
         ['start', 'end'].includes(k) ? (v as Date).toISOString() : v
       )
