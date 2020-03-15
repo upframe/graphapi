@@ -2,15 +2,17 @@ import { User } from '../models'
 import query from '../utils/buildQuery'
 import { AuthenticationError, handleError, UserInputError } from '../error'
 import { generateAuthUrl } from '../gcal'
+import knex from '../db'
 
 export default {
   mentors: async (_, __, ___, info) =>
-    await query(User, info, 'visibility')
+    await query(User, info, 'visibility', 'score')
+      .select(knex.raw('mentors.score + RANDOM() as rank'))
       .where({
         role: 'mentor',
         listed: true,
       })
-      .orderByRaw('RANDOM()'),
+      .orderBy('rank', 'DESC'),
 
   me: async (_, __, { id }, info) => {
     if (!id) throw new AuthenticationError('not logged in')

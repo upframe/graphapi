@@ -48,6 +48,7 @@ export default new Map<typeof Model, MapInfo>([
         'google_refresh_token',
         'google_access_token',
         'google_calendar_id',
+        'score',
       ],
       map: {
         ...ident(
