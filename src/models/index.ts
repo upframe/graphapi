@@ -9,6 +9,8 @@ import UserTags from './userTags'
 import ProfilePicture from './profilePicture'
 import User from './user'
 import Mentor from './mentor'
+import List from './list'
+import UserLists from './userLists'
 
 Model.knex(knex)
 
@@ -23,4 +25,6 @@ export {
   Tags,
   UserTags,
   ProfilePicture,
+  List,
+  UserLists,
 }

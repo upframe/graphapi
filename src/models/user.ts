@@ -4,6 +4,7 @@ import SocialMedia from './socialmedia'
 import Tags from './tags'
 import ProfilePicture from './profilePicture'
 import Slots from './slots'
+import List from './list'
 
 const regToStr = (reg: RegExp) => reg.toString().replace(/\/(.*)\//, '$1')
 
@@ -71,6 +72,18 @@ export default class User extends Model {
       join: {
         from: 'users.id',
         to: 'profile_pictures.user_id',
+      },
+    },
+    lists: {
+      relation: Model.ManyToManyRelation,
+      modelClass: List,
+      join: {
+        from: 'users.id',
+        through: {
+          from: 'user_lists.user_id',
+          to: 'user_lists.list_id',
+        },
+        to: 'lists.id',
       },
     },
   }

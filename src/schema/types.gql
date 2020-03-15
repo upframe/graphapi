@@ -9,6 +9,7 @@ interface Person {
   biography: String
   tags: [String!]
   website: String
+  categories: [String!]!
 }
 
 type User implements Person {
@@ -22,6 +23,7 @@ type User implements Person {
   biography: String
   tags: [String!]
   website: String
+  categories: [String!]!
 }
 
 type Mentor implements Person {

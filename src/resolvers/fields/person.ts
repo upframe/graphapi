@@ -29,4 +29,6 @@ export default {
           'https://connect-api-profile-pictures.s3.eu-west-2.amazonaws.com/default.png',
       },
     ],
+
+  categories: ({ lists = [] }) => lists.map(({ name }) => name),
 }
