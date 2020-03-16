@@ -23,12 +23,14 @@ export default {
   }),
 
   profilePictures: ({ profile_pictures }) =>
-    profile_pictures ?? [
-      {
-        url:
-          'https://connect-api-profile-pictures.s3.eu-west-2.amazonaws.com/default.png',
-      },
-    ],
+    profile_pictures?.length
+      ? profile_pictures
+      : [
+          {
+            url:
+              'https://connect-api-profile-pictures.s3.eu-west-2.amazonaws.com/default.png',
+          },
+        ],
 
   categories: ({ lists = [] }) => lists.map(({ name }) => name),
 }
