@@ -7,7 +7,6 @@ input createAccountInput {
   name: String!
   email: String!
   password: String!
-  devPass: String!
 }
 
 input ProfileInput {
