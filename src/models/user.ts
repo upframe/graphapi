@@ -1,53 +1,101 @@
 import { Model } from 'objection'
+import Mentor from './mentor'
+import SocialMedia from './socialmedia'
+import Tags from './tags'
+import ProfilePicture from './profilePicture'
 import Slots from './slots'
-
-class ProfilePicture extends Model {
-  static tableName = 'profilePictures'
-}
+import List from './list'
 
 const regToStr = (reg: RegExp) => reg.toString().replace(/\/(.*)\//, '$1')
 
 export default class User extends Model {
-  uid!: string
+  static tableName = 'users'
+  static idColumn = 'id'
+
+  id!: string
+  handle!: string
   name!: string
   email!: string
   password: string
-  keycode: string
-  newsfeed: string
-  emailNotifications: boolean
-  availabilityReminder: string
-  type: string
-  googleAccessToken: string
-  googleRefreshToken: string
-  upframeCalendarId: string
+  role: string
+  location: string
+  biography: string
+  allow_emails: boolean
 
-  static tableName = 'users'
-  static idColumn = 'uid'
+  mentors?: Mentor
 
   static relationMappings = {
-    profilePictures: {
+    mentors: {
       relation: Model.HasOneRelation,
-      modelClass: ProfilePicture,
+      modelClass: Mentor,
       join: {
-        from: 'users.uid',
-        to: 'profilePictures.uid',
+        from: 'users.id',
+        to: 'mentors.id',
       },
     },
-    timeSlots: {
+    socialmedia: {
+      relation: Model.ManyToManyRelation,
+      modelClass: SocialMedia,
+      join: {
+        from: 'users.id',
+        through: {
+          from: 'user_handles.user_id',
+          to: 'user_handles.platform_id',
+          extra: ['handle'],
+        },
+        to: 'socialmedia.id',
+      },
+    },
+    tags: {
+      relation: Model.ManyToManyRelation,
+      modelClass: Tags,
+      join: {
+        from: 'users.id',
+        through: {
+          from: 'user_tags.user_id',
+          to: 'user_tags.tag_id',
+        },
+        to: 'tags.id',
+      },
+    },
+    time_slots: {
       relation: Model.HasManyRelation,
       modelClass: Slots,
       join: {
-        from: 'users.uid',
-        to: 'timeSlots.mentorUID',
+        from: 'users.id',
+        to: 'time_slots.mentor_id',
+      },
+    },
+    profile_pictures: {
+      relation: Model.HasManyRelation,
+      modelClass: ProfilePicture,
+      join: {
+        from: 'users.id',
+        to: 'profile_pictures.user_id',
+      },
+    },
+    lists: {
+      relation: Model.ManyToManyRelation,
+      modelClass: List,
+      join: {
+        from: 'users.id',
+        through: {
+          from: 'user_lists.user_id',
+          to: 'user_lists.list_id',
+        },
+        to: 'lists.id',
       },
     },
   }
 
   static jsonSchema = {
     type: 'object',
-    required: ['uid', 'name', 'email'],
+    required: ['id', 'handle', 'name', 'email'],
     properties: {
-      uid: {
+      id: {
+        type: 'string',
+      },
+      handle: {
         type: 'string',
       },
       name: {
@@ -70,20 +118,18 @@ export default class User extends Model {
         type: 'string',
         minLength: 8,
       },
-      newsfeed: {
+      role: {
         type: 'string',
-        enum: ['Y', 'N'],
+        enum: ['user', 'mentor', 'nologin'],
       },
-      emailNotifications: {
+      locaation: {
+        type: 'string',
+      },
+      biography: {
+        type: 'string',
+      },
+      allow_emails: {
         type: 'boolean',
-      },
-      availabilityReminder: {
-        type: 'string',
-        enum: ['monthly', 'weekly', 'off'],
-      },
-      type: {
-        type: 'string',
-        enum: ['user', 'mentor'],
       },
     },
   }

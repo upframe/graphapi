@@ -1,4 +1,4 @@
-import { getClient } from '../calendar'
+import { getClient } from '../../gcal'
 
 const buildDate = (date: string): string => {
   if (date === 'now') return new Date().toISOString()
@@ -10,8 +10,8 @@ const buildDate = (date: string): string => {
 export const Calendar = {
   name: ({ summary }) => summary,
 
-  events: async ({ id, uid }, { max, start }) => {
-    const client = await getClient(uid)
+  events: async ({ user_id, id }, { max, start }) => {
+    const client = await getClient(user_id)
     const { data } = await client.calendar.events.list({
       calendarId: id,
       maxResults: max,

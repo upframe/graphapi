@@ -1,5 +1,5 @@
-import query from '../utils/buildQuery'
-import { User } from '../models'
+import query from '../../utils/buildQuery'
+import { User } from '../../models'
 
 export default {
   mentor: async ({ mentorUID, mentor }, _, __, info) =>

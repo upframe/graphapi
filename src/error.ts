@@ -5,7 +5,7 @@ import {
   UserInputError,
 } from 'apollo-server-lambda'
 
-export const KeycodeError = (msg = 'keycode error') =>
+export const handleError = (msg = 'handle error') =>
   new ApolloError(msg, 'KEYCODE_ERROR')
 
 export const CredentialsError = (msg = 'invalid credentials') =>

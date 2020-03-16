@@ -8,3 +8,4 @@ node_modules
 credentials
 _schema.gql
 Dockerfile
+db/seeds/data

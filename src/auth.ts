@@ -2,11 +2,10 @@ import jwt from 'jsonwebtoken'
 import { User } from './models'
 import * as bcrypt from 'bcrypt'
 
-export function authenticate(token: string): string {
+export function authenticate(token: string): { id: string; role: string } {
   if (!token) return
   try {
-    const payload = jwt.verify(token, process.env.PUBLIC_KEY) as any
-    return payload.uid
+    return jwt.verify(token, process.env.PUBLIC_KEY) as any
   } catch (e) {
     if (e instanceof jwt.JsonWebTokenError) return
     throw e
@@ -15,7 +14,7 @@ export function authenticate(token: string): string {
 
 export function signIn(user: User, password: string): string {
   if (!user?.email || !checkPassword(user, password)) return
-  return jwt.sign({ uid: user.uid }, process.env.PRIVATE_KEY, {
+  return jwt.sign({ id: user.id, role: user.role }, process.env.PRIVATE_KEY, {
     issuer: 'upframe',
     subject: user.email,
     algorithm: 'RS256',

@@ -24,5 +24,6 @@ module.exports = {
   rules: {
     semi: ['error', 'never'],
     '@typescript-eslint/no-unused-vars': 'error',
+    'no-unreachable': 'warn',
   },
 }

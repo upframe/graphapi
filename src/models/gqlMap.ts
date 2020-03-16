@@ -1,51 +1,69 @@
-import { Model } from 'objection'
-import { User, Slots } from '.'
+import { Model, User, Mentor, SocialMedia, Tags, ProfilePicture, List } from '.'
+
+const ident = (...fields: string[]) =>
+  Object.fromEntries(fields.map(v => [v, v]))
+const external = (model: typeof Model) => (...fields: string[]) =>
+  Object.fromEntries(fields.map(v => [v, model]))
 
 export default new Map<typeof Model, MapInfo>([
   [
     User,
     {
-      required: ['uid', 'type', 'keycode'],
+      required: ['id', 'role', 'handle'],
       map: {
-        name: 'name',
-        email: 'email',
-        keycode: 'keycode',
-        location: 'location',
-        website: 'website',
-        bio: 'bio',
-        tags: 'tags',
-        visibility: 'newsfeed',
-        profilePictures: 'profilePic',
-        calendarConnected: 'googleRefreshToken',
-        calendars: 'googleRefreshToken',
-        categories: 'category',
-        role: 'role',
-        company: 'company',
-        social: {
-          dribbble: 'dribbble',
-          facebook: 'facebook',
-          github: 'github',
-          linkedin: 'linkedin',
-          twitter: 'twitter',
-        },
+        ...ident(
+          'id',
+          'handle',
+          'name',
+          'email',
+          'password',
+          'role',
+          'location',
+          'website',
+          'biography'
+        ),
         notificationPrefs: {
-          receiveEmails: 'emailNotifications',
-          slotReminder: 'availabilityReminder',
+          receiveEmails: 'allow_emails',
+          slotReminder: Mentor,
         },
-      },
-      relations: {
-        profilePictures: 'profilePictures',
-        slots: 'timeSlots',
+        ...external(Mentor)(
+          'visibility',
+          'title',
+          'company',
+          'calendarConnected',
+          'calendars'
+        ),
+        ...external(SocialMedia)('social'),
+        ...external(Tags)('tags'),
+        ...external(ProfilePicture)('profilePictures'),
+        ...external(List)('categories'),
       },
     },
   ],
   [
-    Slots,
+    Mentor,
     {
-      required: ['sid', 'mentorUID'],
+      required: [
+        'id',
+        'google_refresh_token',
+        'google_access_token',
+        'google_calendar_id',
+        'score',
+      ],
       map: {
-        start: 'start',
-        duration: 'end',
+        ...ident(
+          'id',
+          'title',
+          'company',
+          'google_refresh_token',
+          'google_access_token',
+          'google_calendar_id'
+        ),
+        visibility: 'listed',
+        notificationPrefs: {
+          slotReminder: 'slot_reminder_email',
+        },
+        calendars: 'google_refresh_token',
       },
     },
   ],
@@ -54,11 +72,7 @@ export default new Map<typeof Model, MapInfo>([
 interface MapInfo {
   required?: string[]
   map: Mapping
-  relations?: Relations
 }
 export interface Mapping {
-  [gql: string]: string | Mapping
-}
-export interface Relations {
-  [gql: string]: string
+  [gql: string]: string | Mapping | typeof Model
 }

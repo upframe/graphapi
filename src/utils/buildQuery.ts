@@ -1,36 +1,81 @@
 import { Model } from 'objection'
 import getQueryFields from './queryFields'
-import gqlSqlMap, { Mapping, Relations } from '../models/gqlMap'
+import gqlSqlMap, { Mapping } from '../models/gqlMap'
 import merge from 'lodash/merge'
 
 interface Fields {
   [field: string]: boolean | Fields
 }
-const resolveColumns = (model: Mapping, fields: Fields) =>
-  typeof model === 'string'
-    ? model
-    : Object.entries(fields).flatMap(([k, v]) =>
-        !(k in model)
-          ? []
-          : typeof v === 'boolean'
-          ? model[k]
-          : resolveColumns(model[k] as Mapping, v)
+
+const resolveColumns = (
+  model: typeof Model,
+  fields: Fields,
+  additional: string[] = []
+): { columns: string[]; tables: string[] } => {
+  const { map, required = [] } = gqlSqlMap.get(model) ?? {}
+  let tables = [model.tableName]
+  if (!map) return { columns: [], tables }
+
+  fields = {
+    ...fields,
+    ...Object.fromEntries([...required, ...additional].map(k => [k, true])),
+  }
+
+  const resolveFields = (
+    map: Mapping,
+    field: string | string[] | Fields,
+    ...path: string[]
+  ) => {
+    if (Array.isArray(field))
+      return field.flatMap(field => resolveFields(map, field))
+
+    if (typeof field === 'object')
+      return Object.entries(field).flatMap(([k, v]) =>
+        typeof v === 'boolean'
+          ? resolveFields(map, k, ...path)
+          : typeof map[k] === 'function'
+          ? resolveFields(map, k, ...path)
+          : resolveFields((map[k] as Mapping) ?? {}, v, ...path, k)
       )
-const resolveRelations = (relations: Relations, fields: Fields) =>
-  Object.keys(fields).flatMap(field => relations[field] ?? [])
+
+    if (!(field in map)) return []
+    if (typeof map[field] === 'function') {
+      const buildField = (...path: string[]) => ({
+        [path.shift()]: path.length ? buildField(...path) : true,
+      })
+      let res = resolveColumns(
+        map[field] as typeof Model,
+        buildField(...path, field)
+      )
+      tables = Array.from(new Set([...tables, ...res.tables]))
+      return res.columns
+    }
+
+    if (typeof map[field] === 'string')
+      return `${model.tableName}.${map[field]}${
+        map[field] !== field ? ` as ${field}` : ''
+      }`
+
+    return Object.keys(map[field] ?? []).map(child =>
+      resolveFields(map[field] as Mapping, child, ...path, field)
+    )
+  }
+
+  return { columns: Array.from(new Set(resolveFields(map, fields))), tables }
+}
 
 export function buildQuery(
   model: typeof Model,
   fields: Fields,
   additional: string[] = []
 ): ReturnType<typeof Model.query> {
-  const { map, relations, required } = gqlSqlMap.get(model)
-  const columns = fields ? resolveColumns(map, fields) : []
-  const graphs = fields && relations ? resolveRelations(relations, fields) : []
-  let query = model
-    .query()
-    .select([...(required ?? []), ...columns, ...additional])
-  for (let graph of graphs) query = query.withGraphFetched(graph)
+  const { columns, tables } = resolveColumns(model, fields, additional)
+  let query = model.query().select(columns)
+  tables
+    .filter(table => table !== model.tableName)
+    .forEach(table => {
+      query = query.withGraphJoined(table)
+    })
   return query
 }
 
