@@ -33,4 +33,6 @@ export default {
         ],
 
   categories: ({ lists = [] }) => lists.map(({ name }) => name),
+
+  role: ({ role }) => role.toUpperCase(),
 }

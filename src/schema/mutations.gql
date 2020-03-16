@@ -43,16 +43,16 @@ input SlotUpdateInput {
 
 input MsgExtInput {
   to: ID!
-  name: String!
-  email: String!
   message: String!
+  name: String
+  email: String
 }
 
 input RequestSlotInput {
   slotId: ID!
-  name: String!
-  email: String!
   message: String!
+  name: String
+  email: String
 }
 
 type Mutation {

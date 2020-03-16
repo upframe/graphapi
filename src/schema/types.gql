@@ -10,6 +10,7 @@ interface Person {
   tags: [String!]
   website: String
   categories: [String!]!
+  role: Role @private
 }
 
 type User implements Person {
@@ -24,6 +25,7 @@ type User implements Person {
   tags: [String!]
   website: String
   categories: [String!]!
+  role: Role @private
 }
 
 type Mentor implements Person {
@@ -45,6 +47,7 @@ type Mentor implements Person {
   calendars(ids: [ID!]): [Calendar!] @private
   calendarConnected: Boolean @private
   categories: [String!]!
+  role: Role @private
 }
 
 type Calendar {
@@ -111,4 +114,10 @@ type SocialHandle {
   name: String
   url: String
   handle: String
+}
+
+enum Role {
+  USER
+  MENTOR
+  NOLOGIN
 }
