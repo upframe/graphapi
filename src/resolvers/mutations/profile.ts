@@ -5,7 +5,7 @@ import { User, UserHandles, UserTags, Tags, Mentor } from '../../models'
 import { AuthenticationError, UserInputError } from '../../error'
 
 export default {
-  updateProfile: async (_, { input }, { id }) => {
+  updateProfile: async (_, { input }, { id, role }) => {
     if (!id) throw new AuthenticationError('not logged in')
 
     const handles = (input.social ?? [])
@@ -84,8 +84,9 @@ export default {
           'website',
           'biography',
         ]),
-        // @ts-ignore
-        mentors: { id, ...obj.filterKeys(input, ['title', 'company']) },
+        ...(role !== 'user' && {
+          mentors: { id, ...obj.filterKeys(input, ['title', 'company']) },
+        }),
       })
       .withGraphFetched('socialmedia')
       .withGraphFetched('tags')
@@ -116,12 +117,12 @@ export default {
         allow_emails: receiveEmails,
       }),
       // @ts-ignore
-      mentors: {
-        id,
-        ...(slotReminder && {
+      ...(slotReminder && {
+        mentors: {
+          id,
           slot_reminder_email: slotReminder.toLowerCase(),
-        }),
-      },
+        },
+      }),
     })
 
     return user

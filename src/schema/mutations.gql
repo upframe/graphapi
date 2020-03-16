@@ -59,7 +59,7 @@ type Mutation {
   signIn(input: LoginInput!): Person
   signOut: Int
   createAccount(input: createAccountInput!): Person
-  updateProfile(input: ProfileInput!): Mentor
+  updateProfile(input: ProfileInput!): Person
   requestEmailChange: Int
   requestPasswordChange: Int
   deleteAccount(password: String!): Int
