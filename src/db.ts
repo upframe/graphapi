@@ -17,9 +17,7 @@ export default knex({
     database:
       (process.env.NODE_ENV !== 'production'
         ? process.env.DB_NAME_DEV
-        : process.env.DEB_NAME_PROD) ??
-      get('NAME') ??
-      'api',
+        : process.env.DEB_NAME_PROD) ?? get('NAME'),
   },
   pool: { min: 0, max: 20 },
   debug: !!process.env.IS_OFFLINE,
