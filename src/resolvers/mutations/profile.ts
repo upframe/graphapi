@@ -90,6 +90,7 @@ export default {
       })
       .withGraphFetched('socialmedia')
       .withGraphFetched('tags')
+      .withGraphFetched('profile_pictures')
   },
 
   setProfileVisibility: async (_, { visibility }, { id, role }, info) => {
@@ -111,19 +112,21 @@ export default {
     if (slotReminder && role !== 'mentor')
       throw new UserInputError(`can't set slot reminder as ${role}`)
 
-    const user = await User.query().upsertGraphAndFetch({
-      id,
-      ...(typeof receiveEmails === 'boolean' && {
-        allow_emails: receiveEmails,
-      }),
-      // @ts-ignore
-      ...(slotReminder && {
-        mentors: {
-          id,
-          slot_reminder_email: slotReminder.toLowerCase(),
-        },
-      }),
-    })
+    const user = await User.query()
+      .upsertGraphAndFetch({
+        id,
+        ...(typeof receiveEmails === 'boolean' && {
+          allow_emails: receiveEmails,
+        }),
+        // @ts-ignore
+        ...(slotReminder && {
+          mentors: {
+            id,
+            slot_reminder_email: slotReminder.toLowerCase(),
+          },
+        }),
+      })
+      .withGraphFetched('profile_pictures')
 
     return user
   },
