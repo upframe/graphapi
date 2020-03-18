@@ -17,7 +17,9 @@ export default {
     if (!token) throw new UserInputError('invalid credentials')
     ctx.setHeader(
       'Set-Cookie',
-      `auth=${token}; HttpOnly; Max-Age=${60 ** 2 * 24 * 14}`
+      `auth=${token}; HttpOnly; SameSite=Strict; Secure; Max-Age=${60 ** 2 *
+        24 *
+        14}`
     )
     ctx.id = user.id
     return user
@@ -25,7 +27,10 @@ export default {
 
   signOut: (_, __, ctx) => {
     if (!ctx.id) throw new AuthenticationError('not logged in')
-    ctx.setHeader('Set-Cookie', 'auth=deleted; HttpOnly; Max-Age=-1')
+    ctx.setHeader(
+      'Set-Cookie',
+      'auth=deleted; HttpOnly; SameSite=Strict; Secure; Max-Age=-1'
+    )
     ctx.id = null
   },
 
@@ -69,7 +74,10 @@ export default {
     })
     ctx.setHeader(
       'Set-Cookie',
-      `auth=${signIn(user, password)}; HttpOnly; Max-Age=${60 ** 2 * 24 * 14}`
+      `auth=${signIn(
+        user,
+        password
+      )}; HttpOnly; SameSite=Strict; Secure; Max-Age=${60 ** 2 * 24 * 14}`
     )
     ctx.id = user.id
     return user

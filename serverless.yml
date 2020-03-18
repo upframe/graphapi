@@ -14,19 +14,9 @@ functions:
       - http:
           path: /
           method: post
-          cors:
-            origins:
-              - https://beta.upframe.io
-              - https://upframe.io
-            allowCredentials: true
       - http:
           path: /
           method: get
-          cors:
-            origins:
-              - https://beta.upframe.io
-              - https://upframe.io
-            allowCredentials: true
 
     environment:
       stage: ${self:provider.stage}

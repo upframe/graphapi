@@ -95,15 +95,7 @@ export const graphapi = async (event, context) => {
     }),
   })
 
-  const handler = server.createHandler({
-    cors: {
-      origin:
-        process.env.stage === 'dev'
-          ? 'https://beta.upframe.io'
-          : 'https://upframe.io',
-      credentials: true,
-    },
-  })
+  const handler = server.createHandler()
 
   return await new Promise((resolve, reject) => {
     const callback = (error, body) => {
