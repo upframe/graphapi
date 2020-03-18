@@ -31,6 +31,6 @@ export const hashPassword = (password: string): string =>
   bcrypt.hashSync(password, bcrypt.genSaltSync(10))
 
 export const cookie = (name: string, value: string, age = 60 ** 2 * 24 * 14) =>
-  `${name}=${value}; Domain=upframe.io; HttpOnly; ${
-    !process.env.IS_OFFLINE ? 'Secure;' : ''
+  `${name}=${value}; HttpOnly;${
+    !process.env.IS_OFFLINE ? 'Domain=upframe.io; Secure;' : ''
   } SameSite=Lax; Max-Age=${age}`

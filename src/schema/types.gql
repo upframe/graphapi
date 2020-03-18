@@ -11,7 +11,7 @@ interface Person {
   tags: [String!]
   website: String
   categories: [String!]!
-  role: Role @private
+  role: Role
 }
 
 type User implements Person {
@@ -27,7 +27,7 @@ type User implements Person {
   tags: [String!]
   website: String
   categories: [String!]!
-  role: Role @private
+  role: Role
 }
 
 type Mentor implements Person {
@@ -49,7 +49,7 @@ type Mentor implements Person {
   calendars(ids: [ID!]): [Calendar!] @private
   calendarConnected: Boolean @private
   categories: [String!]!
-  role: Role @private
+  role: Role
 }
 
 type Calendar {
