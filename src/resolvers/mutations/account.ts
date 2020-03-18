@@ -1,6 +1,6 @@
 import query from '../../utils/buildQuery'
 import { User } from '../../models'
-import { signIn, checkPassword, hashPassword } from '../../auth'
+import { signIn, checkPassword, hashPassword, cookie } from '../../auth'
 import {
   AuthenticationError,
   UserInputError,
@@ -15,22 +15,14 @@ export default {
     })
     const token = signIn(user, password)
     if (!token) throw new UserInputError('invalid credentials')
-    ctx.setHeader(
-      'Set-Cookie',
-      `auth=${token}; HttpOnly; SameSite=Strict; Secure; Max-Age=${60 ** 2 *
-        24 *
-        14}`
-    )
+    ctx.setHeader('Set-Cookie', cookie('auth', token))
     ctx.id = user.id
     return user
   },
 
   signOut: (_, __, ctx) => {
     if (!ctx.id) throw new AuthenticationError('not logged in')
-    ctx.setHeader(
-      'Set-Cookie',
-      'auth=deleted; HttpOnly; SameSite=Strict; Secure; Max-Age=-1'
-    )
+    ctx.setHeader('Set-Cookie', cookie('auth', 'deleted', -1))
     ctx.id = null
   },
 
@@ -72,13 +64,7 @@ export default {
       password: hashPassword(password),
       role: 'user',
     })
-    ctx.setHeader(
-      'Set-Cookie',
-      `auth=${signIn(
-        user,
-        password
-      )}; HttpOnly; SameSite=Strict; Secure; Max-Age=${60 ** 2 * 24 * 14}`
-    )
+    ctx.setHeader('Set-Cookie', cookie('auth', signIn(user, password)))
     ctx.id = user.id
     return user
   },
@@ -93,7 +79,7 @@ export default {
       .findById(id)
     if (!checkPassword(user, password))
       throw new ForbiddenError('wrong password')
-    setHeader('Set-Cookie', 'auth=deleted; HttpOnly; Max-Age=-1')
+    setHeader('Set-Cookie', cookie('auth', 'deleted', -1))
     await User.query().deleteById(id)
   },
 }

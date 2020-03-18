@@ -28,7 +28,9 @@ export const graphapi = async (event, context) => {
       inheritResolversFromInterfaces: true,
     }),
     context: ({ event }) => ({
-      ...authenticate(parseCookies(event.headers.Cookie).auth),
+      ...authenticate(
+        parseCookies(event.headers.Cookie ?? event.headers.cookie).auth
+      ),
       setHeader(header, value) {
         headers[header] = value
       },
@@ -95,7 +97,15 @@ export const graphapi = async (event, context) => {
     }),
   })
 
-  const handler = server.createHandler()
+  const handler = server.createHandler({
+    cors: {
+      origin:
+        process.env.stage === 'dev'
+          ? 'https://beta.upframe.io'
+          : 'https://upframe.io',
+      credentials: true,
+    },
+  })
 
   return await new Promise((resolve, reject) => {
     const callback = (error, body) => {
