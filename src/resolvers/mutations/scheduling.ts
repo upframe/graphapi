@@ -75,10 +75,12 @@ export default {
     return user
   },
 
-  requestSlot: async (_, { input }) => {
-    if (!new RegExp(User.jsonSchema.properties.email.pattern).test(input.email))
-      throw new UserInputError(`invalid email ${input.email}`)
-    if (input.name.length < 3) throw new UserInputError(`invalid name`)
+  requestSlot: async (_, { input }, { id }) => {
+    let { email, name, ...rest } = !id ? input : await User.query().findById(id)
+
+    if (!new RegExp(User.jsonSchema.properties.email.pattern).test(email))
+      throw new UserInputError(`invalid email ${email}`)
+    if (name.length < 3) throw new UserInputError(`invalid name ${name}`)
     const slot = await Slots.query().findById(input.slotId)
     if (!slot) throw new UserInputError('unknown slot')
 
@@ -88,18 +90,19 @@ export default {
       .withGraphFetched('mentors')
       .findById(slot.mentor_id)
 
-    const mentee =
-      (await User.query()
-        .where({ email: input.email })
-        .first()) ??
-      (await User.query().insertAndFetch({
-        id: uuidv4(),
-        email: input.email,
-        name: input.name,
-        role: 'nologin',
-        handle: uuidv4(),
-        password: '--------',
-      }))
+    const mentee = id
+      ? { email, name, ...rest }
+      : (await User.query()
+          .where({ email })
+          .first()) ??
+        (await User.query().insertAndFetch({
+          id: uuidv4(),
+          email,
+          name,
+          role: 'nologin',
+          handle: uuidv4(),
+          password: '--------',
+        }))
 
     const meetup = {
       slot_id: slot.id,

@@ -51,10 +51,11 @@ const resolveColumns = (
       return res.columns
     }
 
-    if (typeof map[field] === 'string')
-      return `${model.tableName}.${map[field]}${
-        map[field] !== field ? ` as ${field}` : ''
-      }`
+    if (typeof map[field] === 'string') {
+      return `${model.tableName !== 'mentors' ? `${model.tableName}.` : ''}${
+        map[field]
+      }${map[field] !== field ? ` as ${field}` : ''}`
+    }
 
     return Object.keys(map[field] ?? []).map(child =>
       resolveFields(map[field] as Mapping, child, ...path, field)

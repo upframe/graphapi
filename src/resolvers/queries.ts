@@ -28,6 +28,15 @@ export default {
     return mentor
   },
 
+  user: async (_, { handle, id }, __, info) => {
+    if (!id && !handle) throw new UserInputError('must provide handle or id')
+    let q = query(User, info)
+    q = id ? q.findById(id) : q.where({ 'users.handle': handle }).first()
+    const user = await q
+    if (!user) throw handleError(`can't find user ${handle ?? id}`)
+    return user
+  },
+
   calendarConnectUrl: async (_, __, { id }) => {
     if (!id) throw new AuthenticationError('not logged in')
     return await generateAuthUrl()

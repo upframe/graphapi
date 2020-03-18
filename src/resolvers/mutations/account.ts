@@ -1,11 +1,12 @@
 import query from '../../utils/buildQuery'
 import { User } from '../../models'
-import { signIn, checkPassword } from '../../auth'
+import { signIn, checkPassword, hashPassword } from '../../auth'
 import {
   AuthenticationError,
   UserInputError,
   ForbiddenError,
 } from '../../error'
+import uuidv4 from 'uuid/v4'
 
 export default {
   signIn: async (_, { input: { email, password } }, ctx, info) => {
@@ -28,38 +29,50 @@ export default {
     ctx.id = null
   },
 
-  createAccount: async (
-    _,
-    { input: { devPass, name, email, password } },
-    ctx
-  ) => {
-    // if (devPass !== process.env.DEV_PASSWORD)
-    //   throw new ForbiddenError('incorrect dev password')
-    // const [existing] = await User.query()
-    //   .where({ email })
-    //   .orWhere({ name })
-    // if (existing)
-    //   throw new UserInputError(
-    //     `user with ${
-    //       existing.email === email ? `email "${email}"` : `name "${name}"`
-    //     } already exists`
-    //   )
-    // password = hashPassword(password)
-    // const user = await User.query().insertAndFetch({
-    //   id: uuidv4(),
-    //   name,
-    //   email,
-    //   password,
-    //   type: 'mentor',
-    //   newsfeed: 'N',
-    //   handle: name.toLowerCase().replace(/\s/g, '.'),
-    // })
-    // ctx.setHeader(
-    //   'Set-Cookie',
-    //   `auth=${signIn(user, password)}; HttpOnly; Max-Age=${60 ** 2 * 24 * 14}`
-    // )
-    // ctx.id = user.id
-    // return user
+  createAccount: async (_, { input: { name, email, password } }, ctx) => {
+    let existing = await User.query()
+      .where({
+        email,
+      })
+      .orWhere({ name })
+      .first()
+    console.log(existing)
+    if (existing?.email === email && existing.role === 'nologin') {
+      await User.query()
+        .where({ email })
+        .delete()
+      existing = null
+    }
+    if (existing) {
+      throw new UserInputError(
+        `user with ${
+          existing.email === email ? `email "${email}"` : `name "${name}"`
+        } already exists`
+      )
+    }
+
+    let handle = name.toLowerCase().replace(/[^\w]+/g, '.')
+    if (
+      await User.query()
+        .where({ handle })
+        .first()
+    )
+      handle = uuidv4()
+
+    const user = await User.query().insertAndFetch({
+      id: uuidv4(),
+      handle,
+      name,
+      email,
+      password: hashPassword(password),
+      role: 'user',
+    })
+    ctx.setHeader(
+      'Set-Cookie',
+      `auth=${signIn(user, password)}; HttpOnly; Max-Age=${60 ** 2 * 24 * 14}`
+    )
+    ctx.id = user.id
+    return user
   },
 
   requestEmailChange() {},

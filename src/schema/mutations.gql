@@ -7,7 +7,6 @@ input createAccountInput {
   name: String!
   email: String!
   password: String!
-  devPass: String!
 }
 
 input ProfileInput {
@@ -44,23 +43,23 @@ input SlotUpdateInput {
 
 input MsgExtInput {
   to: ID!
-  name: String!
-  email: String!
   message: String!
+  name: String
+  email: String
 }
 
 input RequestSlotInput {
   slotId: ID!
-  name: String!
-  email: String!
   message: String!
+  name: String
+  email: String
 }
 
 type Mutation {
   signIn(input: LoginInput!): Person
   signOut: Int
   createAccount(input: createAccountInput!): Person
-  updateProfile(input: ProfileInput!): Mentor
+  updateProfile(input: ProfileInput!): Person
   requestEmailChange: Int
   requestPasswordChange: Int
   deleteAccount(password: String!): Int

@@ -122,7 +122,7 @@ export default class User extends Model {
         type: 'string',
         enum: ['user', 'mentor', 'nologin'],
       },
-      locaation: {
+      location: {
         type: 'string',
       },
       biography: {

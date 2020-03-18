@@ -5,7 +5,7 @@ import { User, UserHandles, UserTags, Tags, Mentor } from '../../models'
 import { AuthenticationError, UserInputError } from '../../error'
 
 export default {
-  updateProfile: async (_, { input }, { id }) => {
+  updateProfile: async (_, { input }, { id, role }) => {
     if (!id) throw new AuthenticationError('not logged in')
 
     const handles = (input.social ?? [])
@@ -84,11 +84,13 @@ export default {
           'website',
           'biography',
         ]),
-        // @ts-ignore
-        mentors: { id, ...obj.filterKeys(input, ['title', 'company']) },
+        ...(role !== 'user' && {
+          mentors: { id, ...obj.filterKeys(input, ['title', 'company']) },
+        }),
       })
       .withGraphFetched('socialmedia')
       .withGraphFetched('tags')
+      .withGraphFetched('profile_pictures')
   },
 
   setProfileVisibility: async (_, { visibility }, { id, role }, info) => {
@@ -110,19 +112,21 @@ export default {
     if (slotReminder && role !== 'mentor')
       throw new UserInputError(`can't set slot reminder as ${role}`)
 
-    const user = await User.query().upsertGraphAndFetch({
-      id,
-      ...(typeof receiveEmails === 'boolean' && {
-        allow_emails: receiveEmails,
-      }),
-      // @ts-ignore
-      mentors: {
+    const user = await User.query()
+      .upsertGraphAndFetch({
         id,
-        ...(slotReminder && {
-          slot_reminder_email: slotReminder.toLowerCase(),
+        ...(typeof receiveEmails === 'boolean' && {
+          allow_emails: receiveEmails,
         }),
-      },
-    })
+        // @ts-ignore
+        ...(slotReminder && {
+          mentors: {
+            id,
+            slot_reminder_email: slotReminder.toLowerCase(),
+          },
+        }),
+      })
+      .withGraphFetched('profile_pictures')
 
     return user
   },

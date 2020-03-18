@@ -17,3 +17,8 @@ export const mapValues = (
   obj: object,
   func: (v: unknown, k: string) => unknown
 ) => map(obj, ([k, v]) => [k, func(v, k)])
+
+export const replace = (
+  obj: object,
+  rep: { [k: string]: (v: unknown) => unknown }
+) => map(obj, ([k, v]) => [k, k in rep ? rep[k](v) : v])
