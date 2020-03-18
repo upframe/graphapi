@@ -38,16 +38,19 @@ functions:
       OAUTH_CLIENT_SECRET: ${ssm:/API/OAuth/ClientSecret~true}
       CALENDAR_ID: ${ssm:/API/CalendarId}
       CALENDAR_REFRESH_TOKEN: ${ssm:/API/CalendarRefreshToken~true}
-      PROD_DB_HOST: ${ssm:/API/Prod/DB/Host}
-      PROD_DB_PORT: ${ssm:/API/Prod/DB/Port}
-      PROD_DB_NAME: ${ssm:/API/Prod/DB/Name}
-      PROD_DB_USER: ${ssm:/API/Prod/DB/User}
-      PROD_DB_PASS: ${ssm:/API/Prod/DB/Password~true}
-      DEV_DB_HOST: ${ssm:/API/Dev/DB/Host}
-      DEV_DB_PORT: ${ssm:/API/Dev/DB/Port}
-      DEV_DB_NAME: ${ssm:/API/Dev/DB/Name}
-      DEV_DB_USER: ${ssm:/API/Dev/DB/User}
-      DEV_DB_PASS: ${ssm:/API/Dev/DB/Password~true}
+
+      PROD_DB_HOST: ${ssm:/DB/Prod/Host}
+      PROD_DB_PORT: ${ssm:/DB/Prod/Port}
+      PROD_DB_NAME: ${ssm:/DB/Prod/Name}
+      PROD_DB_USER: ${ssm:/DB/Prod/User}
+      PROD_DB_PASS: ${ssm:/DB/Prod/Password~true}
+
+      DEV_DB_HOST: ${ssm:/DB/Dev/Host}
+      DEV_DB_PORT: ${ssm:/DB/Dev/Port}
+      DEV_DB_NAME: ${ssm:/DB/Dev/Name}
+      DEV_DB_USER: ${ssm:/DB/Dev/User}
+      DEV_DB_PASS: ${ssm:/DB/Dev/Password~true}
+
       GCAL_REDIRECT_DEV: ${ssm:/API/Dev/GCalRedirect}
       GCAL_REDIRECT_PROD: ${ssm:/API/Prod/GCalRedirect}
       DEV_PASSWORD: ${ssm:/API/DevPassword~true}
