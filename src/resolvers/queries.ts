@@ -1,4 +1,4 @@
-import { User } from '../models'
+import { User, Tags } from '../models'
 import query from '../utils/buildQuery'
 import { AuthenticationError, handleError, UserInputError } from '../error'
 import { generateAuthUrl } from '../gcal'
@@ -40,5 +40,12 @@ export default {
   calendarConnectUrl: async (_, __, { id }) => {
     if (!id) throw new AuthenticationError('not logged in')
     return await generateAuthUrl()
+  },
+
+  tags: async (_, { orderBy }) => {
+    let tags = await Tags.query().select('name')
+    if (orderBy === 'alpha')
+      tags = tags.sort((a, b) => a.name.localeCompare(b.name))
+    return tags
   },
 }
