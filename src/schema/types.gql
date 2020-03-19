@@ -123,3 +123,11 @@ enum Role {
   MENTOR
   NOLOGIN
 }
+
+type Tag {
+  name: String!
+}
+
+enum TagOrder {
+  alpha
+}
