@@ -35,43 +35,45 @@ export default {
           ),
     ])
 
-    const tags: string[] = Array.from(
-      new Set((input.tags ?? []).map(v => v.toLowerCase()))
-    )
-    if (tags.length) {
-      const currentTags = await UserTags.query().where({ user_id: id })
-      let existing = await Tags.query()
-      let unknown = tags.filter(
-        tag => !existing.find(({ name }) => name === tag)
+    if (role !== 'user') {
+      const tags: string[] = Array.from(
+        new Set((input.tags ?? []).map(v => v.toLowerCase()))
       )
-      if (unknown.length)
-        existing = [
-          ...existing,
-          ...(await Tags.query().insertAndFetch(
-            unknown.map(name => ({ name }))
-          )),
-        ]
-      const currentTagNames = currentTags.map(
-        ({ tag_id }) => existing.find(({ id }) => id === tag_id).name
-      )
-      const newTags = tags
-        .filter(tag => !currentTagNames.includes(tag))
-        .map(name => existing.find(tag => tag.name === name).id)
-
-      if (newTags.length)
-        await UserTags.query().insert(
-          newTags.map(tag_id => ({ tag_id, user_id: id }))
+      if (tags.length) {
+        const currentTags = await UserTags.query().where({ user_id: id })
+        let existing = await Tags.query()
+        let unknown = tags.filter(
+          tag => !existing.find(({ name }) => name === tag)
         )
+        if (unknown.length)
+          existing = [
+            ...existing,
+            ...(await Tags.query().insertAndFetch(
+              unknown.map(name => ({ name }))
+            )),
+          ]
+        const currentTagNames = currentTags.map(
+          ({ tag_id }) => existing.find(({ id }) => id === tag_id).name
+        )
+        const newTags = tags
+          .filter(tag => !currentTagNames.includes(tag))
+          .map(name => existing.find(tag => tag.name === name).id)
 
-      const removedTags = currentTagNames
-        .filter(tag => !tags.includes(tag))
-        .map(tag => existing.find(({ name }) => name === tag).id)
+        if (newTags.length)
+          await UserTags.query().insert(
+            newTags.map(tag_id => ({ tag_id, user_id: id }))
+          )
 
-      if (removedTags.length)
-        await UserTags.query()
-          .del()
-          .where({ user_id: id })
-          .whereIn('tag_id', removedTags)
+        const removedTags = currentTagNames
+          .filter(tag => !tags.includes(tag))
+          .map(tag => existing.find(({ name }) => name === tag).id)
+
+        if (removedTags.length)
+          await UserTags.query()
+            .del()
+            .where({ user_id: id })
+            .whereIn('tag_id', removedTags)
+      }
     }
 
     return await User.query()
