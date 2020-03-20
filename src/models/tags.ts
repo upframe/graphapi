@@ -1,7 +1,6 @@
-import { Model } from 'objection'
-import User from './user'
+import { Model, User } from '.'
 
-export default class Tags extends Model {
+export class Tags extends Model {
   static tableName = 'tags'
   static idColumn = 'id'
 

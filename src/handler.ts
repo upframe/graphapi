@@ -1,3 +1,7 @@
+import knex from './db'
+import { Model, Mentor } from './models'
+Model.knex(knex)
+
 import {
   ApolloServer,
   makeExecutableSchema,
@@ -10,7 +14,6 @@ import PrivateDirective from './directives/private'
 import { authenticate } from './auth'
 import typeDefs from './schema'
 import { ValidationError } from 'objection'
-import { Mentor } from './models'
 
 export const graphapi = async (event, context) => {
   context.callbackWaitsForEmptyEventLoop = false

@@ -1,8 +1,9 @@
 import uuidv4 from 'uuid/v4'
 import query, { querySubsets } from '../../utils/buildQuery'
-import { User, Slots, Meetups, Mentor } from '../../models'
 import { sendMeetupRequest, sendMeetupConfirmation } from '../../email'
 import { addMeetup, deleteMeetup, getClient } from '../../gcal'
+import { User, Mentor, Slots, Meetup } from '../../models'
+
 import {
   AuthenticationError,
   UserInputError,
@@ -111,7 +112,7 @@ export default {
       message: input.message,
       location: `https://talky.io/${mentor.handle}`,
     }
-    await Meetups.query().insert(meetup)
+    await Meetup.query().insert(meetup)
     sendMeetupRequest(mentor, mentee, { ...meetup, slot })
 
     if (mentor.mentors?.google_refresh_token)
@@ -148,7 +149,7 @@ export default {
         'name',
         'email'
       ).whereIn('id', [slot.mentor_id, slot.meetups.mentee_id]),
-      Meetups.query()
+      Meetup.query()
         .findById(meetupId)
         .patch({ status: 'confirmed' }),
     ])
@@ -157,7 +158,7 @@ export default {
     const mentee = parts.find(({ id }) => id === slot.meetups.mentee_id)
 
     sendMeetupConfirmation(mentor, mentee, slot)
-    await Meetups.query()
+    await Meetup.query()
       .findById(meetupId)
       .patch({
         ...(await addMeetup(slot, mentor, mentee)),
@@ -187,7 +188,7 @@ export default {
       .findById(id)
 
     await Promise.all([
-      Meetups.query().deleteById(meetupId),
+      Meetup.query().deleteById(meetupId),
       mentor.google_refresh_token &&
         (
           await getClient(mentor.id, mentor.google_refresh_token)

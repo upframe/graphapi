@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken'
-import { User } from './models'
 import * as bcrypt from 'bcrypt'
+import { User } from './models'
 
 export function authenticate(token: string): { id: string; role: string } {
   if (!token) return

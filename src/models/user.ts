@@ -1,14 +1,16 @@
-import { Model } from 'objection'
-import Mentor from './mentor'
-import SocialMedia from './socialmedia'
-import Tags from './tags'
-import ProfilePicture from './profilePicture'
-import Slots from './slots'
-import List from './list'
+import {
+  Model,
+  Mentor,
+  List,
+  SocialMedia,
+  Tags,
+  ProfilePicture,
+  Slots,
+} from '.'
 
 const regToStr = (reg: RegExp) => reg.toString().replace(/\/(.*)\//, '$1')
 
-export default class User extends Model {
+export class User extends Model {
   static tableName = 'users'
   static idColumn = 'id'
 

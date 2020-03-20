@@ -1,8 +1,6 @@
-import { Model } from 'objection'
-import User from './user'
-import Slots from './slots'
+import { Model, User, Slots } from '.'
 
-export default class Mentor extends Model {
+export class Mentor extends Model {
   static tableName = 'mentors'
   static idColumn = 'id'
 

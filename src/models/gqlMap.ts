@@ -65,6 +65,7 @@ export default new Map<typeof Model, MapInfo>([
       },
     },
   ],
+  // [List, { required: ['id', 'name'], map: { users: User } }],
 ])
 
 interface MapInfo {

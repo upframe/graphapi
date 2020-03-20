@@ -1,8 +1,8 @@
 import query from '../../utils/buildQuery'
 import knex from '../../db'
 import * as obj from '../../utils/object'
-import { User, UserHandles, UserTags, Tags, Mentor } from '../../models'
 import { AuthenticationError, UserInputError } from '../../error'
+import { User, UserHandles, UserTags, Tags, Mentor } from '../../models'
 
 export default {
   updateProfile: async (_, { input }, { id, role }) => {

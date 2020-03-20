@@ -131,3 +131,8 @@ type Tag {
 enum TagOrder {
   alpha
 }
+
+type List {
+  name: String!
+  users: [Person!]
+}

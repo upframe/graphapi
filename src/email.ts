@@ -1,8 +1,8 @@
 import mailgun from 'mailgun-js'
-import { User, Meetups, Slots } from './models'
+import { User, Meetup, Slots } from './models'
 import AWS from 'aws-sdk'
 
-type Meetup = Partial<Meetups> & { slot: Partial<Slots> }
+type Event = Partial<Meetup> & { slot: Partial<Slots> }
 
 const mail = mailgun({
   domain: 'upframe.io',
@@ -79,7 +79,7 @@ export async function sendMessage(
 export async function sendMeetupRequest(
   mentor: User,
   mentee: User,
-  meetup: Meetup
+  meetup: Event
 ) {
   const senderName = mentee.name.split(' ')[0]
   const receiverName = mentee.name.split(' ')[0]

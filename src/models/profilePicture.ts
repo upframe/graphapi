@@ -1,7 +1,6 @@
-import { Model } from 'objection'
-import User from './user'
+import { Model, User } from '.'
 
-export default class ProfilePicture extends Model {
+export class ProfilePicture extends Model {
   static tableName = 'profile_pictures'
   static idColumn = 'url'
 

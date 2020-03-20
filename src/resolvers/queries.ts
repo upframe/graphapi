@@ -1,4 +1,4 @@
-import { User, Tags } from '../models'
+import { User, Tags, List } from '../models'
 import query from '../utils/buildQuery'
 import { AuthenticationError, handleError, UserInputError } from '../error'
 import { generateAuthUrl } from '../gcal'
@@ -47,5 +47,11 @@ export default {
     if (orderBy === 'alpha')
       tags = tags.sort((a, b) => a.name.localeCompare(b.name))
     return tags
+  },
+
+  lists: async () => {
+    const lists = await List.query().withGraphFetched('users')
+    console.log(lists)
+    return lists
   },
 }

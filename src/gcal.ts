@@ -1,5 +1,5 @@
 import { google, calendar_v3 } from 'googleapis'
-import { User, Mentor, Slots, Meetups } from './models'
+import { User, Mentor, Slots, Meetup } from './models'
 
 const createClient = () =>
   new google.auth.OAuth2(
@@ -51,7 +51,7 @@ export async function addMeetup(
   slot: Slots,
   mentor: User & Mentor,
   mentee: User
-): Promise<Partial<Meetups>> {
+): Promise<Partial<Meetup>> {
   const event = {
     id: slot.id.replace(/[^\w]/g, ''),
     summary: `Upframe Meetup ${mentor.name.split(' ')[0]} & ${

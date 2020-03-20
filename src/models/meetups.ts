@@ -1,6 +1,6 @@
-import { Model } from 'objection'
+import { Model } from '.'
 
-export default class Meetup extends Model {
+export class Meetup extends Model {
   slot_id!: string
   status: string
   mentee_id: string

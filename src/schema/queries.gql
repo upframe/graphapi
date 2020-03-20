@@ -5,4 +5,5 @@ type Query {
   user(handle: String, id: ID): Person
   calendarConnectUrl: String
   tags(orderBy: TagOrder = alpha): [Tag!]!
+  lists: [List!]!
 }
