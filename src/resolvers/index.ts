@@ -1,5 +1,5 @@
 import Query from './queries'
-import Mutation from './mutations'
+import * as Mutation from './mutations'
 import Person from './fields/person'
 import Mentor from './fields/mentor'
 import Meetup from './fields/meetup'

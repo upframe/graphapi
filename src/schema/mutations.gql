@@ -72,4 +72,6 @@ type Mutation {
   cancelMeetup(meetupId: ID!): Int
   connectCalendar(code: ID!): Mentor
   disconnectCalendar: Mentor
+
+  createList(name: String!): List
 }
