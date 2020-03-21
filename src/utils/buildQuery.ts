@@ -14,6 +14,7 @@ import getQueryFields from './queryFields'
 const ENTRIES = {
   Person: User,
   Mentor: User,
+  List,
 }
 const GQL_SQL_MAP = new Map<typeof Model, Map<typeof Model, string[]>>()
 const __ALWAYS__ = '__always__'
@@ -32,10 +33,9 @@ set(User)
   .add(SocialMedia, 'social')
   .add(ProfilePicture, 'profilePictures')
   .add(List, 'categories')
-
 set(Mentor).add(Slots, 'slots')
-
 set(Slots).add(Meetup, __ALWAYS__)
+set(List).add(User, 'users')
 
 type Fields = ReturnType<typeof getQueryFields>
 
@@ -46,7 +46,7 @@ export default function<M extends Model>(
   const type =
     info.returnType.name ?? info.returnType.ofType?.ofType?.ofType?.name
   const entry = ENTRIES[type]
-  if (!entry) throw Error(`no known table for ${info.returnType}`)
+  if (!entry) throw Error(`no known table for ${type}`)
   const fields = getQueryFields(info)
 
   const resolve = (model: typeof Model, requested: Fields) => {

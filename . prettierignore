@@ -1,0 +1,4 @@
+node_modules
+.webpack
+.serverless
+db/seeds/data

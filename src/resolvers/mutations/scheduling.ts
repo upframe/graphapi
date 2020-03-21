@@ -128,7 +128,7 @@ export default {
       })
   },
 
-  acceptMeetup: async (_, { meetupId }, { id }, info) => {
+  acceptMeetup: async (_, { meetupId }, { id }) => {
     if (!id) throw new AuthenticationError('Not logged in.')
     const slot = await Slots.query()
       .withGraphFetched('meetups')
@@ -142,13 +142,9 @@ export default {
       throw new UserInputError('meetup already confirmed')
 
     const [parts] = await Promise.all([
-      querySubsets(
-        User,
-        ['mentor', 'mentee'],
-        info,
-        'name',
-        'email'
-      ).whereIn('id', [slot.mentor_id, slot.meetups.mentee_id]),
+      User.query()
+        .withGraphFetched('mentors')
+        .whereIn('id', [slot.mentor_id, slot.meetups.mentee_id]),
       Meetup.query()
         .findById(meetupId)
         .patch({ status: 'confirmed' }),

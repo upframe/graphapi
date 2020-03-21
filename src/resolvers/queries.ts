@@ -1,4 +1,4 @@
-import { Tags, List } from '../models'
+import { Tags } from '../models'
 import query from '../utils/buildQuery'
 import { AuthenticationError, handleError, UserInputError } from '../error'
 import { generateAuthUrl } from '../gcal'
@@ -49,9 +49,5 @@ export default {
     return tags
   },
 
-  lists: async () => {
-    const lists = await List.query().withGraphFetched('users')
-    console.log(lists)
-    return lists
-  },
+  lists: async (_, __, ___, info) => await query(info),
 }

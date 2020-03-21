@@ -1,4 +1,3 @@
-import query from '../../utils/buildQuery'
 import { User } from '../../models'
 import { UserInputError } from '../../error'
 import { sendMessage } from '../../email'

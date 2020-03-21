@@ -49,7 +49,7 @@ export async function getClient(
 
 export async function addMeetup(
   slot: Slots,
-  mentor: User & Mentor,
+  mentor: User,
   mentee: User
 ): Promise<Partial<Meetup>> {
   const event = {
@@ -80,7 +80,7 @@ export async function addMeetup(
     transparency: 'opaque',
 
     attendees: [
-      ...(mentor.google_calendar_id
+      ...(mentor.mentors.google_calendar_id
         ? []
         : [{ email: mentor.email, displayName: mentor.name }]),
       { email: mentee.email, displayName: mentee.name },
@@ -88,11 +88,11 @@ export async function addMeetup(
   }
 
   let gcal_user_event_id: string
-  if (mentor.google_calendar_id) {
+  if (mentor.mentors.google_calendar_id) {
     const { data } = await (
-      await getClient(mentor.id, mentor.google_refresh_token)
+      await getClient(mentor.id, mentor.mentors.google_refresh_token)
     ).calendar.events.patch({
-      calendarId: mentor.google_calendar_id,
+      calendarId: mentor.mentors.google_calendar_id,
       requestBody: event,
     })
     gcal_user_event_id = data.id

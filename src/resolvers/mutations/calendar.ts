@@ -38,7 +38,7 @@ export default {
     if (!id) throw new AuthenticationError('not logged in')
 
     const {
-      mentors: { google_refresh_token, google_calendar_id },
+      mentors: { google_refresh_token, google_calendar_id, ...mentors } = {},
       ...user
     } = await query<User>(info).findById(id)
 
@@ -61,6 +61,6 @@ export default {
         }),
     ])
 
-    return user
+    return { ...user, mentors }
   },
 }
