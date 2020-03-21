@@ -1,5 +1,5 @@
 import uuidv4 from 'uuid/v4'
-import query, { querySubsets } from '../../utils/buildQuery'
+import query from '../../utils/buildQuery'
 import { sendMeetupRequest, sendMeetupConfirmation } from '../../email'
 import { addMeetup, deleteMeetup, getClient } from '../../gcal'
 import { User, Mentor, Slots, Meetup } from '../../models'
@@ -43,7 +43,7 @@ export default {
           .delete(),
     ])
 
-    const user = await query(User, info)
+    const user = await query<User>(info)
       .withGraphFetched('mentors')
       .findById(id)
 

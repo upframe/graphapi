@@ -102,7 +102,7 @@ export default {
     await Mentor.query().patchAndFetchById(id, {
       listed: visibility === 'LISTED',
     })
-    return await query(User, info).findById(id)
+    return await query(info).findById(id)
   },
 
   updateNotificationPreferences: async (

@@ -1,4 +1,4 @@
-import { User, Tags, List } from '../models'
+import { Tags, List } from '../models'
 import query from '../utils/buildQuery'
 import { AuthenticationError, handleError, UserInputError } from '../error'
 import { generateAuthUrl } from '../gcal'
@@ -6,7 +6,7 @@ import knex from '../db'
 
 export default {
   mentors: async (_, __, ___, info) =>
-    await query(User, info, 'visibility', 'score')
+    await query(info, { join: true })
       .select(knex.raw('mentors.score + RANDOM() as rank'))
       .where({
         role: 'mentor',
@@ -16,23 +16,23 @@ export default {
 
   me: async (_, __, { id }, info) => {
     if (!id) throw new AuthenticationError('not logged in')
-    return await query(User, info).findById(id)
+    return await query(info).findById(id)
   },
 
   mentor: async (_, { handle, id }, __, info) => {
     if (!id && !handle) throw new UserInputError('must provide handle or id')
-    let q = query(User, info)
-    q = id ? q.findById(id) : q.where({ 'users.handle': handle }).first()
-    const mentor = await q
+    const mentor = await query(info)
+      .where(id ? { 'users.id': id } : { handle })
+      .first()
     if (!mentor) throw handleError(`can't find mentor ${handle ?? id}`)
     return mentor
   },
 
   user: async (_, { handle, id }, __, info) => {
     if (!id && !handle) throw new UserInputError('must provide handle or id')
-    let q = query(User, info)
-    q = id ? q.findById(id) : q.where({ 'users.handle': handle }).first()
-    const user = await q
+    const user = await query(info)
+      .where(id ? { 'users.id': id } : { handle })
+      .first()
     if (!user) throw handleError(`can't find user ${handle ?? id}`)
     return user
   },

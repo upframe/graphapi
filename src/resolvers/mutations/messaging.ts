@@ -5,7 +5,7 @@ import { sendMessage } from '../../email'
 
 export default {
   messageExt: async (_, { input }, { id }) => {
-    const receiver = await query(User, null, 'email', 'name').findById(input.to)
+    const receiver = await User.query().findById(input.to)
     if (!receiver?.email) throw new UserInputError('unknown receier')
 
     let { email, name } = !id ? input : await User.query().findById(id)

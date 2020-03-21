@@ -27,7 +27,7 @@ export default {
           google_refresh_token: tokens.refresh_token,
           google_calendar_id: data.id,
         })
-      return await query(User, info).findById(id)
+      return await query(info).findById(id)
     } catch (e) {
       console.log(e)
       throw e
@@ -37,10 +37,10 @@ export default {
   disconnectCalendar: async (_, __, { id }, info) => {
     if (!id) throw new AuthenticationError('not logged in')
 
-    const { google_refresh_token, google_calendar_id, ...user } = await query(
-      Mentor,
-      info
-    ).findById(id)
+    const {
+      mentors: { google_refresh_token, google_calendar_id },
+      ...user
+    } = await query<User>(info).findById(id)
 
     if (!google_refresh_token)
       throw new UserInputError('calendar not connected')

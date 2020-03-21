@@ -10,7 +10,7 @@ import uuidv4 from 'uuid/v4'
 
 export default {
   signIn: async (_, { input: { email, password } }, ctx, info) => {
-    const [user] = await query(User, info, 'email', 'password').where({
+    const [user] = await query<User>(info).where({
       email,
     })
     const token = signIn(user, password)
@@ -33,7 +33,6 @@ export default {
       })
       .orWhere({ name })
       .first()
-    console.log(existing)
     if (existing?.email === email && existing.role === 'nologin') {
       await User.query()
         .where({ email })

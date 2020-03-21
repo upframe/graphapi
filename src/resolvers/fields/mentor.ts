@@ -20,10 +20,15 @@ export default {
     ...parent,
   }),
 
-  slots: async ({ id }, { after, before, includeBooked }) => {
-    let slots = await Slots.query()
-      .where({ mentor_id: id })
-      .withGraphFetched('meetups')
+  slots: async (
+    { id, mentors, time_slots = mentors?.time_slots },
+    { after, before, includeBooked }
+  ) => {
+    let slots =
+      time_slots ??
+      (await Slots.query()
+        .where({ mentor_id: id })
+        .withGraphFetched('meetups'))
 
     if (!includeBooked) slots = slots.filter(({ meetups }) => meetups === null)
 
