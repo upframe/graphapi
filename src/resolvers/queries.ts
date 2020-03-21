@@ -52,7 +52,7 @@ export default {
   lists: async (_, __, ___, info) => await query(info),
 
   list: async (_, { name }, ___, info) =>
-    await query(info, { join: true })
+    await query(info, { join: true, include: { users: { mentors: true } } })
       .where({ 'lists.name': name, listed: true })
       .first(),
 }
