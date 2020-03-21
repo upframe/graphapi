@@ -6,4 +6,5 @@ type Query {
   calendarConnectUrl: String
   tags(orderBy: TagOrder = alpha): [Tag!]!
   lists: [List!]!
+  list(name: String!): List
 }
