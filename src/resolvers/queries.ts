@@ -5,8 +5,8 @@ import { generateAuthUrl } from '../gcal'
 import knex from '../db'
 
 export default {
-  mentors: async (_, __, ___, info) =>
-    await query(info, { join: true })
+  mentors: async (_, __, { id }, info) =>
+    await query(info, { id, join: true, include: { mentors: true } })
       .select(knex.raw('mentors.score + RANDOM() as rank'))
       .where({
         role: 'mentor',
@@ -16,7 +16,7 @@ export default {
 
   me: async (_, __, { id }, info) => {
     if (!id) throw new AuthenticationError('not logged in')
-    return await query(info).findById(id)
+    return await query(info, { id }).findById(id)
   },
 
   mentor: async (_, { handle, id }, __, info) => {

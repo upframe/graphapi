@@ -18,6 +18,17 @@ export class User extends Model {
 
   mentors?: Mentor
 
+  static _controlAccess(user: User, id: string) {
+    if ('email' in user && user.id !== id) delete user.email
+    return user
+  }
+
+  static afterFind({ result, context }: any) {
+    return Array.isArray(result)
+      ? result.map(v => User._controlAccess(v, context.id))
+      : User._controlAccess(result, context.id)
+  }
+
   static relationMappings = {
     mentors: {
       relation: Model.HasOneRelation,

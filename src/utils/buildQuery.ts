@@ -41,7 +41,7 @@ type Fields = ReturnType<typeof getQueryFields>
 
 export default function<M extends Model>(
   info: any,
-  { join = false, include = {} } = {}
+  { join = false, include = {}, id = null } = {}
 ): QueryBuilder<M, M[]> {
   const type =
     info.returnType.name ?? info.returnType.ofType?.ofType?.ofType?.name
@@ -86,7 +86,7 @@ export default function<M extends Model>(
   let { [entry.tableName]: graph } = resolve(entry, fields)
   graph = mergeGraph(graph, include)
 
-  let query = entry.query()
+  let query = entry.query().context({ id })
   if (graph) query = query[`withGraph${join ? 'Joined' : 'Fetched'}`](graph)
   return query
 }
