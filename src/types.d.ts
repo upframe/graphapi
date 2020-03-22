@@ -6,3 +6,17 @@ type Resolver<M extends Model = Model> = (args: {
 }) => any
 
 type Fields = { [k: string]: Fields | boolean }
+
+interface Policy {
+  effect: 'allow' | 'disallow'
+  action: 'read'
+  resource: string
+}
+
+interface Group {
+  policies: Policy[]
+}
+
+interface AccessGraph {
+  [field: string]: boolean | AccessGraph
+}
