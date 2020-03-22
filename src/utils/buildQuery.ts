@@ -8,6 +8,7 @@ import {
   ProfilePicture,
   Meetup,
   List,
+  Tags,
 } from '../models'
 import getQueryFields from './queryFields'
 
@@ -15,6 +16,7 @@ const ENTRIES = {
   Person: User,
   Mentor: User,
   List,
+  Tag: Tags,
 }
 const GQL_SQL_MAP = new Map<typeof Model, Map<typeof Model, string[]>>()
 const __ALWAYS__ = '__always__'
@@ -33,11 +35,10 @@ set(User)
   .add(SocialMedia, 'social')
   .add(ProfilePicture, 'profilePictures')
   .add(List, 'categories')
+  .add(Tags, 'tags')
 set(Mentor).add(Slots, 'slots')
 set(Slots).add(Meetup, __ALWAYS__)
 set(List).add(User, 'users')
-
-type Fields = ReturnType<typeof getQueryFields>
 
 export default function<M extends Model>(
   info: any,

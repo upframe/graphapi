@@ -1,4 +1,5 @@
-import Query from './queries'
+import query from '../utils/buildQuery'
+import * as queries from './queries'
 import * as Mutation from './mutations'
 import Person from './fields/person'
 import Mentor from './fields/mentor'
@@ -9,8 +10,23 @@ import {
   MentorNotificationPreferences,
 } from './fields/notificationPreferences'
 
+const resolver = (handler: Resolver) => (
+  parent: any,
+  args: any,
+  ctx: any,
+  info: any
+) =>
+  handler({
+    query: (options = {}) => query(info, { ...ctx, ...options }),
+    parent,
+    args,
+    ctx,
+  })
+
 export default {
-  Query,
+  Query: Object.fromEntries(
+    Object.entries(queries).map(([k, v]) => [k, resolver(v)])
+  ),
   Mutation,
   Person,
   Mentor,

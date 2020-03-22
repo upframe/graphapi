@@ -14,7 +14,6 @@ function isExcludedByDirective(info: any, { directives }): boolean {
   return false
 }
 
-type Fields = { [k: string]: Fields | boolean }
 export default function getFields(
   info: any,
   asts = info.fieldASTs ?? info.fieldNodes
