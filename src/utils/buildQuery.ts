@@ -42,7 +42,7 @@ set(List).add(User, 'users')
 
 export default function<M extends Model>(
   info: any,
-  { join = false, include = {}, id = null } = {}
+  { join = false, include = {}, ctx = {} } = {}
 ): QueryBuilder<M, M[]> {
   const type =
     info.returnType.name ?? info.returnType.ofType?.ofType?.ofType?.name
@@ -87,9 +87,9 @@ export default function<M extends Model>(
   let { [entry.tableName]: graph } = resolve(entry, fields)
   graph = mergeGraph(graph, include)
 
-  let query = entry.query().context({ id })
+  let query = entry.query()
   if (graph) query = query[`withGraph${join ? 'Joined' : 'Fetched'}`](graph)
-  return query
+  return query.context(ctx)
 }
 
 const mergeGraph = (a: object, b: Object) =>

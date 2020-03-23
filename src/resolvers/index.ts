@@ -17,7 +17,7 @@ const resolver = (handler: Resolver) => (
   info: any
 ) =>
   handler({
-    query: (options = {}) => query(info, { ...ctx, ...options }),
+    query: (options = {}) => query(info, { ...options, ctx }),
     parent,
     args,
     ctx,

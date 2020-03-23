@@ -1,6 +1,7 @@
 import knex from './db'
 import { Model, Mentor } from './models'
 Model.knex(knex)
+import { buildUser } from './authorization'
 
 import {
   ApolloServer,
@@ -30,14 +31,19 @@ export const graphapi = async (event, context) => {
       },
       inheritResolversFromInterfaces: true,
     }),
-    context: ({ event }) => ({
-      ...authenticate(
+    context: ({ event }): ResolverCtx => {
+      const { id, role } = authenticate(
         parseCookies(event.headers.Cookie ?? event.headers.cookie).auth
-      ),
-      setHeader(header, value) {
-        headers[header] = value
-      },
-    }),
+      )
+      const roles = role?.split('.').map(v => v.trim()) ?? []
+      return {
+        ...buildUser(id, ...roles),
+        roles,
+        setHeader(header, value) {
+          headers[header] = value
+        },
+      }
+    },
     debug:
       event.headers.debug === process.env.DEV_PASSWORD ||
       !!process.env.IS_OFFLINE,

@@ -1,1 +1,1 @@
-export const createList = (_, __, { id, role }) => {}
+export const createList = () => {}

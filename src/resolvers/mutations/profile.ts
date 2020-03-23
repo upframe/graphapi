@@ -97,12 +97,12 @@ export const updateProfile = async (_, { input }, { id, role }) => {
 export const setProfileVisibility = async (
   _,
   { visibility },
-  { id, role },
+  { id, roles },
   info
 ) => {
   if (!id) throw new AuthenticationError('not logged in')
-  if (role !== 'mentor')
-    throw new UserInputError(`can't set visibility of ${role} account`)
+  if (!roles.includes('mentor'))
+    throw new UserInputError(`must be mentor to set account visibility`)
   await Mentor.query().patchAndFetchById(id, {
     listed: visibility === 'LISTED',
   })
@@ -112,11 +112,11 @@ export const setProfileVisibility = async (
 export const updateNotificationPreferences = async (
   _,
   { input: { receiveEmails, slotReminder } },
-  { id, role }
+  { id, roles }
 ) => {
   if (!id) throw new AuthenticationError('not logged in')
-  if (slotReminder && role !== 'mentor')
-    throw new UserInputError(`can't set slot reminder as ${role}`)
+  if (slotReminder && !roles.includes('mentor'))
+    throw new UserInputError(`must be mentor to set slot reminder`)
 
   const user = await User.query()
     .upsertGraphAndFetch({

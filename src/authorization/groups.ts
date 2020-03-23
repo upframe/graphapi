@@ -1,4 +1,5 @@
-export const Maker: Group = {
+export const visitor: Group = {
+  groups: [],
   policies: [
     {
       effect: 'allow',
@@ -16,4 +17,14 @@ export const Maker: Group = {
       resource: 'mentors.[id, title, company]',
     },
   ],
+}
+
+export const maker: Group = {
+  groups: [visitor],
+  policies: [],
+}
+
+export const mentor: Group = {
+  groups: [maker],
+  policies: [],
 }

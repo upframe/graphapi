@@ -1,5 +1,7 @@
 import _ from 'lodash'
 import * as path from '../utils/path'
+import * as groupList from './groups'
+import { ForbiddenError } from 'apollo-server-lambda'
 
 export const dataGraph: AccessGraph = {
   users: {
@@ -31,9 +33,13 @@ const expandPolicy = (policy: any) =>
 
 const buildPolicies = (policies: any[]) => policies.flatMap(expandPolicy)
 
-export const buildAccessGraph = (role: Group): AccessGraph => {
-  const policies = buildPolicies(role.policies)
+const getPolicies = (entity: Partial<Group | User>) => [
+  ...(entity.groups?.flatMap(getPolicies) ?? []),
+  ...(entity.policies ?? []),
+]
 
+export const buildAccessGraph = (user: Partial<User>): AccessGraph => {
+  const policies = buildPolicies(getPolicies(user))
   let accessGraph = {}
   for (const policy of policies) {
     if (policy.effect === 'allow')
@@ -43,6 +49,21 @@ export const buildAccessGraph = (role: Group): AccessGraph => {
     else throw Error(`invalid policy effect ${policy.effect}`)
   }
   return accessGraph
+}
+
+export const buildUser = (id: string, ...groupNames: string[]): User => {
+  if (groupNames.length === 0) groupNames = ['visitor']
+  const groups = groupNames.map(group => {
+    if (!(group in groupList))
+      throw new ForbiddenError(`invalid group ${group}`)
+    return groupList[group]
+  })
+  return {
+    id,
+    groups,
+    policies: [],
+    accessGraph: buildAccessGraph({ id, groups }),
+  }
 }
 
 export function accessFilter(data: any, accessGraph: AccessGraph) {

@@ -15,8 +15,20 @@ interface Policy {
 
 interface Group {
   policies: Policy[]
+  groups: Group[]
+}
+interface User extends Group {
+  id: string
+  accessGraph: AccessGraph
 }
 
 interface AccessGraph {
   [field: string]: boolean | AccessGraph
+}
+
+interface ResolverCtx {
+  id: string
+  roles: string[]
+  accessGraph: AccessGraph
+  setHeader(header: string, value: string): void
 }
