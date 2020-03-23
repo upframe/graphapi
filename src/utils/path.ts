@@ -12,6 +12,6 @@ export const expand = (path: string): string[] => {
 }
 
 export const getPaths = (obj: any, ...path: string[]) =>
-  typeof obj !== 'object'
+  typeof obj !== 'object' || obj === null
     ? path.join('.')
     : Object.entries(obj).flatMap(([k, v]) => getPaths(v, ...path, k))
