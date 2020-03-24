@@ -4,7 +4,7 @@ import * as obj from '../../utils/object'
 import { AuthenticationError, UserInputError } from '../../error'
 import { User, UserHandles, UserTags, Tags, Mentor } from '../../models'
 
-export const updateProfile = async (_, { input }, { id, role, ...ctx }) => {
+export const updateProfile = async (_, { input }, { id, role }) => {
   if (!id) throw new AuthenticationError('not logged in')
 
   const handles = (input.social ?? [])

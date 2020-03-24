@@ -11,7 +11,6 @@ import {
 } from 'apollo-server-lambda'
 import resolvers from './resolvers'
 import { parseCookies } from './utils/cookie'
-import PrivateDirective from './directives/private'
 import { authenticate } from './auth'
 import typeDefs from './schema'
 import { ValidationError } from 'objection'
@@ -26,9 +25,6 @@ export const graphapi = async (event, context) => {
       typeDefs,
       // @ts-ignore
       resolvers,
-      schemaDirectives: {
-        private: PrivateDirective,
-      },
       inheritResolversFromInterfaces: true,
     }),
     context: ({ event }): ResolverCtx => {

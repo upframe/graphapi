@@ -28,7 +28,7 @@ export default class AuthUser {
     return this._expanded
   }
 
-  _expandPolicies() {
+  private _expandPolicies() {
     this._expanded = buildPolicies(
       getPolicies({
         policies: this._policies,
@@ -42,7 +42,7 @@ export default class AuthUser {
     resource: string,
     data?: any
   ): PolicyEffect {
-    if ('where' in policy && data && !policy.where(data, this))
+    if (typeof policy.where === 'function' && data && !policy.where(data, this))
       return PolicyEffect.NO_EFFECT
 
     const policyPath = policy.resource.split('.')

@@ -6,7 +6,7 @@ interface Person {
   location: String
   profilePictures: [ProfilePicture]
   social(includeEmpty: Boolean = false): [SocialHandle!]
-  notificationPrefs: NotificationPreferences @private
+  notificationPrefs: NotificationPreferences
   biography: String
   tags: [String!]
   website: String
@@ -18,11 +18,11 @@ type User implements Person {
   id: ID!
   handle: String
   name: String!
-  email: String @private
+  email: String
   location: String
   profilePictures: [ProfilePicture]
   social(includeEmpty: Boolean = false): [SocialHandle!]
-  notificationPrefs: UserNotificationPreferences @private
+  notificationPrefs: UserNotificationPreferences
   biography: String
   tags: [String!]
   website: String
@@ -34,7 +34,7 @@ type Mentor implements Person {
   id: ID!
   handle: String!
   name: String!
-  email: String @private
+  email: String
   title: String
   company: String
   location: String
@@ -43,11 +43,11 @@ type Mentor implements Person {
   profilePictures: [ProfilePicture!]!
   social(includeEmpty: Boolean = false): [SocialHandle!]
   tags: [String!]
-  visibility: Visibility @private
-  notificationPrefs: MentorNotificationPreferences @private
+  visibility: Visibility
+  notificationPrefs: MentorNotificationPreferences
   slots(after: String, before: String, includeBooked: Boolean = false): [Slot!]!
-  calendars(ids: [ID!]): [Calendar!] @private
-  calendarConnected: Boolean @private
+  calendars(ids: [ID!]): [Calendar!]
+  calendarConnected: Boolean
   categories: [String!]!
   role: Role
 }

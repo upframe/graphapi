@@ -1,6 +1,3 @@
-const currentUser = ({ users }, { id }) => users?.id && users.id !== id
-const currentMentor = ({ mentors }, { id }) => mentors?.id && mentors.id !== id
-
 export const visitor: Group = {
   groups: [],
   policies: [
@@ -13,12 +10,7 @@ export const visitor: Group = {
       effect: 'disallow',
       action: 'read',
       resource: 'users.[email, allow_emails]',
-      where: currentUser,
-    },
-    {
-      effect: 'allow',
-      action: 'read',
-      resource: 'mentors',
+      where: 'users.id != current.id',
     },
     {
       effect: 'allow',
@@ -29,7 +21,7 @@ export const visitor: Group = {
       effect: 'allow',
       action: 'read',
       resource: 'mentors',
-      where: currentMentor,
+      where: 'mentors.id = current.id',
     },
   ],
 }

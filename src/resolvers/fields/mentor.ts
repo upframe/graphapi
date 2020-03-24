@@ -4,7 +4,7 @@ import { Slots } from '../../models'
 
 export default {
   visibility: ({ mentors, visibility = mentors?.listed }) =>
-    visibility ? 'LISTED' : 'UNLISTED',
+    typeof visibility !== 'boolean' ? null : visibility ? 'LISTED' : 'UNLISTED',
 
   title: ({ mentors, title = mentors?.title }) => title,
   company: ({ mentors, company = mentors?.company }) => company,
