@@ -4,10 +4,11 @@ import { getPaths } from '../utils/path'
 import _ from 'lodash'
 
 export default class AuthUser {
-  id: string
   private _groups: string[] = []
   private _policies: Policy[] = []
   private _expanded: Policy[] = []
+
+  constructor(public readonly id: string) {}
 
   get policies() {
     return this._policies
@@ -36,7 +37,14 @@ export default class AuthUser {
     )
   }
 
-  private static checkPolicy(policy, resource): PolicyEffect {
+  private checkPolicy(
+    policy: Policy,
+    resource: string,
+    data?: any
+  ): PolicyEffect {
+    if ('where' in policy && data && !policy.where(data, this))
+      return PolicyEffect.NO_EFFECT
+
     const policyPath = policy.resource.split('.')
     const resourcePath = resource.split('.')
 
@@ -58,17 +66,17 @@ export default class AuthUser {
     return effect
   }
 
-  can(resource: string): boolean {
+  can(resource: string, data?: any): boolean {
     let effect: PolicyEffect = PolicyEffect.NO_EFFECT
     for (const policy of this.expandedPolicies) {
-      const res = AuthUser.checkPolicy(policy, resource)
+      const res = this.checkPolicy(policy, resource, data)
       if (res !== PolicyEffect.NO_EFFECT) effect = res
     }
     return effect === PolicyEffect.ALLOW
   }
 
   filter(data: any) {
-    return _.pick(data, ...getPaths(data).filter(path => this.can(path)))
+    return _.pick(data, ...getPaths(data).filter(path => this.can(path, data)))
   }
 }
 

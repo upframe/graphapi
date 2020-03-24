@@ -36,7 +36,7 @@ export const graphapi = async (event, context) => {
         parseCookies(event.headers.Cookie ?? event.headers.cookie).auth
       )
       const roles = role?.split('.').map(v => v.trim()) ?? []
-      const user = new AuthUser()
+      const user = new AuthUser(id)
       user.groups = roles
       return {
         id,

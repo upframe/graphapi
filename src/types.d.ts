@@ -11,6 +11,7 @@ interface Policy {
   effect: 'allow' | 'disallow'
   action: 'read'
   resource: string
+  where?(data: any, user: import('./authorization/user').default): boolean
 }
 
 interface Group {
