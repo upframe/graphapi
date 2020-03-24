@@ -17,18 +17,14 @@ interface Group {
   policies: Policy[]
   groups: Group[]
 }
-interface User extends Group {
-  id: string
-  accessGraph: AccessGraph
-}
 
 interface AccessGraph {
   [field: string]: boolean | AccessGraph
 }
 
 interface ResolverCtx {
+  user: import('./authorization/user').default
   id: string
   roles: string[]
-  accessGraph: AccessGraph
   setHeader(header: string, value: string): void
 }

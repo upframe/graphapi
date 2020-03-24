@@ -1,8 +1,8 @@
 import { Model as ObjectionModel } from 'objection'
-import { accessFilter, dataGraph } from '../authorization'
+import { dataGraph } from '../authorization'
 
 export class Model extends ObjectionModel {
-  static _controlAccess(item: Model, context: Partial<User> = {}) {
+  static _controlAccess(item: Model, context: ResolverCtx) {
     const data = { [this.tableName]: item }
     const relations = Object.fromEntries(
       Object.entries(item)
@@ -13,9 +13,8 @@ export class Model extends ObjectionModel {
         })
     )
     const filtered =
-      this.tableName in dataGraph
-        ? accessFilter(data, context.accessGraph)
-        : data
+      this.tableName in dataGraph ? context.user.filter(data) : data
+
     return { ...filtered[this.tableName], ...relations }
   }
 

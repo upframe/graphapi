@@ -1,7 +1,7 @@
 import knex from './db'
 import { Model, Mentor } from './models'
 Model.knex(knex)
-import { buildUser } from './authorization'
+import AuthUser from './authorization/user'
 
 import {
   ApolloServer,
@@ -36,8 +36,11 @@ export const graphapi = async (event, context) => {
         parseCookies(event.headers.Cookie ?? event.headers.cookie).auth
       )
       const roles = role?.split('.').map(v => v.trim()) ?? []
+      const user = new AuthUser()
+      user.groups = roles
       return {
-        ...buildUser(id, ...roles),
+        id,
+        user,
         roles,
         setHeader(header, value) {
           headers[header] = value
