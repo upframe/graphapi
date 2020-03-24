@@ -11,6 +11,7 @@ import {
   Tags,
 } from '../models'
 import getQueryFields from './queryFields'
+import { fromPaths } from '../utils/path'
 
 const ENTRIES = {
   Person: User,
@@ -85,7 +86,10 @@ export default function<M extends Model>(
   }
 
   let { [entry.tableName]: graph } = resolve(entry, fields)
-  graph = mergeGraph(graph, include)
+  graph = mergeGraph(
+    graph,
+    typeof include === 'string' ? fromPaths(include) : include
+  )
 
   let query = entry.query()
   if (graph) query = query[`withGraph${join ? 'Joined' : 'Fetched'}`](graph)

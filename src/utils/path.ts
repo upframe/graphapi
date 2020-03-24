@@ -1,3 +1,5 @@
+import _ from 'lodash'
+
 export const expand = (path: string): string[] => {
   let segs = path.split('.')
   const compInd = segs.findIndex(seg => /^\[.+\]$/.test(seg))
@@ -15,3 +17,28 @@ export const getPaths = (obj: any, ...path: string[]) =>
   typeof obj !== 'object' || obj === null || obj instanceof Date
     ? path.join('.')
     : Object.entries(obj).flatMap(([k, v]) => getPaths(v, ...path, k))
+
+export const fromPaths = (path: string): AccessGraph => {
+  path.trim()
+  let paths = ['']
+  let lvl = 0
+  if (/^\[.*\]$/.test(path)) {
+    path = path.replace(/^\[(.*)\]$/, '$1')
+    for (let char of path) {
+      if (char === ',' && lvl === 0) {
+        paths.push('')
+        continue
+      }
+      if (char === '[') lvl++
+      if (char === ']') lvl--
+      paths[paths.length - 1] += char
+    }
+  } else paths = [path]
+
+  return _.merge(
+    {},
+    ...paths
+      .flatMap(path => expand(path.trim()))
+      .map(path => _.set({}, path, true))
+  )
+}

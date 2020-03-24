@@ -9,7 +9,7 @@ export const me: Resolver = async ({ query, ctx: { id } }) => {
 }
 
 export const mentors: Resolver = async ({ query }) =>
-  await query({ join: true, include: { mentors: true } })
+  await query({ join: true, include: 'mentors' })
     .select(knex.raw('mentors.score + RANDOM() as rank'))
     .where({
       role: 'mentor',
@@ -53,6 +53,6 @@ export const tags: Resolver<Tags> = async ({ query, args: { orderBy } }) => {
 export const lists: Resolver = async ({ query }) => await query()
 
 export const list: Resolver = async ({ query, args: { name } }) =>
-  await query({ join: true, include: { users: { mentors: true } } })
+  await query({ join: true, include: 'users.mentors' })
     .where({ 'lists.name': name, listed: true })
     .first()

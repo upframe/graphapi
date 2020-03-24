@@ -28,9 +28,10 @@ export const graphapi = async (event, context) => {
       inheritResolversFromInterfaces: true,
     }),
     context: ({ event }): ResolverCtx => {
-      const { id, role } = authenticate(
-        parseCookies(event.headers.Cookie ?? event.headers.cookie).auth
-      )
+      const { id, role } =
+        authenticate(
+          parseCookies(event.headers.Cookie ?? event.headers.cookie).auth
+        ) ?? {}
       const roles = role?.split('.').map(v => v.trim()) ?? []
       const user = new AuthUser(id)
       user.groups = roles.length ? roles : ['visitor']
