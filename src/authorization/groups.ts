@@ -23,6 +23,36 @@ export const visitor: Group = {
       resource: 'mentors',
       where: 'mentors.id = current.id',
     },
+    {
+      effect: 'allow',
+      action: 'read',
+      resource: 'time_slots',
+    },
+    {
+      effect: 'allow',
+      action: 'read',
+      resource: 'meetups',
+    },
+    {
+      effect: 'allow',
+      action: 'read',
+      resource: 'profile_pictures',
+    },
+    {
+      effect: 'allow',
+      action: 'read',
+      resource: 'tags',
+    },
+    {
+      effect: 'allow',
+      action: 'read',
+      resource: 'lists',
+    },
+    {
+      effect: 'allow',
+      action: 'read',
+      resource: 'socialmedia',
+    },
   ],
 }
 

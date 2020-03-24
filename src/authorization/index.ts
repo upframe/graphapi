@@ -1,31 +1,6 @@
 import _ from 'lodash'
 import * as path from '../utils/path'
 
-export const dataGraph: AccessGraph = {
-  users: {
-    id: true,
-    handle: true,
-    name: true,
-    email: true,
-    password: true,
-    role: true,
-    location: true,
-    biography: true,
-    allow_emails: true,
-    mentors: true,
-  },
-  mentors: {
-    id: true,
-    listed: true,
-    title: true,
-    company: true,
-    google_refresh_token: true,
-    google_access_token: true,
-    google_calendar_id: true,
-    slot_reminder_email: true,
-  },
-}
-
 function buildWhere(where: string): WhereFunc {
   const [ls, op, rs] = where.split(/(!?=)/).map(v => v.trim())
   if (!ls || !rs) throw Error(`invalid where expression ${where}`)

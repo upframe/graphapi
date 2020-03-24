@@ -10,7 +10,7 @@ interface Person {
   biography: String
   tags: [String!]
   website: String
-  categories: [String!]!
+  categories: [String!]
   role: Role
 }
 
@@ -26,7 +26,7 @@ type User implements Person {
   biography: String
   tags: [String!]
   website: String
-  categories: [String!]!
+  categories: [String!]
   role: Role
 }
 
@@ -48,7 +48,7 @@ type Mentor implements Person {
   slots(after: String, before: String, includeBooked: Boolean = false): [Slot!]!
   calendars(ids: [ID!]): [Calendar!]
   calendarConnected: Boolean
-  categories: [String!]!
+  categories: [String!]
   role: Role
 }
 
