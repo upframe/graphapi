@@ -7,6 +7,7 @@ export default class AuthUser {
   private _groups: string[] = []
   private _policies: Policy[] = []
   private _expanded: Policy[] = []
+  public denied: string[] = []
 
   constructor(public readonly id: string) {}
 
@@ -76,7 +77,11 @@ export default class AuthUser {
   }
 
   filter(data: any) {
-    return _.pick(data, ...getPaths(data).filter(path => this.can(path, data)))
+    const [permitted, denied] = _.partition(getPaths(data), path =>
+      this.can(path, data)
+    )
+    this.denied.push(...denied)
+    return _.pick(data, ...permitted)
   }
 }
 

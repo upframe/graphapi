@@ -14,6 +14,7 @@ import { parseCookies } from './utils/cookie'
 import { authenticate } from './auth'
 import typeDefs from './schema'
 import { ValidationError } from 'objection'
+import { formatError } from 'graphql'
 
 export const graphapi = async (event, context) => {
   context.callbackWaitsForEmptyEventLoop = false
@@ -83,6 +84,17 @@ export const graphapi = async (event, context) => {
         err.message = null
       }
       return err
+    },
+    formatResponse: (response, { context }) => {
+      const denied = (context as ResolverCtx).user.denied
+      if (denied.length === 0) return response
+      response.errors = [
+        ...(response.errors ?? []),
+        ...denied.map(v =>
+          formatError(new ForbiddenError(`not allowed to access ${v}`))
+        ),
+      ]
+      return response
     },
     ...(process.env.stage === 'dev'
       ? {
