@@ -4,7 +4,7 @@ import * as obj from '../../utils/object'
 import { AuthenticationError, UserInputError } from '../../error'
 import { User, UserHandles, UserTags, Tags, Mentor } from '../../models'
 
-export const updateProfile = async (_, { input }, { id, role }) => {
+export const updateProfile = async (_, { input }, { id, role, ...ctx }) => {
   if (!id) throw new AuthenticationError('not logged in')
 
   const handles = (input.social ?? [])
@@ -97,16 +97,20 @@ export const updateProfile = async (_, { input }, { id, role }) => {
 export const setProfileVisibility = async (
   _,
   { visibility },
-  { id, roles },
+  { id, roles, ...ctx },
   info
 ) => {
   if (!id) throw new AuthenticationError('not logged in')
   if (!roles.includes('mentor'))
     throw new UserInputError(`must be mentor to set account visibility`)
-  await Mentor.query().patchAndFetchById(id, {
-    listed: visibility === 'LISTED',
-  })
-  return await query(info).findById(id)
+
+  await Mentor.query()
+    .findById(id)
+    .patch({ listed: visibility === 'LISTED' })
+  const user = await query(info)
+    .findById(id)
+    .context(ctx)
+  return user
 }
 
 export const updateNotificationPreferences = async (
@@ -124,7 +128,6 @@ export const updateNotificationPreferences = async (
       ...(typeof receiveEmails === 'boolean' && {
         allow_emails: receiveEmails,
       }),
-      // @ts-ignore
       ...(slotReminder && {
         mentors: {
           id,

@@ -1,4 +1,5 @@
 const currentUser = ({ users }, { id }) => users?.id && users.id !== id
+const currentMentor = ({ mentors }, { id }) => mentors?.id && mentors.id !== id
 
 export const visitor: Group = {
   groups: [],
@@ -17,7 +18,18 @@ export const visitor: Group = {
     {
       effect: 'allow',
       action: 'read',
+      resource: 'mentors',
+    },
+    {
+      effect: 'allow',
+      action: 'read',
       resource: 'mentors.[id, title, company]',
+    },
+    {
+      effect: 'allow',
+      action: 'read',
+      resource: 'mentors',
+      where: currentMentor,
     },
   ],
 }

@@ -19,7 +19,7 @@ export class Model extends ObjectionModel {
   }
 
   static afterFind({ result, context, relation }: any) {
-    if (relation || !result) return
+    if (relation || !result || !context.user) return
     return Array.isArray(result)
       ? result.map(v => this._controlAccess(v, context))
       : this._controlAccess(result, context)

@@ -31,7 +31,7 @@ const set = (model: typeof Model) => {
 }
 
 set(User)
-  .add(Mentor, 'company', 'title', 'slots')
+  .add(Mentor, 'company', 'title', 'slots', 'notificationPrefs', 'visibility')
   .add(SocialMedia, 'social')
   .add(ProfilePicture, 'profilePictures')
   .add(List, 'categories')

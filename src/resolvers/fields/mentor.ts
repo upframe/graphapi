@@ -3,7 +3,7 @@ import * as obj from '../../utils/object'
 import { Slots } from '../../models'
 
 export default {
-  visibility: ({ mentors, visibility = mentors?.visibility }) =>
+  visibility: ({ mentors, visibility = mentors?.listed }) =>
     visibility ? 'LISTED' : 'UNLISTED',
 
   title: ({ mentors, title = mentors?.title }) => title,

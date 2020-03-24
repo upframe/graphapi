@@ -37,7 +37,7 @@ export const graphapi = async (event, context) => {
       )
       const roles = role?.split('.').map(v => v.trim()) ?? []
       const user = new AuthUser(id)
-      user.groups = roles
+      user.groups = roles.length ? roles : ['visitor']
       return {
         id,
         user,
