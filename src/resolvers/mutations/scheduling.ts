@@ -82,8 +82,6 @@ export const requestSlot = async (_, { input }, { id }) => {
   const slot = await Slots.query().findById(input.slotId)
   if (!slot) throw new UserInputError('unknown slot')
 
-  console.log({ slot })
-
   const mentor = await User.query()
     .withGraphFetched('mentors')
     .findById(slot.mentor_id)

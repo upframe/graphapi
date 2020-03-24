@@ -15,7 +15,7 @@ export default {
     return socialmedia
   },
 
-  tags: ({ role, tags }) =>
+  tags: ({ role, tags = [] }) =>
     role === 'user' ? null : tags.map(({ name }) => name),
 
   notificationPrefs: ({ allow_emails, ...parent }) => ({
