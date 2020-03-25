@@ -1,4 +1,10 @@
 import { Model as ObjectionModel } from 'objection'
+import { ForbiddenError } from '../error'
+
+type StaticHookArguments = Parameters<typeof ObjectionModel.beforeInsert>[0] & {
+  context: ResolverCtx
+  cancelQuery(): void
+}
 
 export class Model extends ObjectionModel {
   static _controlAccess(item: Model, context: ResolverCtx) {
@@ -15,10 +21,17 @@ export class Model extends ObjectionModel {
     return { ...filtered, ...relations }
   }
 
-  static afterFind({ result, context, relation }: any) {
+  static afterFind({ result, context, relation }: StaticHookArguments) {
     if (relation || !result || !context.user) return
     return Array.isArray(result)
       ? result.map(v => this._controlAccess(v, context))
       : this._controlAccess(result, context)
+  }
+
+  static beforeInsert({ context }: StaticHookArguments) {
+    if (!context?.user?.can(this.tableName, 'create'))
+      throw new ForbiddenError(
+        `you are not allowed to create ${this.tableName}`
+      )
   }
 }

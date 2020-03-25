@@ -1,5 +1,7 @@
 type Resolver<M extends Model = Model> = (args: {
-  query: (options?: any) => QueryBuilder<M, M[]>
+  query: ((options?: any) => import('objection').QueryBuilder<M, M[]>) & {
+    raw(): import('objection').QueryBuilder<M, M[]>
+  }
   parent: any
   args: any
   ctx: any
@@ -9,10 +11,11 @@ type Fields = { [k: string]: Fields | boolean }
 
 interface Policy {
   effect: 'allow' | 'disallow'
-  action: 'read'
+  action: Action
   resource: string
   where?: WhereFunc | string
 }
+type Action = 'read' | 'create'
 
 type WhereFunc = (
   data: any,

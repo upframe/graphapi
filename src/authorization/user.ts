@@ -41,8 +41,11 @@ export default class AuthUser {
   private checkPolicy(
     policy: Policy,
     resource: string,
+    action: Action,
     data?: any
   ): PolicyEffect {
+    if (policy.action !== action) return PolicyEffect.NO_EFFECT
+
     if (typeof policy.where === 'function' && data && !policy.where(data, this))
       return PolicyEffect.NO_EFFECT
 
@@ -67,10 +70,10 @@ export default class AuthUser {
     return effect
   }
 
-  can(resource: string, data?: any): boolean {
+  can(resource: string, action: Action, data?: any): boolean {
     let effect: PolicyEffect = PolicyEffect.NO_EFFECT
     for (const policy of this.expandedPolicies) {
-      const res = this.checkPolicy(policy, resource, data)
+      const res = this.checkPolicy(policy, resource, action, data)
       if (res !== PolicyEffect.NO_EFFECT) effect = res
     }
     return effect === PolicyEffect.ALLOW
@@ -78,7 +81,7 @@ export default class AuthUser {
 
   filter(data: any) {
     const [permitted, denied] = _.partition(getPaths(data), path =>
-      this.can(path, data)
+      this.can(path, 'read', data)
     )
     this.denied.push(...denied)
     return _.pick(data, ...permitted)

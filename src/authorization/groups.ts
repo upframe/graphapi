@@ -70,5 +70,10 @@ export const mentor: Group = {
       resource: 'mentors',
       where: 'mentors.id = current.id',
     },
+    {
+      effect: 'allow',
+      action: 'create',
+      resource: 'lists',
+    },
   ],
 }
