@@ -134,7 +134,7 @@ enum TagOrder {
 }
 
 type List {
-  id: ID
+  id: Int
   name: String!
   users: [Person!]
 }

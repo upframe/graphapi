@@ -1,6 +1,10 @@
+type Model = import('./models').Model
+
 type Resolver<M extends Model = Model> = (args: {
   query: ((options?: any) => import('objection').QueryBuilder<M, M[]>) & {
-    raw(model?: any): import('objection').QueryBuilder<M, M[]>
+    raw<R extends Model = M>(
+      model?: new () => R
+    ): import('objection').QueryBuilder<R, R[]>
   }
   parent: any
   args: any

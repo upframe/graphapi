@@ -86,5 +86,15 @@ export const admin: Group = {
       action: 'delete',
       resource: 'lists',
     },
+    {
+      effect: 'allow',
+      action: 'create',
+      resource: 'user_lists',
+    },
+    {
+      effect: 'allow',
+      action: 'delete',
+      resource: 'user_lists',
+    },
   ],
 }

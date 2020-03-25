@@ -74,5 +74,7 @@ type Mutation {
   disconnectCalendar: Mentor
 
   createList(name: String!): List
-  deleteList(listId: ID!): Int
+  deleteList(listId: Int!): Int
+  addToList(listId: Int!, userId: ID!): List
+  removeFromList(listId: Int!, userId: ID!): List
 }
