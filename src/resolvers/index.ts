@@ -18,7 +18,7 @@ const resolver = (handler: Resolver) => (
 ) =>
   handler({
     query: Object.assign((options = {}) => query(info, { ...options, ctx }), {
-      raw: () => query.raw(info, ctx),
+      raw: (model?: any) => query.raw(info, ctx, model),
     }),
     parent,
     args,
@@ -30,10 +30,10 @@ export default {
     Object.entries(queries).map(([k, v]) => [k, resolver(v)])
   ),
   Mutation: Object.fromEntries(
-    Object.entries(Mutation).map(([k, v]) => {
-      if (k === 'createList') return [k, resolver(v)]
-      return [k, v]
-    })
+    Object.entries(Mutation).map(([k, v]) => [
+      k,
+      k.toLowerCase().includes('list') ? resolver(v as Resolver) : v,
+    ])
   ),
   Person,
   Mentor,

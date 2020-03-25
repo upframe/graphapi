@@ -103,12 +103,16 @@ export default Object.assign(
   {
     raw: <M extends Model>(
       info: any,
-      ctx: ResolverCtx
+      ctx: ResolverCtx,
+      model?: any
     ): QueryBuilder<M, M[]> => {
-      const type =
-        info.returnType.name ?? info.returnType.ofType?.ofType?.ofType?.name
-      const entry = ENTRIES[type]
-      if (!entry) throw Error(`no known table for ${type}`)
+      let entry
+      if (!model) {
+        const type =
+          info.returnType.name ?? info.returnType.ofType?.ofType?.ofType?.name
+        entry = ENTRIES[type]
+        if (!entry) throw Error(`no known table for ${type}`)
+      } else entry = model
       return entry.query().context(ctx)
     },
   }

@@ -1,6 +1,6 @@
 type Resolver<M extends Model = Model> = (args: {
   query: ((options?: any) => import('objection').QueryBuilder<M, M[]>) & {
-    raw(): import('objection').QueryBuilder<M, M[]>
+    raw(model?: any): import('objection').QueryBuilder<M, M[]>
   }
   parent: any
   args: any
@@ -15,7 +15,7 @@ interface Policy {
   resource: string
   where?: WhereFunc | string
 }
-type Action = 'read' | 'create'
+type Action = 'read' | 'create' | 'delete'
 
 type WhereFunc = (
   data: any,
