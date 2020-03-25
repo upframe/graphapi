@@ -17,7 +17,9 @@ const resolver = (handler: Resolver) => (
   info: any
 ) =>
   handler({
-    query: (options = {}) => query(info, { ...options, ctx }),
+    query: Object.assign((options = {}) => query(info, { ...options, ctx }), {
+      raw: () => query.raw(info, ctx),
+    }),
     parent,
     args,
     ctx,
@@ -27,7 +29,12 @@ export default {
   Query: Object.fromEntries(
     Object.entries(queries).map(([k, v]) => [k, resolver(v)])
   ),
-  Mutation,
+  Mutation: Object.fromEntries(
+    Object.entries(Mutation).map(([k, v]) => {
+      if (k === 'createList') return [k, resolver(v)]
+      return [k, v]
+    })
+  ),
   Person,
   Mentor,
   Meetup,

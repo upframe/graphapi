@@ -133,6 +133,7 @@ enum TagOrder {
 }
 
 type List {
+  id: ID
   name: String!
   users: [Person!]
 }

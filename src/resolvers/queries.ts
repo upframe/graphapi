@@ -54,5 +54,8 @@ export const lists: Resolver = async ({ query }) => await query()
 
 export const list: Resolver = async ({ query, args: { name } }) =>
   await query({ join: true, include: 'users.mentors' })
-    .where({ 'lists.name': name, listed: true })
+    .where({ 'lists.name': name })
+    .andWhere(function() {
+      this.where({ listed: true }).orWhereNull('listed')
+    })
     .first()
