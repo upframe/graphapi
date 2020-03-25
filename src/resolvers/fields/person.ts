@@ -2,7 +2,7 @@ import { SocialMedia } from '../../models'
 
 export default {
   __resolveType({ role }) {
-    if (role === 'mentor') return 'Mentor'
+    if (role !== 'User') return 'Mentor'
     return 'User'
   },
 

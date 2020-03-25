@@ -70,9 +70,20 @@ export const mentor: Group = {
       resource: 'mentors',
       where: 'mentors.id = current.id',
     },
+  ],
+}
+
+export const admin: Group = {
+  groups: [mentor],
+  policies: [
     {
       effect: 'allow',
       action: 'create',
+      resource: 'lists',
+    },
+    {
+      effect: 'allow',
+      action: 'delete',
       resource: 'lists',
     },
   ],

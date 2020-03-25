@@ -122,6 +122,7 @@ enum Role {
   USER
   MENTOR
   NOLOGIN
+  ADMIN
 }
 
 type Tag {

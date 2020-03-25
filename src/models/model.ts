@@ -34,4 +34,11 @@ export class Model extends ObjectionModel {
         `you are not allowed to create ${this.tableName}`
       )
   }
+
+  static beforeDelete({ context }: StaticHookArguments) {
+    if (!context?.user.can(this.tableName, 'delete'))
+      throw new ForbiddenError(
+        `you are not allowed to delete ${this.tableName}`
+      )
+  }
 }
