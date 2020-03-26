@@ -18,7 +18,9 @@ export class Model extends ObjectionModel {
           return [k, relation?.afterFind({ result, context }) ?? result]
         })
     )
-    return { ...filtered, ...relations }
+    const result = { ...filtered, ...relations }
+    Object.setPrototypeOf(result, this.prototype)
+    return result
   }
 
   static afterFind({ result, context, relation }: StaticHookArguments) {
@@ -36,7 +38,7 @@ export class Model extends ObjectionModel {
   }
 
   static beforeDelete({ context }: StaticHookArguments) {
-    if (!context?.user.can(this.tableName, 'delete'))
+    if (!context?.user?.can(this.tableName, 'delete'))
       throw new ForbiddenError(
         `you are not allowed to delete ${this.tableName}`
       )
