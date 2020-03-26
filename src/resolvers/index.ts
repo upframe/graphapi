@@ -17,6 +17,7 @@ const resolver = (handler: Resolver) => (
   info: any
 ) =>
   handler({
+    // @ts-ignore
     query: Object.assign((options = {}) => query(info, { ...options, ctx }), {
       raw: (model?: any) => query.raw(info, ctx, model),
     }),
@@ -27,12 +28,19 @@ const resolver = (handler: Resolver) => (
 
 export default {
   Query: Object.fromEntries(
-    Object.entries(queries).map(([k, v]) => [k, resolver(v)])
+    Object.entries(queries).map(([k, v]) => [k, resolver(v as any)])
   ),
   Mutation: Object.fromEntries(
     Object.entries(Mutation).map(([k, v]) => [
       k,
-      k.toLowerCase().includes('list') ? resolver(v as Resolver) : v,
+      k.toLowerCase().includes('list') ||
+      [
+        'updateProfile',
+        'setProfileVisibility',
+        'updateNotificationPreferences',
+      ].includes(k)
+        ? resolver(v as Resolver)
+        : v,
     ])
   ),
   Person,

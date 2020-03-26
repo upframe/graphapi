@@ -19,7 +19,7 @@ export default class AuthUser {
     this._expandPolicies()
   }
   get groups() {
-    return this._groups
+    return this._expandGroups()
   }
   set groups(v: string[]) {
     this._groups = v
@@ -27,6 +27,18 @@ export default class AuthUser {
   }
   get expandedPolicies() {
     return this._expanded
+  }
+
+  private _expandGroups(groups = this._groups ?? []): string[] {
+    if (!groups?.length) return []
+    return Array.from(
+      new Set([
+        ...groups,
+        ...this._expandGroups(
+          groups.flatMap(v => groupList[v].groups.map(({ name }) => name))
+        ),
+      ])
+    )
   }
 
   private _expandPolicies() {
@@ -48,7 +60,8 @@ export default class AuthUser {
 
     if (
       typeof policy.where === 'function' &&
-      'where' in policy && (!data || !policy.where(data, this))
+      'where' in policy &&
+      (!data || !policy.where(data, this))
     )
       return PolicyEffect.NO_EFFECT
 

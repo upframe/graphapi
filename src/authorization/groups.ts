@@ -1,4 +1,5 @@
 export const visitor: Group = {
+  name: 'visitor',
   groups: [],
   policies: [
     {
@@ -51,10 +52,16 @@ export const visitor: Group = {
       action: 'read',
       resource: 'user_handles',
     },
+    {
+      effect: 'allow',
+      action: 'read',
+      resource: 'user_tags',
+    },
   ],
 }
 
 export const maker: Group = {
+  name: 'maker',
   groups: [visitor],
   policies: [
     {
@@ -79,6 +86,7 @@ export const maker: Group = {
 }
 
 export const mentor: Group = {
+  name: 'mentor',
   groups: [maker],
   policies: [
     {
@@ -87,10 +95,32 @@ export const mentor: Group = {
       resource: 'mentors',
       where: 'mentors.id = current.id',
     },
+    {
+      effect: 'allow',
+      action: 'update',
+      resource: 'mentors',
+      where: 'mentors.id = current.id',
+    },
+    {
+      effect: 'allow',
+      action: 'create',
+      resource: 'tags',
+    },
+    {
+      effect: 'allow',
+      action: 'create',
+      resource: 'user_tags',
+    },
+    {
+      effect: 'allow',
+      action: 'delete',
+      resource: 'user_tags',
+    },
   ],
 }
 
 export const admin: Group = {
+  name: 'admin',
   groups: [mentor],
   policies: [
     {

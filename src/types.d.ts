@@ -1,15 +1,20 @@
 type Model = import('./models').Model
 
-type Resolver<M extends Model = Model> = (args: {
-  query: ((options?: any) => import('objection').QueryBuilder<M, M[]>) & {
+type Resolver<M = void> = (args: {
+  query: ((
+    options?: any
+  ) => import('objection').QueryBuilder<
+    M extends Model ? M : Model,
+    M extends Model ? M[] : Model[]
+  >) & {
     raw<R extends Model = M>(
       model?: new () => R
     ): import('objection').QueryBuilder<R, R[]>
   }
   parent: any
   args: any
-  ctx: any
-}) => any
+  ctx: ResolverCtx
+}) => Promise<M | M[]>
 
 type Fields = { [k: string]: Fields | boolean }
 
@@ -27,6 +32,7 @@ type WhereFunc = (
 ) => boolean
 
 interface Group {
+  name: string
   policies: Policy[]
   groups: Group[]
 }

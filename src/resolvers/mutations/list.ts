@@ -27,7 +27,7 @@ export const deleteList: Resolver = async ({ args: { listId }, query }) => {
     throw new UserInputError(`list with id ${listId} doesn't exist`)
 }
 
-export const addToList: Resolver = async ({
+export const addToList: Resolver<List> = async ({
   args: { listId, userId },
   query,
 }) => {

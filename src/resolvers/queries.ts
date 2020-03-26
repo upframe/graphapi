@@ -1,14 +1,14 @@
-import { User, Tags } from '../models'
+import { User, Tags, List } from '../models'
 import { AuthenticationError, handleError, UserInputError } from '../error'
 import { generateAuthUrl } from '../gcal'
 import knex from '../db'
 
-export const me: Resolver = async ({ query, ctx: { id } }) => {
+export const me: Resolver<User> = async ({ query, ctx: { id } }) => {
   if (!id) throw new AuthenticationError('not logged in')
   return await query().findById(id)
 }
 
-export const mentors: Resolver = async ({ query }) =>
+export const mentors: Resolver<User> = async ({ query }) =>
   await query({ join: true, include: 'mentors' })
     .select(knex.raw('mentors.score + RANDOM() as rank'))
     .where({
@@ -40,7 +40,7 @@ export const user: Resolver<User> = async ({ query, args: { id, handle } }) => {
   return user
 }
 
-export const calendarConnectUrl: Resolver = async ({ ctx: { id } }) => {
+export const calendarConnectUrl: Resolver<string> = async ({ ctx: { id } }) => {
   if (!id) throw new AuthenticationError('not logged in')
   return await generateAuthUrl()
 }
@@ -52,9 +52,9 @@ export const tags: Resolver<Tags> = async ({ query, args: { orderBy } }) => {
   return tags
 }
 
-export const lists: Resolver = async ({ query }) => await query()
+export const lists: Resolver<List> = async ({ query }) => await query()
 
-export const list: Resolver = async ({ query, args: { name } }) =>
+export const list: Resolver<List> = async ({ query, args: { name } }) =>
   await query({ join: true, include: 'users.mentors' })
     .where({ 'lists.name': name })
     .andWhere(function() {
