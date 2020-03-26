@@ -19,7 +19,7 @@ interface Policy {
   resource: string
   where?: WhereFunc | string
 }
-type Action = 'read' | 'create' | 'delete'
+type Action = 'create' | 'read' | 'update' | 'delete'
 
 type WhereFunc = (
   data: any,

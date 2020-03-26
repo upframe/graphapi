@@ -58,6 +58,12 @@ export const maker: Group = {
       resource: 'users.[email, allow_emails]',
       where: 'users.id = current.id',
     },
+    {
+      effect: 'allow',
+      action: 'update',
+      resource: 'users',
+      where: 'users.id = current.id',
+    },
   ],
 }
 

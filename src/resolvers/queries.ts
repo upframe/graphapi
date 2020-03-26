@@ -12,8 +12,10 @@ export const mentors: Resolver = async ({ query }) =>
   await query({ join: true, include: 'mentors' })
     .select(knex.raw('mentors.score + RANDOM() as rank'))
     .where({
-      role: 'mentor',
       listed: true,
+    })
+    .andWhere(function() {
+      this.whereIn('role', ['mentor', 'admin'])
     })
     .orderBy('rank', 'DESC')
 

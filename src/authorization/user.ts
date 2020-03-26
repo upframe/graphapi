@@ -46,7 +46,10 @@ export default class AuthUser {
   ): PolicyEffect {
     if (policy.action !== action) return PolicyEffect.NO_EFFECT
 
-    if (typeof policy.where === 'function' && data && !policy.where(data, this))
+    if (
+      typeof policy.where === 'function' &&
+      'where' in policy && (!data || !policy.where(data, this))
+    )
       return PolicyEffect.NO_EFFECT
 
     const policyPath = policy.resource.split('.')

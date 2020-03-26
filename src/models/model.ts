@@ -43,4 +43,15 @@ export class Model extends ObjectionModel {
         `you are not allowed to delete ${this.tableName}`
       )
   }
+
+  static beforeUpdate({ context, inputItems }: StaticHookArguments) {
+    if (
+      !inputItems.every(item =>
+        context?.user?.can(this.tableName, 'update', { [this.tableName]: item })
+      )
+    )
+      throw new ForbiddenError(
+        `you are not allowed to update ${this.tableName}`
+      )
+  }
 }
