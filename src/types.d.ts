@@ -41,3 +41,5 @@ interface ResolverCtx {
   roles: string[]
   setHeader(header: string, value: string): void
 }
+
+type ModelContent<M extends Model> = Omit<M, keyof Model>

@@ -37,21 +37,30 @@ export class Model extends ObjectionModel {
       )
   }
 
-  static beforeDelete({ context }: StaticHookArguments) {
-    if (!context?.user?.can(this.tableName, 'delete'))
-      throw new ForbiddenError(
-        `you are not allowed to delete ${this.tableName}`
-      )
-  }
-
   static beforeUpdate({ context, inputItems }: StaticHookArguments) {
     if (
       !inputItems.every(item =>
-        context?.user?.can(this.tableName, 'update', { [this.tableName]: item })
+        context?.user?.can(this.tableName, 'update', {
+          [this.tableName]: item,
+        })
       )
     )
       throw new ForbiddenError(
         `you are not allowed to update ${this.tableName}`
+      )
+  }
+
+  static async beforeDelete({ context, asFindQuery }: StaticHookArguments) {
+    const items = await asFindQuery()
+    if (
+      !items.every(item =>
+        context?.user?.can(this.tableName, 'delete', {
+          [this.tableName]: item,
+        })
+      )
+    )
+      throw new ForbiddenError(
+        `you are not allowed to delete ${this.tableName}`
       )
   }
 }

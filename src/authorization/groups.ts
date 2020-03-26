@@ -46,6 +46,11 @@ export const visitor: Group = {
       action: 'read',
       resource: 'socialmedia',
     },
+    {
+      effect: 'allow',
+      action: 'read',
+      resource: 'user_handles',
+    },
   ],
 }
 
@@ -63,6 +68,12 @@ export const maker: Group = {
       action: 'update',
       resource: 'users',
       where: 'users.id = current.id',
+    },
+    {
+      effect: 'allow',
+      action: 'delete',
+      resource: 'user_handles',
+      where: 'user_handles.user_id = current.id',
     },
   ],
 }

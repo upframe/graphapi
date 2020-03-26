@@ -6,7 +6,7 @@ export default {
     return 'User'
   },
 
-  social: async ({ socialmedia }, { includeEmpty }) => {
+  social: async ({ socialmedia = [] }, { includeEmpty }) => {
     if (includeEmpty)
       return (await SocialMedia.query()).map(v => ({
         ...v,
