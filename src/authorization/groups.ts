@@ -57,6 +57,11 @@ export const visitor: Group = {
       action: 'read',
       resource: 'user_tags',
     },
+    {
+      effect: 'allow',
+      action: 'create',
+      resource: 'users',
+    },
   ],
 }
 
@@ -81,6 +86,12 @@ export const user: Group = {
       action: 'delete',
       resource: 'user_handles',
       where: 'user_handles.user_id = current.id',
+    },
+    {
+      effect: 'allow',
+      action: 'delete',
+      resource: 'users',
+      where: 'users.id = current.id',
     },
   ],
 }
@@ -142,6 +153,16 @@ export const admin: Group = {
       effect: 'allow',
       action: 'delete',
       resource: 'user_lists',
+    },
+    {
+      effect: 'allow',
+      action: 'delete',
+      resource: 'users',
+    },
+    {
+      effect: 'allow',
+      action: 'read',
+      resource: 'users',
     },
   ],
 }

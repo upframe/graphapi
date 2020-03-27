@@ -1,8 +1,28 @@
-import { Model as ObjectionModel } from 'objection'
+import {
+  Model as ObjectionModel,
+  QueryBuilder as ObjectionQueryBuilder,
+  Page,
+} from 'objection'
 import { ForbiddenError } from '../error'
 import knex from '../db'
+import AuthUser from 'src/authorization/user'
 
 const debug: boolean = (knex as any).context?.client?.config?.debug
+
+export class QueryBuilder<
+  M extends ObjectionModel,
+  R = M[]
+> extends ObjectionQueryBuilder<M, R> {
+  ArrayQueryBuilderType!: QueryBuilder<M, M[]>
+  SingleQueryBuilderType!: QueryBuilder<M, M>
+  NumberQueryBuilderType!: QueryBuilder<M, number>
+  PageQueryBuilderType!: QueryBuilder<M, Page<M>>
+
+  asUser(user: AuthUser) {
+    this.context({ ...this.context(), user })
+    return this
+  }
+}
 
 type StaticHookArguments = Parameters<typeof ObjectionModel.beforeInsert>[0] & {
   context: ResolverCtx
@@ -10,21 +30,8 @@ type StaticHookArguments = Parameters<typeof ObjectionModel.beforeInsert>[0] & {
 }
 
 export class Model extends ObjectionModel {
-  static _controlAccess(item: Model, context: ResolverCtx) {
-    const data = { [this.tableName]: item }
-    const filtered = context.user.filter(data)[this.tableName]
-    const relations = Object.fromEntries(
-      Object.entries(item)
-        .filter(([k]) => k in (this.relationMappings ?? {}) && k in filtered)
-        .map(([k, result]) => {
-          const relation = (this.relationMappings ?? {})[k]?.modelClass
-          return [k, relation?.afterFind({ result, context }) ?? result]
-        })
-    )
-    const result = { ...filtered, ...relations }
-    Object.setPrototypeOf(result, this.prototype)
-    return result
-  }
+  QueryBuilderType!: QueryBuilder<this>
+  static QueryBuilder = QueryBuilder
 
   static afterFind({ result, context, relation }: StaticHookArguments) {
     if (relation || !result || !context.user) return
@@ -69,6 +76,22 @@ export class Model extends ObjectionModel {
       throw new ForbiddenError(
         `you are not allowed to delete ${this.tableName}`
       )
+  }
+
+  static _controlAccess(item: Model, context: ResolverCtx) {
+    const data = { [this.tableName]: item }
+    const filtered = context.user.filter(data)[this.tableName]
+    const relations = Object.fromEntries(
+      Object.entries(item)
+        .filter(([k]) => k in (this.relationMappings ?? {}) && k in filtered)
+        .map(([k, result]) => {
+          const relation = (this.relationMappings ?? {})[k]?.modelClass
+          return [k, relation?.afterFind({ result, context }) ?? result]
+        })
+    )
+    const result = { ...filtered, ...relations }
+    Object.setPrototypeOf(result, this.prototype)
+    return result
   }
 
   private static _log(action: string) {

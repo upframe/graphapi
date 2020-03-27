@@ -1,7 +1,6 @@
 import query from '../utils/buildQuery'
 import { AuthenticationError } from '../error'
-import { Model } from '../models'
-import { QueryBuilder } from 'objection'
+import { Model, QueryBuilder } from '../models'
 
 export default function<M = void>() {
   type Assertions<M> = {
@@ -50,7 +49,7 @@ type Resolver<M = void> = (args: {
   parent: any
   args: any
   ctx: ResolverCtx
-}) => Promise<M | M[]>
+}) => Promise<M | M[]> | M | M[]
 
 type Query<M extends Model> = ((
   options?: any

@@ -1,6 +1,6 @@
-import { QueryBuilder } from 'objection'
 import {
   Model,
+  QueryBuilder,
   User,
   Mentor,
   SocialMedia,
