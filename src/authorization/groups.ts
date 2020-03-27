@@ -60,8 +60,8 @@ export const visitor: Group = {
   ],
 }
 
-export const maker: Group = {
-  name: 'maker',
+export const user: Group = {
+  name: 'user',
   groups: [visitor],
   policies: [
     {
@@ -87,7 +87,7 @@ export const maker: Group = {
 
 export const mentor: Group = {
   name: 'mentor',
-  groups: [maker],
+  groups: [user],
   policies: [
     {
       effect: 'allow',

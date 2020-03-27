@@ -1,9 +1,9 @@
 import knex from '../../db'
 import * as obj from '../../utils/object'
 import { User, UserHandles, UserTags, Tags } from '../../models'
-
 import _ from 'lodash'
 import AuthUser from 'src/authorization/user'
+import resolver from '../resolver'
 
 const updateSocial = async (
   user: AuthUser,
@@ -76,59 +76,53 @@ const updateTags = async (user: AuthUser, tags: string[]) => {
   }
 }
 
-export const updateProfile: Resolver<User> = async ({
-  args: { input },
-  ctx: { user },
-  query,
-}) => {
-  await Promise.all([
-    updateSocial(user, input.social),
-    updateTags(user, input.tags),
-  ])
+export const updateProfile = resolver<User>()(
+  async ({ args: { input }, ctx: { user }, query }) => {
+    await Promise.all([
+      updateSocial(user, input.social),
+      updateTags(user, input.tags),
+    ])
 
-  return await query().upsertGraphAndFetch({
-    id: user.id,
-    ...obj.filterKeys(input, [
-      'name',
-      'handle',
-      'location',
-      'website',
-      'biography',
-    ]),
-    ...(user.groups.includes('mentor') && {
-      mentors: {
-        id: user.id,
-        ...obj.filterKeys(input, ['title', 'company']),
-      },
-    }),
-  })
-}
+    return await query().upsertGraphAndFetch({
+      id: user.id,
+      ...obj.filterKeys(input, [
+        'name',
+        'handle',
+        'location',
+        'website',
+        'biography',
+      ]),
+      ...(user.groups.includes('mentor') && {
+        mentors: {
+          id: user.id,
+          ...obj.filterKeys(input, ['title', 'company']),
+        },
+      }),
+    })
+  }
+)
 
-export const setProfileVisibility: Resolver<User> = async ({
-  args: { visibility },
-  ctx: { id },
-  query,
-}) =>
-  await query().upsertGraphAndFetch({
-    id,
-    mentors: { id, listed: visibility === 'LISTED' },
-  })
+export const setProfileVisibility = resolver<User>()(
+  async ({ args: { visibility }, ctx: { id }, query }) =>
+    await query().upsertGraphAndFetch({
+      id,
+      mentors: { id, listed: visibility === 'LISTED' },
+    })
+)
 
-export const updateNotificationPreferences: Resolver<User> = async ({
-  args: { input },
-  ctx: { id },
-  query,
-}) => {
-  return query().upsertGraphAndFetch({
-    id,
-    ...(typeof input.receiveEmails === 'boolean' && {
-      allow_emails: input.receiveEmails,
-    }),
-    ...(input.slotReminder && {
-      mentors: {
-        id,
-        slot_reminder_email: input.slotReminder.toLowerCase(),
-      },
-    }),
-  })
-}
+export const updateNotificationPreferences = resolver<User>()(
+  async ({ args: { input }, ctx: { id }, query }) => {
+    return query().upsertGraphAndFetch({
+      id,
+      ...(typeof input.receiveEmails === 'boolean' && {
+        allow_emails: input.receiveEmails,
+      }),
+      ...(input.slotReminder && {
+        mentors: {
+          id,
+          slot_reminder_email: input.slotReminder.toLowerCase(),
+        },
+      }),
+    })
+  }
+)

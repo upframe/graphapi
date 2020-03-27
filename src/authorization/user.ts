@@ -45,9 +45,15 @@ export default class AuthUser {
     this._expanded = buildPolicies(
       getPolicies({
         policies: this._policies,
-        groups: this._groups.map(v => groupList[v]),
+        groups: this._groups.map(AuthUser._getGroup),
       })
     )
+  }
+
+  private static _getGroup(name: string): Group {
+    const group = groupList[name]
+    if (!group) throw new Error(`unknown group ${name}`)
+    return group
   }
 
   private checkPolicy(
