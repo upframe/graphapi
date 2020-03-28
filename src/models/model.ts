@@ -6,6 +6,7 @@ import {
 import { ForbiddenError } from '../error'
 import knex from '../db'
 import AuthUser from 'src/authorization/user'
+import _ from 'lodash'
 
 const debug: boolean = (knex as any).context?.client?.config?.debug
 
@@ -21,6 +22,14 @@ export class QueryBuilder<
   asUser(user: AuthUser) {
     this.context({ ...this.context(), user })
     return this
+  }
+
+  findById(id) {
+    this.context({
+      ...this.context(),
+      byId: { [(this as any)._modelClass?.tableName]: id },
+    })
+    return super.findById(id)
   }
 }
 
@@ -51,10 +60,21 @@ export class Model extends ObjectionModel {
 
   static beforeUpdate({ context, inputItems }: StaticHookArguments) {
     this._log('beforeUpdate')
+    let id = _.get(context, `byId.${this.tableName}`)
+    if (typeof this.idColumn === 'string') id = { [this.idColumn]: id }
+    else if (Array.isArray(this.idColumn))
+      id = Object.fromEntries(this.idColumn.map((c, i) => [c, id[i]]))
     if (
       !inputItems.every(item =>
         context?.user?.can(this.tableName, 'update', {
-          [this.tableName]: item,
+          [this.tableName]: {
+            ...item,
+            ...Object.fromEntries(
+              Object.entries(id)
+                .map(([c, v]) => [c, item[c] ?? v])
+                .filter(([, v]) => v !== undefined)
+            ),
+          },
         })
       )
     )
