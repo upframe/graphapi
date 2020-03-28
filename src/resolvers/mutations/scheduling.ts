@@ -219,6 +219,7 @@ export const cancelMeetup = resolver().loggedIn(
           requestBody: {
             summary: 'Upframe Slot',
             description: ``,
+            attendees: [],
           },
         }),
       deleteMeetup(meetup, mentor).catch(() =>

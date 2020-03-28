@@ -139,6 +139,12 @@ export const mentor: Group = {
       resource: 'time_slots',
       where: 'time_slots.mentor_id = current.id',
     },
+    {
+      effect: 'allow',
+      action: 'delete',
+      resource: 'time_slots',
+      where: 'time_slots.mentor_id = current.id',
+    },
   ],
 }
 
