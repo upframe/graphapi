@@ -39,7 +39,8 @@ set(User)
     'slots',
     'notificationPrefs',
     'visibility',
-    'calendarConnected'
+    'calendarConnected',
+    'calendars'
   )
   .add(SocialMedia, 'social')
   .add(ProfilePicture, 'profilePictures')

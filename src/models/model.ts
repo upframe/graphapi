@@ -50,9 +50,15 @@ export class Model extends ObjectionModel {
       : this._controlAccess(result, context)
   }
 
-  static beforeInsert({ context }: StaticHookArguments) {
+  static beforeInsert({ context, inputItems }: StaticHookArguments) {
     this._log('beforeInsert')
-    if (!context?.user?.can(this.tableName, 'create'))
+    if (
+      !inputItems.every(item =>
+        context?.user?.can(this.tableName, 'create', {
+          [this.tableName]: item,
+        })
+      )
+    )
       throw new ForbiddenError(
         `you are not allowed to create ${this.tableName}`
       )

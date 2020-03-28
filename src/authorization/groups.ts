@@ -127,6 +127,12 @@ export const mentor: Group = {
       action: 'delete',
       resource: 'user_tags',
     },
+    {
+      effect: 'allow',
+      action: 'create',
+      resource: 'time_slots',
+      where: 'time_slots.mentor_id = current.id',
+    },
   ],
 }
 

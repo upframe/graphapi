@@ -32,4 +32,8 @@ interface ResolverCtx {
   setHeader(header: string, value: string): void
 }
 
-type ModelContent<M extends Model> = Omit<M, keyof Model>
+type ModelContent<M extends Model> = {
+  [K in keyof Omit<M, keyof Model>]: M[K] extends Model
+    ? ModelContent<M[K]>
+    : M[K]
+}

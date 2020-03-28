@@ -1,7 +1,7 @@
 import * as Query from './queries'
 import * as Mutation from './mutations'
 import Person from './fields/person'
-import Mentor from './fields/mentor'
+import * as Mentor from './fields/mentor'
 import Meetup from './fields/meetup'
 import { Calendar, Event } from './fields/calendar'
 import {

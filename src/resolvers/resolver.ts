@@ -2,9 +2,9 @@ import query from '../utils/buildQuery'
 import { AuthenticationError } from '../error'
 import { Model, QueryBuilder } from '../models'
 
-export default function<M = void>() {
-  type Assertions<M> = {
-    [key in keyof typeof assertions]: ResolverBuilder<M> & Assertions<M>
+export default function<M = void, P extends Model = null>() {
+  type Assertions<M, P> = {
+    [key in keyof typeof assertions]: ResolverBuilder<M, P> & Assertions<M, P>
   }
 
   const asserts = []
@@ -20,7 +20,7 @@ export default function<M = void>() {
   }
 
   return Object.defineProperties(
-    (handler: Resolver<M>) => (
+    (handler: Resolver<M, P>) => (
       ...[parent, args, ctx, info]: Parameters<ApolloResolver>
     ) => {
       asserts.forEach(assert => assert(ctx))
@@ -41,12 +41,13 @@ export default function<M = void>() {
       })
     },
     assertions
-  ) as ResolverBuilder<M> & Assertions<M>
+  ) as ResolverBuilder<M, P extends Model ? ModelContent<P> & any : P> &
+    Assertions<M, P extends Model ? ModelContent<P> & any : P>
 }
 
-type Resolver<M = void> = (args: {
+type Resolver<M = void, P = null> = (args: {
   query: Query<M extends Model ? M : Model>
-  parent: any
+  parent: P
   args: any
   ctx: ResolverCtx
 }) => Promise<M | M[]> | M | M[]
@@ -61,6 +62,6 @@ type Query<M extends Model> = ((
 }
 
 type ApolloResolver = (parent: any, args: any, ctx: any, info: any) => any
-type ResolverBuilder<M = void> = (
-  handler: Resolver<M>
+type ResolverBuilder<M = void, P = null> = (
+  handler: Resolver<M, P>
 ) => (...args: Parameters<ApolloResolver>) => any
