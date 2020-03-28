@@ -93,6 +93,7 @@ export async function addMeetup(
       await getClient(mentor.id, mentor.mentors.google_refresh_token)
     ).calendar.events.patch({
       calendarId: mentor.mentors.google_calendar_id,
+      eventId: event.id,
       requestBody: event,
     })
     gcal_user_event_id = data.id

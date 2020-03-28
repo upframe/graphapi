@@ -28,9 +28,10 @@ export const notificationPrefs = resolver<any, User>()(
 )
 
 export const slots = resolver<any, User>()(
-  ({ parent: { mentors }, args: { after, before } }) => {
+  ({ parent: { mentors }, args: { after, before, includeBooked } }) => {
     if (!mentors) return null
-    let slots = mentors.time_slots
+    let slots = mentors.time_slots ?? []
+    if (!includeBooked) slots = slots.filter(({ meetups }) => !meetups)
     if (after)
       slots = slots.filter(({ start }) => new Date(start) >= new Date(after))
     if (before)

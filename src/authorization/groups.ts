@@ -15,7 +15,7 @@ export const visitor: Group = {
     {
       effect: 'allow',
       action: 'read',
-      resource: 'mentors.[id, title, company]',
+      resource: 'mentors.[id, title, company, time_slots]',
     },
     {
       effect: 'allow',
@@ -61,6 +61,12 @@ export const visitor: Group = {
       effect: 'allow',
       action: 'create',
       resource: 'users',
+    },
+    {
+      effect: 'allow',
+      action: 'create',
+      resource: 'meetups',
+      where: 'meetups.mentee_id = current.id',
     },
   ],
 }
@@ -169,6 +175,21 @@ export const admin: Group = {
       effect: 'allow',
       action: 'read',
       resource: 'users',
+    },
+    {
+      effect: 'allow',
+      action: 'read',
+      resource: 'mentors',
+    },
+    {
+      effect: 'allow',
+      action: 'delete',
+      resource: 'meetups',
+    },
+    {
+      effect: 'allow',
+      action: 'update',
+      resource: 'meetups',
     },
   ],
 }
