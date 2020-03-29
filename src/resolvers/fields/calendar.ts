@@ -1,4 +1,5 @@
 import { getClient } from '../../gcal'
+import resolver from '../resolver'
 
 const buildDate = (date: string): string => {
   if (date === 'now') return new Date().toISOString()
@@ -7,26 +8,22 @@ const buildDate = (date: string): string => {
   return date
 }
 
-export const Calendar = {
-  name: ({ summary }) => summary,
+export const name = resolver<string, any>()(({ parent }) => parent.summary)
 
-  events: async ({ user_id, id }, { max, start }) => {
-    const client = await getClient(user_id)
+export const events = resolver<any[], any>()(
+  async ({ parent, args: { max, start } }) => {
+    const client = await getClient(parent.user_id)
     const { data } = await client.calendar.events.list({
-      calendarId: id,
+      calendarId: parent.id,
       maxResults: max,
       timeMin: buildDate(start),
       singleEvents: true,
       orderBy: 'startTime',
     })
     return data.items
-  },
+  }
+)
 
-  color: ({ backgroundColor }) => backgroundColor,
-}
-
-export const Event = {
-  name: ({ summary }) => summary,
-  start: ({ start }) => start?.dateTime,
-  end: ({ end }) => end?.dateTime,
-}
+export const color = resolver<string, any>()(
+  ({ parent }) => parent.backgroundColor
+)

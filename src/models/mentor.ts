@@ -13,6 +13,8 @@ export class Mentor extends Model {
   google_calendar_id: string
   slot_reminder_email: string
 
+  time_slots?: Slots[]
+
   static relationMappings = {
     time_slots: {
       relation: Model.HasManyRelation,

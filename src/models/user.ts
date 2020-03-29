@@ -17,6 +17,10 @@ export class User extends Model {
   allow_emails: boolean
 
   mentors?: Mentor
+  socialmedia?: SocialMedia[]
+  tags?: Tags[]
+  profile_pictures?: ProfilePicture[]
+  lists?: List[]
 
   static relationMappings = {
     mentors: {

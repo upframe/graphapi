@@ -41,8 +41,8 @@ export default function<M = void, P extends Model = null>() {
       })
     },
     assertions
-  ) as ResolverBuilder<M, P extends Model ? ModelContent<P> & any : P> &
-    Assertions<M, P extends Model ? ModelContent<P> & any : P>
+  ) as ResolverBuilder<M, P extends Model ? ModelContent<P> : P> &
+    Assertions<M, P extends Model ? ModelContent<P> : P>
 }
 
 type Resolver<M = void, P = null> = (args: {

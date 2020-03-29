@@ -1,9 +1,11 @@
-import query from '../../utils/buildQuery'
+import resolver from '../resolver'
 
-export default {
-  mentor: async ({ mentorUID, mentor }, _, __, info) =>
-    mentor || (await query(info).findById(mentorUID)),
+export const mentor = resolver<any, any>()(
+  async ({ parent: { mentorUID, mentor }, query }) =>
+    mentor ?? (await query().findById(mentorUID))
+)
 
-  mentee: async ({ menteeUID, mentee }, _, __, info) =>
-    mentee || (await query(info).findById(menteeUID)),
-}
+export const mentee = resolver<any, any>()(
+  async ({ parent: { menteeUID, mentee }, query }) =>
+    mentee ?? (await query().findById(menteeUID))
+)
