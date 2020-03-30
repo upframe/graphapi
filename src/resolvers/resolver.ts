@@ -1,5 +1,5 @@
 import query from '../utils/buildQuery'
-import { AuthenticationError } from '../error'
+import { AuthenticationError, ForbiddenError } from '../error'
 import { Model, QueryBuilder } from '../models'
 
 export default function<M = void, P extends Model = null>() {
@@ -13,6 +13,15 @@ export default function<M = void, P extends Model = null>() {
       get() {
         asserts.push(({ id }) => {
           if (!id) throw new AuthenticationError('not logged in')
+        })
+        return this
+      },
+    },
+    isAdmin: {
+      get() {
+        asserts.push(({ user }) => {
+          if (!user.groups.includes('admin'))
+            throw new ForbiddenError('you have to be an admin')
         })
         return this
       },

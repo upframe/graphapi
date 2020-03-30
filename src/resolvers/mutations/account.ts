@@ -1,4 +1,4 @@
-import { User } from '../../models'
+import { User, Mentor } from '../../models'
 import * as auth from '../../auth'
 import {
   AuthenticationError,
@@ -90,5 +90,32 @@ export const deleteAccount = resolver().loggedIn(
       throw new ForbiddenError('wrong password')
     await query.raw(User).deleteById(id)
     setHeader('Set-Cookie', auth.cookie('auth', 'deleted', -1))
+  }
+)
+
+export const setUserRole = resolver<User>().isAdmin(
+  async ({ args: { userId, role }, query }) => {
+    const user = await query.raw(User).findById(userId)
+    if (!user) throw new UserInputError(`unknown user ${userId}`)
+    role = role.toLowerCase()
+    if (user.role === role)
+      throw new UserInputError(`user ${user.name} already has role ${role}`)
+    if (role === 'nologin')
+      throw new UserInputError("can't set role to NOLOGIN")
+
+    if (
+      ['mentor', 'admin'].includes(role) &&
+      !['mentor', 'admin'].includes(user.role)
+    )
+      await query.raw(Mentor).insert({ id: userId, listed: false })
+    else if (role === 'user' && ['mentor', 'admin'].includes(user.role))
+      await query.raw(Mentor).deleteById(userId)
+
+    await query
+      .raw(User)
+      .findById(userId)
+      .patch({ role })
+
+    return query().findById(userId)
   }
 )

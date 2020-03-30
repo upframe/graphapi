@@ -203,5 +203,20 @@ export const admin: Group = {
       action: 'update',
       resource: 'meetups',
     },
+    {
+      effect: 'allow',
+      action: 'create',
+      resource: 'mentors',
+    },
+    {
+      effect: 'allow',
+      action: 'delete',
+      resource: 'mentors',
+    },
+    {
+      effect: 'allow',
+      action: 'update',
+      resource: 'users',
+    },
   ],
 }

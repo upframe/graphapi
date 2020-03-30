@@ -7,7 +7,7 @@ import { UserInputError } from 'apollo-server-lambda'
 import { List, UserLists } from '../../models'
 import resolver from '../resolver'
 
-export const createList = resolver<List>()(
+export const createList = resolver<List>().isAdmin(
   async ({ args: { name }, query }) => {
     try {
       const { id } = await query.raw().insert({ name })
@@ -20,17 +20,19 @@ export const createList = resolver<List>()(
   }
 )
 
-export const deleteList = resolver()(async ({ args: { listId }, query }) => {
-  if (
-    (await query
-      .raw(List)
-      .findById(listId)
-      .delete()) === 0
-  )
-    throw new UserInputError(`list with id ${listId} doesn't exist`)
-})
+export const deleteList = resolver().isAdmin(
+  async ({ args: { listId }, query }) => {
+    if (
+      (await query
+        .raw(List)
+        .findById(listId)
+        .delete()) === 0
+    )
+      throw new UserInputError(`list with id ${listId} doesn't exist`)
+  }
+)
 
-export const addToList = resolver<List>()(
+export const addToList = resolver<List>().isAdmin(
   async ({ args: { listId, userId }, query }) => {
     try {
       await query.raw(UserLists).insert({ user_id: userId, list_id: listId })
@@ -48,7 +50,7 @@ export const addToList = resolver<List>()(
   }
 )
 
-export const removeFromList = resolver<UserLists>()(
+export const removeFromList = resolver<UserLists>().isAdmin(
   async ({ args: { listId, userId }, query }) => {
     if (
       (await query

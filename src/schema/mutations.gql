@@ -63,6 +63,7 @@ type Mutation {
   deleteAccount(password: String!): Int
   requestEmailChange: Int
   requestPasswordChange: Int
+  setUserRole(userId: ID!, role: Role!): Person
 
   updateProfile(input: ProfileInput!): Person
   setProfileVisibility(visibility: Visibility!): Mentor
