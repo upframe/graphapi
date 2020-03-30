@@ -99,6 +99,12 @@ export const user: Group = {
       resource: 'users',
       where: 'users.id = current.id',
     },
+    {
+      effect: 'allow',
+      action: 'delete',
+      resource: 'profile_pictures',
+      where: 'profile_pictures.user_id = current.id',
+    },
   ],
 }
 

@@ -67,7 +67,8 @@ type Mutation {
   updateProfile(input: ProfileInput!): Person
   setProfileVisibility(visibility: Visibility!): Mentor
   updateNotificationPreferences(input: NotificationSettingsInput!): Mentor
-  uploadProfilePicture(file: Upload!): Int
+  uploadProfilePicture(file: Upload!): Person
+  removeProfilePicture: Person
 
   updateSlots(slots: SlotUpdateInput!): Mentor
   messageExt(input: MsgExtInput!): Int

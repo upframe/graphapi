@@ -34,8 +34,7 @@ export const profilePictures = resolver<any[], User>()(
       ? profile_pictures
       : [
           {
-            url:
-              'https://connect-api-profile-pictures.s3.eu-west-2.amazonaws.com/default.png',
+            url: `https://${process.env.BUCKET_NAME}.s3.eu-west-2.amazonaws.com/default.png`,
           },
         ]
 )
