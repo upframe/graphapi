@@ -38,6 +38,9 @@ functions:
       OAUTH_CLIENT_SECRET: ${ssm:/API/OAuth/ClientSecret~true}
       CALENDAR_ID: ${ssm:/API/CalendarId}
       CALENDAR_REFRESH_TOKEN: ${ssm:/API/CalendarRefreshToken~true}
+      AWS_KEY_ID: ${ssm:/API/AwsKeyId}
+      AWS_KEY_SECRET: ${ssm:/API/AwsKeySecret~true}
+      BUCKET_NAME: ${ssm:/API/PhotoBucket}
 
       PROD_DB_HOST: ${ssm:/DB/Prod/Host}
       PROD_DB_PORT: ${ssm:/DB/Prod/Port}

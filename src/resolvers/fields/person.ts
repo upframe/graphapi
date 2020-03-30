@@ -2,7 +2,7 @@ import resolver from '../resolver'
 import { SocialMedia, User } from '../../models'
 
 export const __resolveType = resolver<string, any>()(({ parent: { role } }) => {
-  if (role !== 'User') return 'Mentor'
+  if (role !== 'user') return 'Mentor'
   return 'User'
 })
 

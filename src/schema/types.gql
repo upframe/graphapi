@@ -138,3 +138,5 @@ type List {
   name: String!
   users: [Person!]
 }
+
+scalar Upload

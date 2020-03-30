@@ -2,7 +2,6 @@ import knex from './db'
 import { Model, Mentor } from './models'
 Model.knex(knex)
 import AuthUser from './authorization/user'
-
 import {
   ApolloServer,
   makeExecutableSchema,
