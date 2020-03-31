@@ -81,7 +81,20 @@ export const createAccount = resolver<User>()(
 )
 
 export const requestEmailChange = resolver()(() => {})
-export const requestPasswordChange = resolver()(() => {})
+
+export const requestPasswordChange = resolver()(({ args: { email } }) => {})
+
+export const changePassword = resolver<User>()(
+  async ({ args: { password }, ctx, query }) => {
+    if (!ctx.id) throw new UserInputError('must be logged in')
+    if (password.length < 8) throw new UserInputError('invalid password')
+    await query
+      .raw(User)
+      .findById(ctx.id)
+      .patch({ password: auth.hashPassword(password) })
+    return await query().findById(ctx.id)
+  }
+)
 
 export const deleteAccount = resolver().loggedIn(
   async ({ args: { password }, ctx: { id, setHeader }, query }) => {

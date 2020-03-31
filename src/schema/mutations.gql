@@ -62,7 +62,8 @@ type Mutation {
   createAccount(input: createAccountInput!): Person
   deleteAccount(password: String!): Int
   requestEmailChange: Int
-  requestPasswordChange: Int
+  requestPasswordChange(email: String!): Int
+  changePassword(password: String!): Person
   setUserRole(userId: ID!, role: Role!): Person
 
   updateProfile(input: ProfileInput!): Person
