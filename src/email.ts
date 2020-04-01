@@ -1,6 +1,8 @@
 import mailgun from 'mailgun-js'
 import { User, Meetup, Slots } from './models'
 import AWS from 'aws-sdk'
+import mustache from 'mustache'
+import mjml from 'mjml'
 
 type Event = Partial<Meetup> & { slot: Partial<Slots> }
 
@@ -138,4 +140,23 @@ export async function sendMeetupConfirmation(
       }),
     })
   )
+}
+
+interface SendOptions {
+  template: string
+  ctx: { [k: string]: string }
+  to: User
+  subject: string
+}
+export async function sendMJML({ template, ctx, to, subject }: SendOptions) {
+  const { Body } = await s3
+    .getObject({
+      Bucket: 'upframe-email-templates',
+      Key: `${template.replace(/\.mjml$/, '')}.mjml`,
+    })
+    .promise()
+
+  const { html, errors } = mjml(mustache.render(Body.toString(), ctx))
+  if (!html || errors.length) throw new Error(errors)
+  send(to, subject, html)
 }
