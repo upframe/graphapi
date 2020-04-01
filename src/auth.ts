@@ -12,8 +12,13 @@ export function authenticate(token: string): { id: string; role: string } {
   }
 }
 
-export function signIn(user: User, password: string): string {
-  if (!user?.email || !checkPassword(user, password)) return
+export function signIn(
+  user: User,
+  password: string,
+  skipPassword = false
+): string {
+  if (!user?.email || (!skipPassword && !checkPassword(user, password))) return
+
   return jwt.sign({ id: user.id, role: user.role }, process.env.PRIVATE_KEY, {
     issuer: 'upframe',
     subject: user.email,

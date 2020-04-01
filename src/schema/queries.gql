@@ -7,4 +7,5 @@ type Query {
   tags(orderBy: TagOrder = alpha): [Tag!]!
   lists: [List!]!
   list(name: String!): List
+  isTokenValid(token: String!): Boolean
 }

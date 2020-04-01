@@ -114,14 +114,42 @@ export const requestPasswordChange = resolver()(
 )
 
 export const changePassword = resolver<User>()(
-  async ({ args: { password }, ctx, query }) => {
-    if (!ctx.id) throw new UserInputError('must be logged in')
+  async ({ args: { password }, ctx, query, args: { token: tokenId } }) => {
+    if (!ctx.id && !tokenId)
+      throw new UserInputError('must be logged in or provide token')
     if (password.length < 8) throw new UserInputError('invalid password')
+
+    let token
+    if (tokenId) {
+      token = await query
+        .raw(Tokens)
+        .findById(tokenId)
+        .asUser(system)
+      if (token?.scope !== 'password') throw new UserInputError('invalid token')
+      if (ctx.id && ctx.id !== token.subject)
+        throw new UserInputError('must logout of current account first')
+      await query
+        .raw(Tokens)
+        .deleteById(tokenId)
+        .asUser(system)
+    }
     await query
       .raw(User)
-      .findById(ctx.id)
+      .findById(token?.subject ?? ctx.id)
       .patch({ password: auth.hashPassword(password) })
-    return await query().findById(ctx.id)
+      .asUser(system)
+
+    const user = await query()
+      .findById(token?.subject ?? ctx.id)
+      .asUser(system)
+    if (token?.subject !== ctx.id) {
+      ctx.setHeader(
+        'Set-Cookie',
+        auth.cookie('auth', auth.signIn(user, null, true))
+      )
+      ctx.id = user.id
+    }
+    return user
   }
 )
 

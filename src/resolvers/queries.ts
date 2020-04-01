@@ -1,8 +1,9 @@
-import { User, Tags, List } from '../models'
+import { User, Tags, List, Tokens } from '../models'
 import { handleError, UserInputError } from '../error'
 import { generateAuthUrl } from '../gcal'
 import knex from '../db'
 import resolver from './resolver'
+import { system } from '../authorization/user'
 
 export const me = resolver<User>().loggedIn(
   async ({ query, ctx: { id } }) => await query().findById(id)
@@ -64,4 +65,14 @@ export const list = resolver<List>()(
         this.where({ listed: true }).orWhereNull('listed')
       })
       .first()
+)
+
+export const isTokenValid = resolver<boolean>()(
+  async ({ args: { token: tokenId }, ctx: { id }, query }) => {
+    const token = await query
+      .raw(Tokens)
+      .findById(tokenId)
+      .asUser(system)
+    return id && id !== token.subject ? false : !!token
+  }
 )
