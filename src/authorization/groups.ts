@@ -218,5 +218,20 @@ export const admin: Group = {
       action: 'update',
       resource: 'users',
     },
+    {
+      effect: 'allow',
+      action: 'create',
+      resource: 'tokens',
+    },
+    {
+      effect: 'allow',
+      action: 'read',
+      resource: 'tokens',
+    },
+    {
+      effect: 'allow',
+      action: 'delete',
+      resource: 'tokens',
+    },
   ],
 }

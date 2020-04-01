@@ -1,4 +1,4 @@
-import { User, Mentor } from '../../models'
+import { User, Mentor, Tokens } from '../../models'
 import * as auth from '../../auth'
 import {
   AuthenticationError,
@@ -8,6 +8,8 @@ import {
 import uuidv4 from 'uuid/v4'
 import resolver from '../resolver'
 import { system } from '../../authorization/user'
+import { sendMJML } from '../../email'
+import genToken from '../../utils/token'
 
 export const signIn = resolver<User>()(
   async ({
@@ -82,7 +84,34 @@ export const createAccount = resolver<User>()(
 
 export const requestEmailChange = resolver()(() => {})
 
-export const requestPasswordChange = resolver()(({ args: { email } }) => {})
+export const requestPasswordChange = resolver()(
+  async ({ args: { email }, query }) => {
+    const user = await query
+      .raw(User)
+      .where({ email })
+      .first()
+      .asUser(system)
+    if (!user?.email)
+      return void (await new Promise(res =>
+        setTimeout(res, 500 + Math.random() * 1000)
+      ))
+
+    const token = genToken()
+
+    Promise.all([
+      sendMJML({
+        template: 'reset-password',
+        ctx: { name: user.name.split(' ')[0], token },
+        to: user,
+        subject: 'Password Reset',
+      }),
+      query
+        .raw(Tokens)
+        .insert({ token, scope: 'password', subject: user.id })
+        .asUser(system),
+    ])
+  }
+)
 
 export const changePassword = resolver<User>()(
   async ({ args: { password }, ctx, query }) => {
