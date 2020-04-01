@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken'
-import { User } from './models'
 import * as bcrypt from 'bcrypt'
+import { User } from './models'
 
 export function authenticate(token: string): { id: string; role: string } {
   if (!token) return
@@ -12,8 +12,13 @@ export function authenticate(token: string): { id: string; role: string } {
   }
 }
 
-export function signIn(user: User, password: string): string {
-  if (!user?.email || !checkPassword(user, password)) return
+export function signIn(
+  user: User,
+  password: string,
+  skipPassword = false
+): string {
+  if (!user?.email || (!skipPassword && !checkPassword(user, password))) return
+
   return jwt.sign({ id: user.id, role: user.role }, process.env.PRIVATE_KEY, {
     issuer: 'upframe',
     subject: user.email,

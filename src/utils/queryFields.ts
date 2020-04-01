@@ -17,7 +17,7 @@ function isExcludedByDirective(info: any, { directives }): boolean {
 export default function getFields(
   info: any,
   asts = info.fieldASTs ?? info.fieldNodes
-) {
+): Fields {
   if (!Array.isArray(asts)) asts = [asts]
 
   const selections = asts.flatMap(ast => ast?.selectionSet?.selections ?? [])

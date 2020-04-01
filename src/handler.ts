@@ -1,3 +1,7 @@
+import knex from './db'
+import { Model, Mentor } from './models'
+Model.knex(knex)
+import AuthUser from './authorization/user'
 import {
   ApolloServer,
   makeExecutableSchema,
@@ -6,11 +10,9 @@ import {
 } from 'apollo-server-lambda'
 import resolvers from './resolvers'
 import { parseCookies } from './utils/cookie'
-import PrivateDirective from './directives/private'
 import { authenticate } from './auth'
 import typeDefs from './schema'
 import { ValidationError } from 'objection'
-import { Mentor } from './models'
 
 export const graphapi = async (event, context) => {
   context.callbackWaitsForEmptyEventLoop = false
@@ -22,19 +24,25 @@ export const graphapi = async (event, context) => {
       typeDefs,
       // @ts-ignore
       resolvers,
-      schemaDirectives: {
-        private: PrivateDirective,
-      },
       inheritResolversFromInterfaces: true,
     }),
-    context: ({ event }) => ({
-      ...authenticate(
-        parseCookies(event.headers.Cookie ?? event.headers.cookie).auth
-      ),
-      setHeader(header, value) {
-        headers[header] = value
-      },
-    }),
+    context: ({ event }): ResolverCtx => {
+      const { id, role } =
+        authenticate(
+          parseCookies(event.headers.Cookie ?? event.headers.cookie).auth
+        ) ?? {}
+      const roles = role?.split('.').map(v => v.trim()) ?? []
+      const user = new AuthUser(id)
+      user.groups = roles.length ? roles : ['visitor']
+      return {
+        id,
+        user,
+        roles,
+        setHeader(header, value) {
+          headers[header] = value
+        },
+      }
+    },
     debug:
       event.headers.debug === process.env.DEV_PASSWORD ||
       !!process.env.IS_OFFLINE,

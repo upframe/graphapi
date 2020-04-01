@@ -1,8 +1,6 @@
-import { Model } from 'objection'
-import User from './user'
-import SocialMedia from './socialmedia'
+import { Model, User, SocialMedia } from '.'
 
-export default class UserHandles extends Model {
+export class UserHandles extends Model {
   static tableName = 'user_handles'
   static idColumn = ['user_id', 'platform_id']
 

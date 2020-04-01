@@ -1,5 +1,5 @@
 import { google, calendar_v3 } from 'googleapis'
-import { User, Mentor, Slots, Meetups } from './models'
+import { User, Mentor, Slots, Meetup } from './models'
 
 const createClient = () =>
   new google.auth.OAuth2(
@@ -49,9 +49,9 @@ export async function getClient(
 
 export async function addMeetup(
   slot: Slots,
-  mentor: User & Mentor,
+  mentor: User,
   mentee: User
-): Promise<Partial<Meetups>> {
+): Promise<Partial<Meetup>> {
   const event = {
     id: slot.id.replace(/[^\w]/g, ''),
     summary: `Upframe Meetup ${mentor.name.split(' ')[0]} & ${
@@ -80,7 +80,7 @@ export async function addMeetup(
     transparency: 'opaque',
 
     attendees: [
-      ...(mentor.google_calendar_id
+      ...(mentor.mentors.google_calendar_id
         ? []
         : [{ email: mentor.email, displayName: mentor.name }]),
       { email: mentee.email, displayName: mentee.name },
@@ -88,11 +88,12 @@ export async function addMeetup(
   }
 
   let gcal_user_event_id: string
-  if (mentor.google_calendar_id) {
+  if (mentor.mentors.google_calendar_id) {
     const { data } = await (
-      await getClient(mentor.id, mentor.google_refresh_token)
+      await getClient(mentor.id, mentor.mentors.google_refresh_token)
     ).calendar.events.patch({
-      calendarId: mentor.google_calendar_id,
+      calendarId: mentor.mentors.google_calendar_id,
+      eventId: event.id,
       requestBody: event,
     })
     gcal_user_event_id = data.id

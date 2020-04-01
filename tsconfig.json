@@ -10,5 +10,5 @@
     "resolveJsonModule": true,
     "allowJs": true
   },
-  "exclude": ["node_modules", ".webpack"]
+  "exclude": ["node_modules", ".webpack", "db", "./*.js"]
 }

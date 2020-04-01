@@ -1,14 +1,12 @@
-import { Model } from 'objection'
-import Meetups from './meetups'
-import User from './user'
+import { Model, User, Meetup } from '.'
 
-export default class Slots extends Model {
+export class Slots extends Model {
   id!: string
   mentor_id!: string
   start!: string
   end: string
 
-  meetups?: Meetups
+  meetups?: Meetup
 
   static tableName = 'time_slots'
   static idColumn = 'id'
@@ -16,7 +14,7 @@ export default class Slots extends Model {
   static relationMappings = {
     meetups: {
       relation: Model.HasOneRelation,
-      modelClass: Meetups,
+      modelClass: Meetup,
       join: {
         from: 'time_slots.id',
         to: 'meetups.slot_id',

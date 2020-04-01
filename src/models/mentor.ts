@@ -1,8 +1,6 @@
-import { Model } from 'objection'
-import User from './user'
-import Slots from './slots'
+import { Model, Slots } from '.'
 
-export default class Mentor extends Model {
+export class Mentor extends Model {
   static tableName = 'mentors'
   static idColumn = 'id'
 
@@ -15,15 +13,9 @@ export default class Mentor extends Model {
   google_calendar_id: string
   slot_reminder_email: string
 
+  time_slots?: Slots[]
+
   static relationMappings = {
-    users: {
-      relation: Model.BelongsToOneRelation,
-      modelClass: User,
-      join: {
-        from: 'mentors.id',
-        to: 'users.id',
-      },
-    },
     time_slots: {
       relation: Model.HasManyRelation,
       modelClass: Slots,

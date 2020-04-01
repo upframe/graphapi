@@ -1,14 +1,8 @@
-import { Model } from 'objection'
-import Mentor from './mentor'
-import SocialMedia from './socialmedia'
-import Tags from './tags'
-import ProfilePicture from './profilePicture'
-import Slots from './slots'
-import List from './list'
+import { Model, Mentor, List, SocialMedia, Tags, ProfilePicture } from '.'
 
 const regToStr = (reg: RegExp) => reg.toString().replace(/\/(.*)\//, '$1')
 
-export default class User extends Model {
+export class User extends Model {
   static tableName = 'users'
   static idColumn = 'id'
 
@@ -23,6 +17,10 @@ export default class User extends Model {
   allow_emails: boolean
 
   mentors?: Mentor
+  socialmedia?: SocialMedia[]
+  tags?: Tags[]
+  profile_pictures?: ProfilePicture[]
+  lists?: List[]
 
   static relationMappings = {
     mentors: {
@@ -56,14 +54,6 @@ export default class User extends Model {
           to: 'user_tags.tag_id',
         },
         to: 'tags.id',
-      },
-    },
-    time_slots: {
-      relation: Model.HasManyRelation,
-      modelClass: Slots,
-      join: {
-        from: 'users.id',
-        to: 'time_slots.mentor_id',
       },
     },
     profile_pictures: {

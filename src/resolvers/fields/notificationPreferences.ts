@@ -1,12 +1,11 @@
-export const NotificationPreferences = {
-  __resolveType: ({ role }) =>
-    role === 'user'
-      ? 'UserNotificationPreferences'
-      : 'MentorNotificationPreferences',
+import resolver from '../resolver'
 
-  receiveEmails: ({ receiveEmails }) => receiveEmails,
-}
+export const __resolveType = resolver<string, any>()(({ parent: { role } }) =>
+  role === 'user'
+    ? 'UserNotificationPreferences'
+    : 'MentorNotificationPreferences'
+)
 
-export const MentorNotificationPreferences = {
-  slotReminder: ({ slotReminder }) => slotReminder?.toUpperCase(),
-}
+export const receiveEmails = resolver<boolean, any>()(
+  ({ parent: { receiveEmails } }) => receiveEmails
+)

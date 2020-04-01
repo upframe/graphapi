@@ -5,7 +5,7 @@ node_modules
 *.key
 .DS_STORE
 *.log
-credentials
+*credentials*
 _schema.gql
 Dockerfile
 db/seeds/data

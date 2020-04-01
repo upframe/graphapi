@@ -58,18 +58,33 @@ input RequestSlotInput {
 type Mutation {
   signIn(input: LoginInput!): Person
   signOut: Int
+
   createAccount(input: createAccountInput!): Person
-  updateProfile(input: ProfileInput!): Person
-  requestEmailChange: Int
-  requestPasswordChange: Int
   deleteAccount(password: String!): Int
+  requestEmailChange(email: String!): Int
+  changeEmail(token: String!): Person
+  requestPasswordChange(email: String!): Int
+  changePassword(password: String!, token: String): Person
+  setUserRole(userId: ID!, role: Role!): Person
+
+  updateProfile(input: ProfileInput!): Person
   setProfileVisibility(visibility: Visibility!): Mentor
   updateNotificationPreferences(input: NotificationSettingsInput!): Mentor
+  uploadProfilePicture(file: Upload!): Person
+  removeProfilePicture: Person
+
   updateSlots(slots: SlotUpdateInput!): Mentor
   messageExt(input: MsgExtInput!): Int
   requestSlot(input: RequestSlotInput!): Int
+
   acceptMeetup(meetupId: ID!): Meetup
   cancelMeetup(meetupId: ID!): Int
+
   connectCalendar(code: ID!): Mentor
   disconnectCalendar: Mentor
+
+  createList(name: String!): List
+  deleteList(listId: Int!): Int
+  addToList(listId: Int!, userId: ID!): List
+  removeFromList(listId: Int!, userId: ID!): List
 }

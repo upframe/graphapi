@@ -6,11 +6,11 @@ interface Person {
   location: String
   profilePictures: [ProfilePicture]
   social(includeEmpty: Boolean = false): [SocialHandle!]
-  notificationPrefs: NotificationPreferences @private
+  notificationPrefs: NotificationPreferences
   biography: String
   tags: [String!]
   website: String
-  categories: [String!]!
+  categories: [String!]
   role: Role
 }
 
@@ -18,15 +18,15 @@ type User implements Person {
   id: ID!
   handle: String
   name: String!
-  email: String @private
+  email: String
   location: String
   profilePictures: [ProfilePicture]
   social(includeEmpty: Boolean = false): [SocialHandle!]
-  notificationPrefs: UserNotificationPreferences @private
+  notificationPrefs: UserNotificationPreferences
   biography: String
   tags: [String!]
   website: String
-  categories: [String!]!
+  categories: [String!]
   role: Role
 }
 
@@ -34,7 +34,7 @@ type Mentor implements Person {
   id: ID!
   handle: String!
   name: String!
-  email: String @private
+  email: String
   title: String
   company: String
   location: String
@@ -43,12 +43,12 @@ type Mentor implements Person {
   profilePictures: [ProfilePicture!]!
   social(includeEmpty: Boolean = false): [SocialHandle!]
   tags: [String!]
-  visibility: Visibility @private
-  notificationPrefs: MentorNotificationPreferences @private
+  visibility: Visibility
+  notificationPrefs: MentorNotificationPreferences
   slots(after: String, before: String, includeBooked: Boolean = false): [Slot!]!
-  calendars(ids: [ID!]): [Calendar!] @private
-  calendarConnected: Boolean @private
-  categories: [String!]!
+  calendars(ids: [ID!]): [Calendar!]
+  calendarConnected: Boolean
+  categories: [String!]
   role: Role
 }
 
@@ -122,6 +122,7 @@ enum Role {
   USER
   MENTOR
   NOLOGIN
+  ADMIN
 }
 
 type Tag {
@@ -131,3 +132,11 @@ type Tag {
 enum TagOrder {
   alpha
 }
+
+type List {
+  id: Int
+  name: String!
+  users: [Person!]
+}
+
+scalar Upload
