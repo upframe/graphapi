@@ -82,7 +82,61 @@ export const createAccount = resolver<User>()(
   }
 )
 
-export const requestEmailChange = resolver()(() => {})
+export const requestEmailChange = resolver()(
+  async ({ args: { email }, ctx: { id }, query }) => {
+    if (
+      await query
+        .raw(User)
+        .where({ email })
+        .first()
+    )
+      throw new UserInputError(`email ${email} already in use`)
+
+    const token = genToken()
+
+    const user = await query.raw(User).findById(id)
+
+    await Promise.all([
+      query
+        .raw(Tokens)
+        .insert({ token, scope: 'email', subject: id, payload: email })
+        .asUser(system),
+      sendMJML({
+        template: 'reset-email',
+        ctx: { name: user.name, handle: user.handle, token },
+        to: { ...user, email } as User,
+        subject: 'Change of Email',
+      }),
+    ])
+  }
+)
+
+export const changeEmail = resolver<User>()(
+  async ({ args: { token: tokenId }, ctx: { id }, query }) => {
+    const token = await query
+      .raw(Tokens)
+      .findById(tokenId)
+      .asUser(system)
+    if (token?.scope !== 'email') throw new UserInputError('invalid token')
+    if (id && id !== token.subject)
+      throw new UserInputError('please first logout of your current account')
+
+    await Promise.all([
+      query
+        .raw(Tokens)
+        .asUser(system)
+        .deleteById(tokenId),
+      query
+        .raw(User)
+        .asUser(system)
+        .findById(token.subject)
+        .patch({ email: token.payload }),
+    ])
+
+    if (id !== token.subject) return null
+    return await query().findById(id)
+  }
+)
 
 export const requestPasswordChange = resolver()(
   async ({ args: { email }, query }) => {
@@ -98,17 +152,17 @@ export const requestPasswordChange = resolver()(
 
     const token = genToken()
 
-    Promise.all([
+    await Promise.all([
+      query
+        .raw(Tokens)
+        .insert({ token, scope: 'password', subject: user.id })
+        .asUser(system),
       sendMJML({
         template: 'reset-password',
         ctx: { name: user.name.split(' ')[0], token },
         to: user,
         subject: 'Password Reset',
       }),
-      query
-        .raw(Tokens)
-        .insert({ token, scope: 'password', subject: user.id })
-        .asUser(system),
     ])
   }
 )

@@ -7,6 +7,7 @@ export class Tokens extends Model {
   token!: string
   scope!: string
   subject!: string
+  payload: string
 
   static relationMappings = {
     users: {
