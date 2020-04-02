@@ -1,4 +1,4 @@
-import { Model, User, SocialMedia } from '.'
+import { Model, SocialMedia } from '.'
 
 export class UserHandles extends Model {
   static tableName = 'user_handles'
@@ -7,8 +7,10 @@ export class UserHandles extends Model {
   user_id!: string
   platform_id!: number
   handle!: string
+}
 
-  static relationMappings = {
+import('./user').then(({ User }) => {
+  UserHandles.relationMappings = {
     users: {
       relation: Model.BelongsToOneRelation,
       modelClass: User,
@@ -26,4 +28,4 @@ export class UserHandles extends Model {
       },
     },
   }
-}
+})

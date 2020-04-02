@@ -1,4 +1,4 @@
-import { Model, User, Meetup } from '.'
+import { Model, Meetup } from '.'
 
 export class Slots extends Model {
   id!: string
@@ -10,8 +10,10 @@ export class Slots extends Model {
 
   static tableName = 'time_slots'
   static idColumn = 'id'
+}
 
-  static relationMappings = {
+import('./user').then(({ User }) => {
+  Slots.relationMappings = {
     meetups: {
       relation: Model.HasOneRelation,
       modelClass: Meetup,
@@ -29,4 +31,4 @@ export class Slots extends Model {
       },
     },
   }
-}
+})

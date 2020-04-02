@@ -1,4 +1,4 @@
-import { Model, Tags, User } from '.'
+import { Model, Tags } from '.'
 
 export class UserTags extends Model {
   static tableName = 'user_tags'
@@ -6,8 +6,10 @@ export class UserTags extends Model {
 
   user_id!: string
   tag_id!: number
+}
 
-  static relationMappings = {
+import('./user').then(({ User }) => {
+  UserTags.relationMappings = {
     users: {
       relation: Model.BelongsToOneRelation,
       modelClass: User,
@@ -25,4 +27,4 @@ export class UserTags extends Model {
       },
     },
   }
-}
+})

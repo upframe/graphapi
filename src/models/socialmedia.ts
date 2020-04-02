@@ -1,4 +1,4 @@
-import { Model, User } from '.'
+import { Model } from '.'
 
 export class SocialMedia extends Model {
   static tableName = 'socialmedia'
@@ -7,8 +7,10 @@ export class SocialMedia extends Model {
   id!: number
   name!: string
   url: string
+}
 
-  static relationMappings = {
+import('./user').then(({ User }) => {
+  SocialMedia.relationMappings = {
     users: {
       relation: Model.HasManyRelation,
       modelClass: User,
@@ -22,4 +24,4 @@ export class SocialMedia extends Model {
       },
     },
   }
-}
+})

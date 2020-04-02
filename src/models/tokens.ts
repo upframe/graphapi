@@ -1,4 +1,4 @@
-import { Model, User } from '.'
+import { Model } from '.'
 
 export class Tokens extends Model {
   static tableName = 'tokens'
@@ -8,17 +8,6 @@ export class Tokens extends Model {
   scope!: string
   subject!: string
   payload: string
-
-  static relationMappings = {
-    users: {
-      relation: Model.HasManyRelation,
-      modelClass: User,
-      join: {
-        from: 'tokens.subject',
-        to: 'users.id',
-      },
-    },
-  }
 
   static jsonSchema = {
     type: 'object',
@@ -31,3 +20,16 @@ export class Tokens extends Model {
     },
   }
 }
+
+import('./user').then(({ User }) => {
+  Tokens.relationMappings = {
+    users: {
+      relation: Model.HasManyRelation,
+      modelClass: User,
+      join: {
+        from: 'tokens.subject',
+        to: 'users.id',
+      },
+    },
+  }
+})

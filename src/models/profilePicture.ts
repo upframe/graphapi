@@ -1,4 +1,4 @@
-import { Model, User } from '.'
+import { Model } from '.'
 
 export class ProfilePicture extends Model {
   static tableName = 'profile_pictures'
@@ -8,8 +8,10 @@ export class ProfilePicture extends Model {
   url!: string
   size!: number
   type!: string
+}
 
-  static relationMappings = {
+import('./user').then(({ User }) => {
+  ProfilePicture.relationMappings = {
     users: {
       relation: Model.BelongsToOneRelation,
       modelClass: User,
@@ -19,4 +21,4 @@ export class ProfilePicture extends Model {
       },
     },
   }
-}
+})

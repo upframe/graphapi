@@ -29,7 +29,7 @@ export const graphapi = async (event, context) => {
     context: ({ event }): ResolverCtx => {
       const { id, role } =
         authenticate(
-          parseCookies(event.headers.Cookie ?? event.headers.cookie).auth
+          parseCookies(event.headers?.Cookie ?? event.headers?.cookie).auth
         ) ?? {}
       const roles = role?.split('.').map(v => v.trim()) ?? []
       const user = new AuthUser(id)
@@ -44,7 +44,7 @@ export const graphapi = async (event, context) => {
       }
     },
     debug:
-      event.headers.debug === process.env.DEV_PASSWORD ||
+      event.headers?.debug === process.env.DEV_PASSWORD ||
       !!process.env.IS_OFFLINE,
     formatError: err => {
       console.log(err)
@@ -77,7 +77,7 @@ export const graphapi = async (event, context) => {
       }
       if (
         !process.env.IS_OFFLINE &&
-        event.headers.debug !== process.env.DEV_PASSWORD &&
+        event.headers?.debug !== process.env.DEV_PASSWORD &&
         err.extensions?.exception?.name === 'DBError'
       ) {
         err.message = null
