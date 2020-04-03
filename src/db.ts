@@ -1,20 +1,12 @@
 import knex from 'knex'
 import { replace } from './utils/object'
 
-const get = (name: string) =>
-  process.env[`${process.env.IS_OFFLINE ? 'DEV' : 'PROD'}_DB_${name}`]
-
-const port = parseInt(process.env.DB_PORT ?? get('PORT'))
-
 const connection = {
-  host: process.env.DB_HOST ?? get('HOST'),
-  ...(!isNaN(port) && { port }),
-  user: process.env.DB_USER ?? get('USER'),
-  password: process.env.DB_PASS ?? get('PASS'),
-  database:
-    (process.env.NODE_ENV !== 'production'
-      ? process.env.DB_NAME_DEV
-      : process.env.DEB_NAME_PROD) ?? get('NAME'),
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
 }
 
 console.log(
@@ -23,11 +15,10 @@ console.log(
   })
 )
 
-// webpack.DefinePlugin replaces variables at compile time, it doesn't inject them.
-// So do not try to dynamically access variables from .env, but explicitly read them!
 export default knex({
   client: 'pg',
   connection,
+  // @ts-ignore
   pool: { min: 0, max: 20 },
   debug: !!process.env.IS_OFFLINE,
 })

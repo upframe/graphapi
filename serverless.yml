@@ -6,6 +6,11 @@ provider:
   stage: ${opt:stage, 'dev'}
   timeout: 10
   region: eu-west-2
+  vpc:
+    securityGroupIds:
+      - ${env:SECURITY_GROUP}
+    subnetIds:
+      - ${env:SUBNET}
 
 functions:
   graphapi:
@@ -42,17 +47,11 @@ functions:
       AWS_KEY_SECRET: ${ssm:/API/AwsKeySecret~true}
       BUCKET_NAME: ${ssm:/API/PhotoBucket}
 
-      PROD_DB_HOST: ${ssm:/DB/Prod/Host}
-      PROD_DB_PORT: ${ssm:/DB/Prod/Port}
-      PROD_DB_NAME: ${ssm:/DB/Prod/Name}
-      PROD_DB_USER: ${ssm:/DB/Prod/User}
-      PROD_DB_PASS: ${ssm:/DB/Prod/Password~true}
-
-      DEV_DB_HOST: ${ssm:/DB/Dev/Host}
-      DEV_DB_PORT: ${ssm:/DB/Dev/Port}
-      DEV_DB_NAME: ${ssm:/DB/Dev/Name}
-      DEV_DB_USER: ${ssm:/DB/Dev/User}
-      DEV_DB_PASS: ${ssm:/DB/Dev/Password~true}
+      DB_HOST: ${ssm:/DB/Host}
+      DB_PORT: ${ssm:/DB/Port}
+      DB_NAME: ${ssm:/DB/Name}
+      DB_USER: ${ssm:/API/DB/User}
+      DB_PASSWORD: ${ssm:/API/DB/Password~true}
 
       GCAL_REDIRECT_DEV: ${ssm:/API/Dev/GCalRedirect}
       GCAL_REDIRECT_PROD: ${ssm:/API/Prod/GCalRedirect}

@@ -84,7 +84,7 @@ export const graphapi = async (event, context) => {
       }
       return err
     },
-    ...(process.env.stage === 'dev'
+    ...(process.env.stage !== 'prod'
       ? {
           introspection: true,
           playground: {
@@ -108,7 +108,7 @@ export const graphapi = async (event, context) => {
   const handler = server.createHandler({
     cors: {
       origin:
-        process.env.stage === 'dev'
+        process.env.stage !== 'prod'
           ? 'https://beta.upframe.io'
           : 'https://upframe.io',
       credentials: true,
