@@ -1,11 +1,6 @@
 import resolver from '../resolver'
-import { S3 } from 'aws-sdk'
+import { s3 } from '../../utils/aws'
 import { User, ProfilePicture } from '../../models'
-
-const s3 = new S3({
-  accessKeyId: process.env.AWS_KEY_ID,
-  secretAccessKey: process.env.AWS_KEY_SECRET,
-})
 
 export const uploadProfilePicture = resolver<User>()(
   async ({ args: { file }, ctx: { id }, query }) => {

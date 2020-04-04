@@ -121,7 +121,7 @@ export const requestSlot = resolver()(
         throw new UserInputError('slot already requested')
       throw e
     }
-    sendMeetupRequest(mentor, mentee, { ...meetup, slot })
+    await sendMeetupRequest(mentor, mentee, { ...meetup, slot })
 
     if (mentor.mentors?.google_refresh_token)
       await (

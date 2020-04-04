@@ -9,7 +9,8 @@ export const connectCalendar = resolver<User>().loggedIn(
     if (google_refresh_token)
       throw new UserInputError('calendar already connected')
 
-    const { tokens } = await (await getClient()).auth.getToken(code)
+    const client = await getClient()
+    const { tokens } = await client.auth.getToken(code)
     const gcal = await getClient(id, tokens.refresh_token)
     const { data } = await gcal.calendar.calendars.insert({
       requestBody: { summary: 'Upframe' },
