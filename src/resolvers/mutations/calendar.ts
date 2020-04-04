@@ -41,9 +41,13 @@ export const disconnectCalendar = resolver<User>().loggedIn(
     const gcal = await getClient(id)
 
     if (google_calendar_id)
-      await gcal.calendar.calendars.delete({
-        calendarId: google_calendar_id,
-      })
+      try {
+        await gcal.calendar.calendars.delete({
+          calendarId: google_calendar_id,
+        })
+      } catch (e) {
+        console.warn("google calendar didn't exist")
+      }
 
     await Promise.all([
       await gcal.auth.revokeToken(google_refresh_token),
