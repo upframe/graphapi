@@ -1,5 +1,5 @@
 import { User, Mentor } from '../../models'
-import { getClient } from '../../gcal'
+import { getClient, removeClient } from '../../gcal'
 import { UserInputError } from '../../error'
 import resolver from '../resolver'
 
@@ -50,9 +50,11 @@ export const disconnectCalendar = resolver<User>().loggedIn(
         console.warn("google calendar didn't exist")
       }
 
+    removeClient(id)
+
     await Promise.all([
-      await gcal.auth.revokeToken(google_refresh_token),
-      await query
+      gcal.auth.revokeToken(google_refresh_token),
+      query
         .raw(Mentor)
         .findById(id)
         .patch({

@@ -15,40 +15,35 @@ async function getTemplate(
   name: string,
   args: { [k: string]: string | undefined } = {}
 ) {
-  try {
-    const { Body } = await s3
-      .getObject({ Bucket: 'upframe-email-templates', Key: `${name}.html` })
-      .promise()
-    let file = Body.toString()
-    ;[...file.matchAll(/<!-- ([A-Z]+)-START -->/g)].forEach(
-      ({
-        0: { length: startLength },
-        1: match,
-        index: startIndex = Infinity,
-      }) => {
-        file = file.replace(
-          file.substring(startIndex, startIndex + startLength),
-          ''
-        )
-        const {
-          0: { length: endLength },
-          index: endIndex = Infinity,
-        } = file.match(`<!-- ${match}-END -->`) as RegExpMatchArray
-        file = file.replace(file.substring(endIndex, endIndex + endLength), '')
-        if (!args[match])
-          file = file.replace(file.substring(startIndex, endIndex), '')
-      }
-    )
-    Object.entries(args)
-      .filter(([, v]) => v)
-      .forEach(([k, v]) => {
-        file = file.replace(new RegExp(k, 'g'), v as string)
-      })
-    return file
-  } catch (e) {
-    console.log(e)
-    throw e
-  }
+  const { Body } = await s3
+    .getObject({ Bucket: 'upframe-email-templates', Key: `${name}.html` })
+    .promise()
+  let file = Body.toString()
+  ;[...file.matchAll(/<!-- ([A-Z]+)-START -->/g)].forEach(
+    ({
+      0: { length: startLength },
+      1: match,
+      index: startIndex = Infinity,
+    }) => {
+      file = file.replace(
+        file.substring(startIndex, startIndex + startLength),
+        ''
+      )
+      const {
+        0: { length: endLength },
+        index: endIndex = Infinity,
+      } = file.match(`<!-- ${match}-END -->`) as RegExpMatchArray
+      file = file.replace(file.substring(endIndex, endIndex + endLength), '')
+      if (!args[match])
+        file = file.replace(file.substring(startIndex, endIndex), '')
+    }
+  )
+  Object.entries(args)
+    .filter(([, v]) => v)
+    .forEach(([k, v]) => {
+      file = file.replace(new RegExp(k, 'g'), v as string)
+    })
+  return file
 }
 
 function send(receiver: User, subject: string, template) {

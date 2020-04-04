@@ -132,3 +132,7 @@ export const generateAuthUrl = async () =>
     scope: 'https://www.googleapis.com/auth/calendar',
     prompt: 'consent',
   })
+
+export const removeClient = (userId: string) => {
+  delete clients[userId]
+}
