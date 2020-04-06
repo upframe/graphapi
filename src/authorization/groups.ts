@@ -66,7 +66,6 @@ export const visitor: Group = {
       effect: 'allow',
       action: 'create',
       resource: 'meetups',
-      where: 'meetups.mentee_id = current.id',
     },
   ],
 }
