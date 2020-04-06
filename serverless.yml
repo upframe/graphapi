@@ -15,6 +15,7 @@ provider:
 functions:
   graphapi:
     handler: src/handler.graphapi
+    provisionedConcurrency: 1
     events:
       - http:
           path: /
