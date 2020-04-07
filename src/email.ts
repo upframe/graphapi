@@ -61,7 +61,7 @@ export async function sendMessage(
   message: string
 ) {
   const senderName = from.name.split(' ')[0]
-  const receiverName = from.name.split(' ')[0]
+  const receiverName = receiver.name.split(' ')[0]
   const subject = `${senderName} sent you a message`
   send(
     receiver,
