@@ -15,7 +15,7 @@ module.exports = {
     extension: 'ts',
   },
   seeds: {
-    directory: './db/seeds/prod',
+    directory: './db/seeds',
     extension: 'ts',
   },
 }
