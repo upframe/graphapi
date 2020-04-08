@@ -90,4 +90,5 @@ type Mutation {
 
   setTagName(id: Int!, name: String!): Tag
   mergeTags(from: Int!, into: Int!): Tag
+  deleteTag(id: Int!): Int
 }

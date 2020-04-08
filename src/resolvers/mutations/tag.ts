@@ -22,3 +22,7 @@ export const mergeTags = resolver<Tags>().isAdmin(
     return query().findById(into)
   }
 )
+
+export const deleteTag = resolver().isAdmin(async ({ query, args: { id } }) => {
+  await query.raw(Tags).deleteById(id)
+})
