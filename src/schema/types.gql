@@ -140,3 +140,7 @@ type List {
 }
 
 scalar Upload
+
+type SearchResult {
+  users: [User!]!
+}

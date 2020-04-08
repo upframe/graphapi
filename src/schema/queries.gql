@@ -8,4 +8,5 @@ type Query {
   lists: [List!]!
   list(name: String!): List
   isTokenValid(token: String!): Boolean
+  search(term: String, maxUsers: Int = 5): SearchResult
 }
