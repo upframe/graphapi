@@ -4,9 +4,7 @@ import { generateAuthUrl } from '../gcal'
 import knex from '../db'
 import resolver from './resolver'
 import { system } from '../authorization/user'
-import levenshtein from 'fast-levenshtein'
-import _ from 'lodash'
-import { filterKeys } from '../utils/object'
+import _search from '../search'
 
 export const me = resolver<User>().loggedIn(
   async ({ query, ctx: { id } }) => await query().findById(id)
@@ -51,8 +49,17 @@ export const calendarConnectUrl = resolver<string>().loggedIn(
   async () => await generateAuthUrl()
 )
 
+export const tag = resolver<Tags>()(async ({ query, args: { id, name } }) => {
+  if (!!id === !!name)
+    throw new UserInputError('must provide either id or name')
+  if (id) return await query().findById(id)
+  return await query()
+    .where('name', 'ilike', name)
+    .first()
+})
+
 export const tags = resolver<Tags>()(async ({ query, args: { orderBy } }) => {
-  let tags = await query().select('name')
+  let tags = await query()
   if (orderBy === 'alpha')
     tags = tags.sort((a, b) => a.name.localeCompare(b.name))
   return tags
@@ -81,75 +88,5 @@ export const isTokenValid = resolver<boolean>()(
 )
 
 export const search = resolver<any>()(async ({ args: { term, maxUsers } }) => {
-  term = term.toLowerCase()
-
-  let usersRaw = await knex('users')
-    .select(
-      'users.id',
-      'name',
-      'handle',
-      'role',
-      'score',
-      'url',
-      'size',
-      'type'
-    )
-    .leftJoin('mentors', { 'users.id': 'mentors.id' })
-    .leftJoin('profile_pictures', { 'users.id': 'profile_pictures.user_id' })
-    .whereNot('role', 'nologin')
-    .where(
-      'name_normalized',
-      'ilike',
-      knex.raw(`('%' || unaccent('${term}') || '%')`)
-    )
-
-  usersRaw = _(usersRaw)
-    .groupBy('id')
-    .values()
-    .value()
-    .flatMap(list =>
-      list.slice(1).reduce(
-        (a, c) => ({
-          ...a,
-          profile_pictures: [
-            ...a.profile_pictures,
-            filterKeys(c, ['url', 'size', 'type']),
-          ],
-        }),
-        {
-          ...filterKeys(list[0], k => !['url', 'size', 'type'].includes(k)),
-          profile_pictures: [filterKeys(list[0], ['url', 'size', 'type'])],
-        }
-      )
-    )
-    .map(({ profile_pictures, ...user }) => ({
-      ...user,
-      profile_pictures: profile_pictures.filter(({ size }) => size),
-    }))
-
-  let [users, mentors] = _.partition(usersRaw, { role: 'user' }).map(list =>
-    list
-      .map(user => ({
-        ...user,
-        dist: levenshtein.get(term, user.name.toLowerCase()),
-      }))
-      .sort((a, b) => a.dist - b.dist)
-  )
-
-  mentors = _(mentors)
-    .groupBy('dist')
-    .values()
-    .value()
-    .map(set => set.sort((a: any, b: any) => b.score - a.score))
-    .flat()
-
-  users = [mentors, users].flat()
-
-  console.log(users.map(({ id, profile_pictures, ...user }) => user))
-
-  users = users.slice(0, maxUsers)
-
-  return {
-    users,
-  }
+  return await _search(term, maxUsers)
 })

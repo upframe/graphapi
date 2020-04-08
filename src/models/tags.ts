@@ -12,7 +12,7 @@ import('./user').then(
   ({ User }) =>
     (Tags.relationMappings = {
       users: {
-        relation: Model.HasManyRelation,
+        relation: Model.ManyToManyRelation,
         modelClass: User,
         join: {
           from: 'tags.id',

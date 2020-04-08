@@ -49,6 +49,7 @@ set(User)
 set(Mentor).add(Slots, 'slots')
 set(Slots).add(Meetup, __ALWAYS__)
 set(List).add(User, 'users')
+set(Tags).add(User, 'users')
 
 export default Object.assign(
   function<M extends Model>(

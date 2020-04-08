@@ -126,7 +126,9 @@ enum Role {
 }
 
 type Tag {
+  id: Int!
   name: String!
+  users: [User!]
 }
 
 enum TagOrder {
@@ -143,4 +145,6 @@ scalar Upload
 
 type SearchResult {
   users: [User!]!
+  userResults: Int
+  tags: [Tag!]!
 }
