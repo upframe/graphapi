@@ -59,7 +59,7 @@ type Resolver<M = void, P = null> = (args: {
   parent: P
   args: any
   ctx: ResolverCtx
-}) => Promise<M | M[]> | M | M[]
+}) => Promise<M | M[] | Error> | M | M[] | Error
 
 type Query<M extends Model> = ((
   options?: any

@@ -87,4 +87,6 @@ type Mutation {
   deleteList(listId: Int!): Int
   addToList(listId: Int!, userId: ID!): List
   removeFromList(listId: Int!, userId: ID!): List
+
+  setTagName(id: Int!, name: String!): Tag
 }
