@@ -4,7 +4,7 @@ import { generateAuthUrl } from '../gcal'
 import knex from '../db'
 import resolver from './resolver'
 import { system } from '../authorization/user'
-import _search from '../search'
+import { searchUsers, searchTags } from '../search'
 
 export const me = resolver<User>().loggedIn(
   async ({ query, ctx: { id } }) => await query().findById(id)
@@ -87,6 +87,12 @@ export const isTokenValid = resolver<boolean>()(
   }
 )
 
-export const search = resolver<any>()(async ({ args: { term, maxUsers } }) => {
-  return await _search(term, maxUsers)
-})
+export const search = resolver<any>()(
+  async ({ args: { term, maxUsers, maxTags } }) => {
+    const [users, tags] = await Promise.all([
+      searchUsers(term, maxUsers),
+      searchTags(term, maxTags),
+    ])
+    return { users, tags }
+  }
+)

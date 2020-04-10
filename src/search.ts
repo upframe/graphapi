@@ -20,7 +20,7 @@ const baseQuery = () =>
     .whereNot('role', 'nologin')
     .andWhere('size', '<=', 128)
 
-export default async function search(term: string, max: number) {
+export async function searchUsers(term: string, limit: number) {
   let usersRaw = await baseQuery().andWhere(
     'name_normalized',
     'ilike',
@@ -69,9 +69,53 @@ export default async function search(term: string, max: number) {
 
   users = [mentors, users].flat()
 
-  return {
-    users: users.slice(0, max),
-    userResults: users.length,
-    tags: [],
+  return users.slice(0, limit)
+}
+
+const tagSelect = () => knex('tags').select('name', 'id')
+
+const tagSearchQuick = async (query: string, limit: number) => {
+  return await tagSelect()
+    .where('name', 'ilike', `${query}%`)
+    .orderByRaw('length(name)')
+    .limit(limit)
+}
+
+const tagSearchComplex = async (query: string, limit: number, exclude = []) => {
+  return await tagSelect()
+    .where('name', 'ilike', `%${query}%`)
+    .whereNotIn('name', exclude)
+    .orderByRaw('length(name)')
+    .limit(limit)
+}
+
+export const searchTags = async (query: string, limit: number) => {
+  let tags = []
+  if (query.length <= 2) tags = await tagSearchQuick(query, limit)
+  if (limit - tags.length > 0) {
+    tags.push(
+      ...(await tagSearchComplex(
+        query,
+        limit - tags.length,
+        tags.map(({ name }) => name)
+      ))
+    )
+    tags = tags
+      .map(tag => ({ ...tag, dist: levenshtein.get(query, tag.name) }))
+      .sort((a, b) => a.dist - b.dist)
   }
+  tags = tags.map(tag => ({ tag }))
+  let term = query.toLowerCase()
+  for (const tag of tags.slice(0, 20)) {
+    const i = tag.tag.name.toLowerCase().indexOf(term)
+    const name = tag.tag.name
+    tag.markup = [
+      ...(i > 0 ? [`<b>${name.slice(0, i)}</b>`] : []),
+      `<span>${name.slice(i, i + term.length)}</span>`,
+      ...(i + term.length < name.length
+        ? [`<b>${name.slice(i + term.length)}</b>`]
+        : []),
+    ].join('')
+  }
+  return tags
 }
