@@ -49,18 +49,27 @@ set(User)
 set(Mentor).add(Slots, 'slots')
 set(Slots).add(Meetup, __ALWAYS__)
 set(List).add(User, 'users')
+set(Tags).add(User, 'users')
 
 export default Object.assign(
   function<M extends Model>(
     info: any,
-    { join = false, include = {}, ctx = {} } = {}
+    {
+      join = false,
+      include = {},
+      ctx = {},
+      section = null,
+      entryName = null,
+    } = {},
+    fields?: Fields
   ): QueryBuilder<M, M[]> {
     const type =
       info.returnType.name ?? info.returnType.ofType?.ofType?.ofType?.name
-    const entry = ENTRIES[type]
-    if (!entry) throw Error(`no known table for ${type}`)
+    const entry = ENTRIES[entryName ?? type]
+    if (!entry) throw Error(`no known table for ${entryName ?? type}`)
 
-    const fields = getQueryFields(info)
+    if (!fields) fields = getQueryFields(info)
+    if (section) fields = fields[section] as Fields
 
     const resolve = (model: typeof Model, requested: Fields) => {
       const reqKeys = Object.keys(requested)

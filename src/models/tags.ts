@@ -6,13 +6,15 @@ export class Tags extends Model {
 
   id!: number
   name!: string
+
+  users?: import('./user').User[]
 }
 
 import('./user').then(
   ({ User }) =>
     (Tags.relationMappings = {
       users: {
-        relation: Model.HasManyRelation,
+        relation: Model.ManyToManyRelation,
         modelClass: User,
         join: {
           from: 'tags.id',

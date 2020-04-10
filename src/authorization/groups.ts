@@ -104,6 +104,11 @@ export const user: Group = {
       resource: 'profile_pictures',
       where: 'profile_pictures.user_id = current.id',
     },
+    {
+      effect: 'allow',
+      action: 'create',
+      resource: 'tags',
+    },
   ],
 }
 
@@ -231,6 +236,16 @@ export const admin: Group = {
       effect: 'allow',
       action: 'delete',
       resource: 'tokens',
+    },
+    {
+      effect: 'allow',
+      action: 'update',
+      resource: 'tags',
+    },
+    {
+      effect: 'allow',
+      action: 'delete',
+      resource: 'tags',
     },
   ],
 }

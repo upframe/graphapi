@@ -4,6 +4,7 @@ import { generateAuthUrl } from '../gcal'
 import knex from '../db'
 import resolver from './resolver'
 import { system } from '../authorization/user'
+import { searchUsers, searchTags } from '../search'
 
 export const me = resolver<User>().loggedIn(
   async ({ query, ctx: { id } }) => await query().findById(id)
@@ -39,7 +40,7 @@ export const user = resolver<User>()(
     const user = await query()
       .where(id ? { 'users.id': id } : { handle })
       .first()
-    if (!mentor) throw handleError(`can't find user ${handle ?? id}`)
+    if (!user) throw handleError(`can't find user ${handle ?? id}`)
     return user
   }
 )
@@ -48,10 +49,21 @@ export const calendarConnectUrl = resolver<string>().loggedIn(
   async () => await generateAuthUrl()
 )
 
+export const tag = resolver<Tags>()(async ({ query, args: { id, name } }) => {
+  if (!!id === !!name)
+    throw new UserInputError('must provide either id or name')
+  if (id) return await query().findById(id)
+  return await query()
+    .where('name', 'ilike', name)
+    .first()
+})
+
 export const tags = resolver<Tags>()(async ({ query, args: { orderBy } }) => {
-  let tags = await query().select('name')
+  let tags = await query({ ...(orderBy === 'users' && { include: 'users' }) })
   if (orderBy === 'alpha')
     tags = tags.sort((a, b) => a.name.localeCompare(b.name))
+  else if (orderBy === 'users')
+    tags = tags.sort((a, b) => (b.users?.length ?? 0) - (a.users?.length ?? 0))
   return tags
 })
 
@@ -74,5 +86,49 @@ export const isTokenValid = resolver<boolean>()(
       .findById(tokenId)
       .asUser(system)
     return id && id !== token.subject ? false : !!token
+  }
+)
+
+export const search = resolver<any>()(
+  async ({
+    args: { term, maxUsers, maxTags, withTags = [], withTagNames = [] },
+    query,
+    fields,
+  }) => {
+    if (withTagNames?.length)
+      withTags = [
+        ...withTags,
+        ...(
+          await query
+            .raw(Tags)
+            .select('id')
+            .whereRaw(
+              `name ILIKE ANY (ARRAY[${withTagNames
+                .map(v => `'${v}'`)
+                .join(',')}])`
+            )
+        ).map(({ id }) => id),
+      ]
+
+    let userProm =
+      'users' in fields ? searchUsers(term, maxUsers, withTags) : null
+    let tagProm = 'tags' in fields ? searchTags(term, maxTags) : null
+    const res = await Promise.all([userProm, tagProm])
+    let users = userProm ? res[0] : null
+    let tags = !tagProm ? null : userProm ? res[1] : res[0]
+
+    if (
+      users &&
+      Object.keys(fields.users).some(
+        k =>
+          !['id', 'name', 'handle', 'profilePictures', '__typename'].includes(k)
+      )
+    ) {
+      users = await query({ section: 'users', entryName: 'Person' }).whereIn(
+        'id',
+        users.map(({ id }) => id)
+      )
+    }
+    return { users, tags }
   }
 )

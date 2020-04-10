@@ -2,11 +2,13 @@ export const filterKeys = (
   obj: object,
   filter: ((k: string) => boolean) | string[]
 ) =>
-  Object.fromEntries(
-    Object.entries(obj).filter(([k]) =>
-      Array.isArray(filter) ? filter.includes(k) : filter(k)
-    )
-  )
+  typeof obj === 'object'
+    ? Object.fromEntries(
+        Object.entries(obj).filter(([k]) =>
+          Array.isArray(filter) ? filter.includes(k) : filter(k)
+        )
+      )
+    : obj
 
 export const map = (
   obj: object,

@@ -8,7 +8,7 @@ interface Person {
   social(includeEmpty: Boolean = false): [SocialHandle!]
   notificationPrefs: NotificationPreferences
   biography: String
-  tags: [String!]
+  tags: [Tag!]
   website: String
   categories: [String!]
   role: Role
@@ -24,7 +24,7 @@ type User implements Person {
   social(includeEmpty: Boolean = false): [SocialHandle!]
   notificationPrefs: UserNotificationPreferences
   biography: String
-  tags: [String!]
+  tags: [Tag!]
   website: String
   categories: [String!]
   role: Role
@@ -42,7 +42,7 @@ type Mentor implements Person {
   biography: String
   profilePictures: [ProfilePicture!]!
   social(includeEmpty: Boolean = false): [SocialHandle!]
-  tags: [String!]
+  tags: [Tag!]
   visibility: Visibility
   notificationPrefs: MentorNotificationPreferences
   slots(after: String, before: String, includeBooked: Boolean = false): [Slot!]!
@@ -126,11 +126,14 @@ enum Role {
 }
 
 type Tag {
+  id: Int!
   name: String!
+  users: [User!]
 }
 
 enum TagOrder {
   alpha
+  users
 }
 
 type List {
@@ -140,3 +143,14 @@ type List {
 }
 
 scalar Upload
+
+type SearchResult {
+  users: [User!]
+  userResults: Int
+  tags: [TagSearchResult]
+}
+
+type TagSearchResult {
+  tag: Tag!
+  markup: String
+}

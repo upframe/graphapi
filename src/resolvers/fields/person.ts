@@ -18,7 +18,7 @@ export const social = resolver<any[], User>()(
 )
 
 export const tags = resolver<any[], User>()(({ parent: { role, tags = [] } }) =>
-  role === 'user' ? null : tags.map(({ name }) => name)
+  role === 'user' ? null : tags
 )
 
 export const notificationPrefs = resolver<any, User>()(
