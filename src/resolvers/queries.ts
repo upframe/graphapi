@@ -110,12 +110,10 @@ export const search = resolver<any>()(
         ).map(({ id }) => id),
       ]
 
-    let userProm =
-      'users' in fields ? searchUsers(term, maxUsers, withTags) : null
-    let tagProm = 'tags' in fields ? searchTags(term, maxTags) : null
-    const res = await Promise.all([userProm, tagProm])
-    let users = userProm ? res[0] : null
-    let tags = !tagProm ? null : userProm ? res[1] : res[0]
+    let [users, tags] = await Promise.all([
+      'users' in fields ? searchUsers(term, maxUsers, withTags) : null,
+      'tags' in fields ? searchTags(term, maxTags) : null,
+    ])
 
     if (
       users &&
