@@ -4,6 +4,7 @@ import { User, UserHandles, UserTags, Tags } from '../../models'
 import _ from 'lodash'
 import AuthUser from 'src/authorization/user'
 import resolver from '../resolver'
+import { UserInputError } from 'apollo-server-lambda'
 
 const updateSocial = async (
   user: AuthUser,
@@ -34,46 +35,51 @@ const updateSocial = async (
   ])
 }
 
-const updateTags = async (user: AuthUser, tags: string[]) => {
+const updateTags = async (
+  user: AuthUser,
+  tags: { addedIds: number[]; removedIds: number[]; addedName: string[] }
+) => {
   if (!user.groups.includes('mentor')) return
 
-  tags = Array.from(new Set((tags ?? []).map(v => v.toLowerCase())))
-  if (tags.length) {
-    const currentTags = await UserTags.query()
+  const addTagsId = async ids =>
+    await UserTags.query()
+      .insert(ids.map(tag_id => ({ tag_id, user_id: user.id })))
+      .asUser(user)
+
+  const removeTagsId = async ids =>
+    await UserTags.query()
       .where({ user_id: user.id })
-      .context({ user })
-    let existing = await Tags.query()
-    let unknown = tags.filter(tag => !existing.find(({ name }) => name === tag))
-    if (unknown.length)
-      existing = [
-        ...existing,
-        ...(await Tags.query()
-          .insertAndFetch(unknown.map(name => ({ name })))
-          .context({ user })),
-      ]
-    const currentTagNames = currentTags.map(
-      ({ tag_id }) => existing.find(({ id }) => id === tag_id).name
-    )
-    const newTags = tags
-      .filter(tag => !currentTagNames.includes(tag))
-      .map(name => existing.find(tag => tag.name === name).id)
+      .whereIn('tag_id', ids)
+      .delete()
+      .asUser(user)
 
-    if (newTags.length)
-      await UserTags.query()
-        .insert(newTags.map(tag_id => ({ tag_id, user_id: user.id })))
-        .context({ user })
+  const addTagsName = async names => {
+    const exist = await Tags.query()
+      .whereRaw(`name ILIKE ANY (ARRAY[${names.map(v => `'${v}'`).join(',')}])`)
+      .asUser(user)
+    if (exist.length)
+      throw new UserInputError(
+        `tags ${exist.map(({ name }) => name).join(', ')} already exist`
+      )
 
-    const removedTags = currentTagNames
-      .filter(tag => !tags.includes(tag))
-      .map(tag => existing.find(({ name }) => name === tag).id)
-
-    if (removedTags.length)
-      await UserTags.query()
-        .del()
-        .where({ user_id: user.id })
-        .whereIn('tag_id', removedTags)
-        .context({ user })
+    const created = ((await Tags.query()
+      .insertAndFetch(names.map(name => ({ name })))
+      .asUser(user)) as unknown) as Tags[]
+    await UserTags.query()
+      .insert(
+        names.map(name => ({
+          tag_id: created.find(tag => tag.name === name).id,
+          user_id: user.id,
+        }))
+      )
+      .asUser(user)
   }
+
+  await Promise.all([
+    tags.addedIds.length && addTagsId(tags.addedIds),
+    tags.removedIds.length && removeTagsId(tags.removedIds),
+    tags.addedName.length && addTagsName(tags.addedName),
+  ])
 }
 
 export const updateProfile = resolver<User>()(

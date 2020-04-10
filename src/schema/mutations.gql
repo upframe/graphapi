@@ -18,7 +18,13 @@ input ProfileInput {
   website: String
   biography: String
   social: [SocialInput]
-  tags: [String!]
+  tags: TagInput
+}
+
+input TagInput {
+  addedIds: [Int!]
+  addedName: [String!]
+  removedIds: [Int!]
 }
 
 input SocialInput {
