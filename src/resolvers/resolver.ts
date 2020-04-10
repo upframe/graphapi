@@ -1,6 +1,7 @@
 import query from '../utils/buildQuery'
 import { AuthenticationError, ForbiddenError } from '../error'
 import { Model, QueryBuilder } from '../models'
+import getQueryFields from '../utils/queryFields'
 
 export default function<M = void, P extends Model = null>() {
   type Assertions<M, P> = {
@@ -33,13 +34,18 @@ export default function<M = void, P extends Model = null>() {
       ...[parent, args, ctx, info]: Parameters<ApolloResolver>
     ) => {
       asserts.forEach(assert => assert(ctx))
+      const fields = getQueryFields(info)
       return handler({
         query: Object.assign(
           (options = {}) =>
-            query(info, {
-              ...options,
-              ctx,
-            }),
+            query(
+              info,
+              {
+                ...options,
+                ctx,
+              },
+              fields
+            ),
           {
             raw: (model?: any) => query.raw(info, ctx, model),
           }
@@ -47,6 +53,7 @@ export default function<M = void, P extends Model = null>() {
         parent,
         args,
         ctx,
+        fields,
       })
     },
     assertions
@@ -59,6 +66,7 @@ type Resolver<M = void, P = null> = (args: {
   parent: P
   args: any
   ctx: ResolverCtx
+  fields: Fields
 }) => Promise<M | M[] | Error> | M | M[] | Error
 
 type Query<M extends Model> = ((

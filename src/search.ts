@@ -21,11 +21,13 @@ const baseQuery = () =>
     .andWhere('size', '<=', 128)
 
 export async function searchUsers(term: string, limit: number, withTags = []) {
-  let query = baseQuery().andWhere(
-    'name_normalized',
-    'ilike',
-    knex.raw(`('%' || unaccent('${term}') || '%')`)
-  )
+  let query = baseQuery()
+  if (term?.length)
+    query = query.andWhere(
+      'name_normalized',
+      'ilike',
+      knex.raw(`('%' || unaccent('${term}') || '%')`)
+    )
 
   if (withTags?.length)
     query = query
@@ -64,7 +66,7 @@ export async function searchUsers(term: string, limit: number, withTags = []) {
     list
       .map(user => ({
         ...user,
-        dist: levenshtein.get(term, user.name.toLowerCase()),
+        dist: levenshtein.get(term ?? '', user.name.toLowerCase()),
       }))
       .sort((a, b) => a.dist - b.dist)
   )
@@ -83,9 +85,11 @@ export async function searchUsers(term: string, limit: number, withTags = []) {
 
 const tagSelect = () => knex('tags').select('name', 'id')
 
-const tagSearchQuick = async (query: string, limit: number) => {
-  return await tagSelect()
-    .where('name', 'ilike', `${query}%`)
+const tagSearchQuick = async (term: string, limit: number) => {
+  return await (term
+    ? tagSelect().where('name', 'ilike', `${term}%`)
+    : tagSelect()
+  )
     .orderByRaw('length(name)')
     .limit(limit)
 }
@@ -100,7 +104,7 @@ const tagSearchComplex = async (query: string, limit: number, exclude = []) => {
 
 export const searchTags = async (query: string, limit: number) => {
   let tags = []
-  if (query.length <= 2) tags = await tagSearchQuick(query, limit)
+  if (query?.length ?? 0 <= 2) tags = await tagSearchQuick(query, limit)
   if (limit - tags.length > 0) {
     tags.push(
       ...(await tagSearchComplex(
@@ -114,7 +118,7 @@ export const searchTags = async (query: string, limit: number) => {
       .sort((a, b) => a.dist - b.dist)
   }
   tags = tags.map(tag => ({ tag }))
-  let term = query.toLowerCase()
+  let term = query?.toLowerCase() ?? ''
   for (const tag of tags.slice(0, 20)) {
     const i = tag.tag.name.toLowerCase().indexOf(term)
     const name = tag.tag.name

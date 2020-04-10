@@ -93,6 +93,7 @@ export const search = resolver<any>()(
   async ({
     args: { term, maxUsers, maxTags, withTags = [], withTagNames = [] },
     query,
+    fields,
   }) => {
     if (withTagNames?.length)
       withTags = [
@@ -109,10 +110,25 @@ export const search = resolver<any>()(
         ).map(({ id }) => id),
       ]
 
-    const [users, tags] = await Promise.all([
-      searchUsers(term, maxUsers, withTags),
-      searchTags(term, maxTags),
-    ])
+    let userProm =
+      'users' in fields ? searchUsers(term, maxUsers, withTags) : null
+    let tagProm = 'tags' in fields ? searchTags(term, maxTags) : null
+    const res = await Promise.all([userProm, tagProm])
+    let users = userProm ? res[0] : null
+    let tags = !tagProm ? null : userProm ? res[1] : res[0]
+
+    if (
+      users &&
+      Object.keys(fields.users).some(
+        k =>
+          !['id', 'name', 'handle', 'profilePictures', '__typename'].includes(k)
+      )
+    ) {
+      users = await query({ section: 'users', entryName: 'Person' }).whereIn(
+        'id',
+        users.map(({ id }) => id)
+      )
+    }
     return { users, tags }
   }
 )
