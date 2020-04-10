@@ -20,12 +20,21 @@ const baseQuery = () =>
     .whereNot('role', 'nologin')
     .andWhere('size', '<=', 128)
 
-export async function searchUsers(term: string, limit: number) {
-  let usersRaw = await baseQuery().andWhere(
+export async function searchUsers(term: string, limit: number, withTags = []) {
+  let query = baseQuery().andWhere(
     'name_normalized',
     'ilike',
     knex.raw(`('%' || unaccent('${term}') || '%')`)
   )
+
+  if (withTags?.length)
+    query = query
+      .innerJoin('user_tags', { 'users.id': 'user_tags.user_id' })
+      .whereIn('tag_id', withTags)
+      .groupBy('users.id', 'name', 'handle', 'role', 'score', 'url')
+      .havingRaw(`count(*) = ${withTags.length}`)
+
+  let usersRaw = await query
 
   usersRaw = _(usersRaw)
     .groupBy('id')

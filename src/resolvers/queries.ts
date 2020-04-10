@@ -92,7 +92,23 @@ export const isTokenValid = resolver<boolean>()(
 export const search = resolver<any>()(
   async ({
     args: { term, maxUsers, maxTags, withTags = [], withTagNames = [] },
+    query,
   }) => {
+    if (withTagNames?.length)
+      withTags = [
+        ...withTags,
+        ...(
+          await query
+            .raw(Tags)
+            .select('id')
+            .whereRaw(
+              `name ILIKE ANY (ARRAY[${withTagNames
+                .map(v => `'${v}'`)
+                .join(',')}])`
+            )
+        ).map(({ id }) => id),
+      ]
+
     const [users, tags] = await Promise.all([
       searchUsers(term, maxUsers, withTags),
       searchTags(term, maxTags),
