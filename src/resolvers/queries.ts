@@ -59,9 +59,11 @@ export const tag = resolver<Tags>()(async ({ query, args: { id, name } }) => {
 })
 
 export const tags = resolver<Tags>()(async ({ query, args: { orderBy } }) => {
-  let tags = await query()
+  let tags = await query({ ...(orderBy === 'users' && { include: 'users' }) })
   if (orderBy === 'alpha')
     tags = tags.sort((a, b) => a.name.localeCompare(b.name))
+  else if (orderBy === 'users')
+    tags = tags.sort((a, b) => (b.users?.length ?? 0) - (a.users?.length ?? 0))
   return tags
 })
 
@@ -88,9 +90,11 @@ export const isTokenValid = resolver<boolean>()(
 )
 
 export const search = resolver<any>()(
-  async ({ args: { term, maxUsers, maxTags } }) => {
+  async ({
+    args: { term, maxUsers, maxTags, withTags = [], withTagNames = [] },
+  }) => {
     const [users, tags] = await Promise.all([
-      searchUsers(term, maxUsers),
+      searchUsers(term, maxUsers, withTags),
       searchTags(term, maxTags),
     ])
     return { users, tags }
