@@ -105,6 +105,7 @@ const tagSearchComplex = async (query: string, limit: number, exclude = []) => {
 export const searchTags = async (query: string, limit: number) => {
   let tags = []
   if (query?.length ?? 0 <= 2) tags = await tagSearchQuick(query, limit)
+  const quickNum = tags.length
   if (limit - tags.length > 0) {
     tags.push(
       ...(await tagSearchComplex(
@@ -114,7 +115,10 @@ export const searchTags = async (query: string, limit: number) => {
       ))
     )
     tags = tags
-      .map(tag => ({ ...tag, dist: levenshtein.get(query, tag.name) }))
+      .map((tag, i) => ({
+        ...tag,
+        dist: levenshtein.get(query, tag.name) - i < quickNum ? 1000 : 0,
+      }))
       .sort((a, b) => a.dist - b.dist)
   }
   tags = tags.map(tag => ({ tag }))
