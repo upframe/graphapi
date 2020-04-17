@@ -46,10 +46,11 @@ async function getTemplate(
   return file
 }
 
-function send(receiver: User, subject: string, template) {
+function send(receiver: Partial<User>, subject: string, template) {
+  if (!receiver.email) throw new Error('must provide email address')
   mail.messages().send({
     from: 'Upframe team@upframe.io',
-    to: `${receiver.name.split(' ')[0]} ${receiver.email}`,
+    to: `${(receiver.name?.split(' ') ?? [])[0] ?? ''} ${receiver.email}`,
     subject,
     html: template,
   })
@@ -141,8 +142,8 @@ export async function sendMeetupConfirmation(
 
 interface SendOptions {
   template: string
-  ctx: { [k: string]: string }
-  to: User
+  ctx: { [k: string]: string | boolean }
+  to: Partial<User>
   subject: string
 }
 export async function sendMJML({ template, ctx, to, subject }: SendOptions) {
