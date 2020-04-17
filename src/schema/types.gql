@@ -168,3 +168,8 @@ enum InviteStatus {
   PENDING
   JOINED
 }
+
+type SignUpInfo {
+  email: String
+  role: Role
+}

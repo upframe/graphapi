@@ -16,4 +16,6 @@ type Query {
     maxUsers: Int = 5
     maxTags: Int = 3
   ): SearchResult
+  signUpInfo(token: ID!): SignUpInfo
+  googleSigninUrl(state: String): String
 }

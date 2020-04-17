@@ -1,4 +1,4 @@
-import { getClient } from '../../gcal'
+import { getClient } from '../../google'
 import resolver from '../resolver'
 
 const buildDate = (date: string): string => {

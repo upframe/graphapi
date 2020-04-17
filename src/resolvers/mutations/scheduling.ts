@@ -1,6 +1,7 @@
 import uuidv4 from 'uuid/v4'
 import { sendMeetupRequest, sendMeetupConfirmation } from '../../email'
-import { addMeetup, deleteMeetup, getClient } from '../../gcal'
+import { getClient } from '../../google'
+import { addMeetup, deleteMeetup } from '../../gcal'
 import { User, Mentor, Slots, Meetup } from '../../models'
 import resolver from '../resolver'
 import { system } from '../../authorization/user'

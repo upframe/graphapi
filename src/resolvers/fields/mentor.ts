@@ -1,4 +1,4 @@
-import { getClient } from '../../gcal'
+import { getClient } from '../../google'
 import * as obj from '../../utils/object'
 import { User } from '../../models'
 

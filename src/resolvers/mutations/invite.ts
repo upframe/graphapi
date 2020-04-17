@@ -31,7 +31,7 @@ export const invite = resolver<User>().loggedIn(
           token: id,
         },
         to: { email },
-        subject: 'Invitation to join Upframe',
+        subject: `${issuer.name} invited you to join Upframe`,
       })
     )
     return issuer

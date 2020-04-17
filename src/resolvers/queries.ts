@@ -1,6 +1,7 @@
-import { User, Tags, List, Tokens } from '../models'
+import { User, Tags, List, Tokens, Invite } from '../models'
 import { handleError, UserInputError } from '../error'
 import { generateAuthUrl } from '../gcal'
+import { generateAuthUrl as signinUrl, signInScopes } from '../google'
 import knex from '../db'
 import resolver from './resolver'
 import { system } from '../authorization/user'
@@ -47,6 +48,10 @@ export const user = resolver<User>()(
 
 export const calendarConnectUrl = resolver<string>().loggedIn(
   async () => await generateAuthUrl()
+)
+
+export const googleSigninUrl = resolver<string>()(
+  async ({ args: { state } }) => await signinUrl(signInScopes, state)
 )
 
 export const tag = resolver<Tags>()(async ({ query, args: { id, name } }) => {
@@ -128,5 +133,15 @@ export const search = resolver<any>()(
       )
     }
     return { users, tags }
+  }
+)
+
+export const signUpInfo = resolver<any>()(
+  async ({ args: { token }, query }) => {
+    if (!token) throw new UserInputError('must provide token')
+    const invite = await query.raw(Invite).findById(token)
+    if (!invite) throw new UserInputError('invalid invite token')
+    if (invite.redeemed) throw new UserInputError('invite token already used')
+    return { email: invite.email, role: invite.role.toUpperCase() }
   }
 )

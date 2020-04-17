@@ -67,6 +67,11 @@ export const visitor: Group = {
       action: 'create',
       resource: 'meetups',
     },
+    {
+      effect: 'allow',
+      action: 'read',
+      resource: 'invites',
+    },
   ],
 }
 
@@ -108,12 +113,6 @@ export const user: Group = {
       effect: 'allow',
       action: 'create',
       resource: 'tags',
-    },
-    {
-      effect: 'allow',
-      action: 'read',
-      resource: 'invites',
-      where: 'invites.issuer = current.id',
     },
     {
       effect: 'allow',

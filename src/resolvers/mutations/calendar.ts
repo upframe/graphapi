@@ -1,5 +1,5 @@
 import { User, Mentor } from '../../models'
-import { getClient, removeClient } from '../../gcal'
+import { getClient, removeClient } from '../../google'
 import { UserInputError } from '../../error'
 import resolver from '../resolver'
 
