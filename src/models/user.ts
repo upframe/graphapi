@@ -1,4 +1,12 @@
-import { Model, Mentor, List, SocialMedia, Tags, ProfilePicture } from '.'
+import {
+  Model,
+  Mentor,
+  List,
+  SocialMedia,
+  Tags,
+  ProfilePicture,
+  Invite,
+} from '.'
 
 const regToStr = (reg: RegExp) => reg.toString().replace(/\/(.*)\//, '$1')
 
@@ -21,6 +29,7 @@ export class User extends Model {
   tags?: Tags[]
   profile_pictures?: ProfilePicture[]
   lists?: List[]
+  invites?: Invite[]
 
   static relationMappings = {
     mentors: {
@@ -74,6 +83,14 @@ export class User extends Model {
           to: 'user_lists.list_id',
         },
         to: 'lists.id',
+      },
+    },
+    invites: {
+      relation: Model.HasManyRelation,
+      modelClass: Invite,
+      join: {
+        from: 'users.id',
+        to: 'invites.issuer',
       },
     },
   }

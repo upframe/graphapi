@@ -109,6 +109,18 @@ export const user: Group = {
       action: 'create',
       resource: 'tags',
     },
+    {
+      effect: 'allow',
+      action: 'read',
+      resource: 'invites',
+      where: 'invites.issuer = current.id',
+    },
+    {
+      effect: 'allow',
+      action: 'create',
+      resource: 'invites',
+      where: 'invites.issuer = current.id',
+    },
   ],
 }
 

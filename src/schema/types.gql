@@ -12,6 +12,7 @@ interface Person {
   website: String
   categories: [String!]
   role: Role
+  invites: [Invite]
 }
 
 type User implements Person {
@@ -28,6 +29,7 @@ type User implements Person {
   website: String
   categories: [String!]
   role: Role
+  invites: [Invite]
 }
 
 type Mentor implements Person {
@@ -50,6 +52,7 @@ type Mentor implements Person {
   calendarConnected: Boolean
   categories: [String!]
   role: Role
+  invites: [Invite]
 }
 
 type Calendar {
@@ -153,4 +156,15 @@ type SearchResult {
 type TagSearchResult {
   tag: Tag!
   markup: String
+}
+
+type Invite {
+  email: String
+  role: Role
+  status: InviteStatus
+}
+
+enum InviteStatus {
+  PENDING
+  JOINED
 }

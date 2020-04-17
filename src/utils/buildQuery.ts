@@ -9,6 +9,7 @@ import {
   Meetup,
   List,
   Tags,
+  Invite,
 } from '../models'
 import getQueryFields from './queryFields'
 import { fromPaths } from '../utils/path'
@@ -46,6 +47,7 @@ set(User)
   .add(ProfilePicture, 'profilePictures')
   .add(List, 'categories')
   .add(Tags, 'tags')
+  .add(Invite, 'invites')
 set(Mentor).add(Slots, 'slots')
 set(Slots).add(Meetup, __ALWAYS__)
 set(List).add(User, 'users')

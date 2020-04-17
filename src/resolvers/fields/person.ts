@@ -47,3 +47,11 @@ export const categories = resolver<
 export const role = resolver<string, User>()(({ parent: { role } }) =>
   role.toUpperCase()
 )
+
+export const invites = resolver<any[], User>()(({ parent: { invites } }) =>
+  (invites ?? []).map(invite => ({
+    ...invite,
+    status: invite.redeemed ? 'JOINED' : 'PENDING',
+    role: invite.role.toUpperCase(),
+  }))
+)
