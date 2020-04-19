@@ -12,25 +12,16 @@ export function authenticate(token: string): { id: string; role: string } {
   }
 }
 
-export function signIn(
-  user: User,
-  password: string,
-  skipPassword = false
-): string {
-  if (!user?.email || (!skipPassword && !checkPassword(user, password))) return
-
-  return jwt.sign({ id: user.id, role: user.role }, process.env.PRIVATE_KEY, {
+export const signInToken = (user: User): string =>
+  jwt.sign({ id: user.id, role: user.role }, process.env.PRIVATE_KEY, {
     issuer: 'upframe',
     subject: user.email,
     algorithm: 'RS256',
     expiresIn: '14d',
   })
-}
 
-export const checkPassword = (user: User, password: string): boolean =>
-  !user?.password || !password || !bcrypt.compareSync(password, user.password)
-    ? false
-    : true
+export const checkPassword = (input: string, password: string): boolean =>
+  input && password ? bcrypt.compareSync(input, password) : false
 
 export const hashPassword = (password: string): string =>
   bcrypt.hashSync(password, bcrypt.genSaltSync(10))

@@ -1,5 +1,5 @@
 import { User, Mentor, Slots, Meetup } from './models'
-import { getClient, generateAuthUrl as authUrl } from './google'
+import { getClient } from './google'
 
 export async function addMeetup(
   slot: Slots,
@@ -79,6 +79,3 @@ export async function deleteMeetup(slot: Slots, mentor: Mentor) {
       }),
   ])
 }
-
-export const generateAuthUrl = async () =>
-  await authUrl(['https://www.googleapis.com/auth/calendar'])

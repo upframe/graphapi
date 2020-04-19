@@ -65,8 +65,9 @@ type Mutation {
   signIn(input: LoginInput!): Person
   signOut: Int
 
-  createAccount(input: createAccountInput!): Person
-  deleteAccount(password: String!): Int
+  signUpGoogle(token: ID!, code: ID!, redirect: String!): Int
+
+  deleteAccount(handle: String!): Int
   requestEmailChange(email: String!): Int
   changeEmail(token: String!): Person
   requestPasswordChange(email: String!): Int

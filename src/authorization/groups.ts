@@ -87,7 +87,7 @@ export const user: Group = {
     },
     {
       effect: 'allow',
-      action: 'update',
+      action: 'update, delete',
       resource: 'users',
       where: 'users.id = current.id',
     },
@@ -96,12 +96,6 @@ export const user: Group = {
       action: 'delete',
       resource: 'user_handles',
       where: 'user_handles.user_id = current.id',
-    },
-    {
-      effect: 'allow',
-      action: 'delete',
-      resource: 'users',
-      where: 'users.id = current.id',
     },
     {
       effect: 'allow',
@@ -119,6 +113,12 @@ export const user: Group = {
       action: 'create',
       resource: 'invites',
       where: 'invites.issuer = current.id',
+    },
+    {
+      effect: 'allow',
+      action: 'update, delete',
+      resource: 'signin_upframe',
+      where: 'signin_upframe.user_id = current.id',
     },
   ],
 }
@@ -182,5 +182,6 @@ export const admin: Group = {
     { effect: 'allow', action: '*', resource: 'tags' },
     { effect: 'allow', action: '*', resource: 'connect_google' },
     { effect: 'allow', action: '*', resource: 'signup' },
+    { effect: 'allow', action: '*', resource: 'signin_upframe' },
   ],
 }

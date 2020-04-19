@@ -1,22 +1,12 @@
 import { google, calendar_v3 } from 'googleapis'
 import { Mentor } from './models'
 
-const createClient = () =>
+export const createClient = (redirect?: string) =>
   new google.auth.OAuth2(
     process.env.OAUTH_CLIENT_ID,
     process.env.OAUTH_CLIENT_SECRET,
-    process.env.IS_OFFLINE
-      ? process.env.GCAL_REDIRECT
-      : `https://${
-          process.env[`GCAL_REDIRECT_${process.env.stage.toUpperCase()}`]
-        }`
+    redirect
   )
-
-const signInClient = new google.auth.OAuth2(
-  process.env.OAUTH_CLIENT_ID,
-  process.env.OAUTH_CLIENT_SECRET,
-  'http://localhost:3000/signup'
-)
 
 const clients: {
   [userId: string]: {
@@ -57,21 +47,11 @@ export const removeClient = (userId: string) => {
   delete clients[userId]
 }
 
-export const generateAuthUrl = async (
-  scopes: string[] = [
+export const scopes = {
+  signIn: [
     'https://www.googleapis.com/auth/plus.me',
     'https://www.googleapis.com/auth/userinfo.email',
+    'https://www.googleapis.com/auth/userinfo.profile',
   ],
-  state?: string
-) =>
-  signInClient.generateAuthUrl({
-    access_type: 'offline',
-    scope: scopes,
-    prompt: 'consent',
-    ...{ state },
-  })
-
-export const signInScopes = [
-  'https://www.googleapis.com/auth/plus.me',
-  'https://www.googleapis.com/auth/userinfo.email',
-]
+  calendar: ['https://www.googleapis.com/auth/calendar'],
+}

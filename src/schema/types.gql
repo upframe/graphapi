@@ -172,4 +172,5 @@ enum InviteStatus {
 type SignUpInfo {
   email: String
   role: Role
+  authComplete: Boolean
 }

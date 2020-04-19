@@ -1,7 +1,6 @@
-import { User, Tags, List, Tokens, Invite } from '../models'
+import { User, Tags, List, Tokens, Invite, Signup } from '../models'
 import { handleError, UserInputError } from '../error'
-import { generateAuthUrl } from '../gcal'
-import { generateAuthUrl as signinUrl, signInScopes } from '../google'
+import { scopes, createClient } from '../google'
 import knex from '../db'
 import resolver from './resolver'
 import { system } from '../authorization/user'
@@ -47,11 +46,22 @@ export const user = resolver<User>()(
 )
 
 export const calendarConnectUrl = resolver<string>().loggedIn(
-  async () => await generateAuthUrl()
+  async ({ args: { redirect } }) =>
+    await createClient(redirect).generateAuthUrl({
+      access_type: 'offline',
+      scope: scopes.calendar,
+      prompt: 'consent',
+    })
 )
 
 export const googleSigninUrl = resolver<string>()(
-  async ({ args: { state } }) => await signinUrl(signInScopes, state)
+  async ({ args: { redirect, state } }) =>
+    await createClient(redirect).generateAuthUrl({
+      access_type: 'offline',
+      scope: scopes.signIn,
+      prompt: 'consent',
+      ...{ state },
+    })
 )
 
 export const tag = resolver<Tags>()(async ({ query, args: { id, name } }) => {
@@ -142,6 +152,14 @@ export const signUpInfo = resolver<any>()(
     const invite = await query.raw(Invite).findById(token)
     if (!invite) throw new UserInputError('invalid invite token')
     if (invite.redeemed) throw new UserInputError('invite token already used')
-    return { email: invite.email, role: invite.role.toUpperCase() }
+    const signup = await query
+      .raw(Signup)
+      .findById(token)
+      .asUser(system)
+    return {
+      email: invite.email,
+      role: invite.role.toUpperCase(),
+      authComplete: !!signup,
+    }
   }
 )

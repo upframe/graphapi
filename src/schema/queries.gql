@@ -3,7 +3,7 @@ type Query {
   mentors: [Mentor!]!
   mentor(handle: String, id: ID): Mentor @deprecated
   user(handle: String, id: ID): Person
-  calendarConnectUrl: String
+  calendarConnectUrl(redirect: String!): String
   tag(id: Int, name: String): Tag
   tags(orderBy: TagOrder = alpha): [Tag!]!
   lists: [List!]!
@@ -17,5 +17,5 @@ type Query {
     maxTags: Int = 3
   ): SearchResult
   signUpInfo(token: ID!): SignUpInfo
-  googleSigninUrl(state: String): String
+  googleSigninUrl(redirect: String!, state: String): String
 }
