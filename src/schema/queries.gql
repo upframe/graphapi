@@ -18,4 +18,5 @@ type Query {
   ): SearchResult
   signUpInfo(token: ID!): SignUpInfo
   googleSigninUrl(redirect: String!, state: String): String
+  checkValidity(name: String, handle: String): [Validity!]!
 }

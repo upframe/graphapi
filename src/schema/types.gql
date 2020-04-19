@@ -174,3 +174,9 @@ type SignUpInfo {
   role: Role
   authComplete: Boolean
 }
+
+type Validity {
+  field: String
+  valid: Boolean!
+  reason: String
+}
