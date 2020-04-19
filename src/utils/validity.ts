@@ -1,10 +1,6 @@
-export const name = (value: string) => {
-  if (value.length < 3) return 'too short'
-  if (value.length > 50) return 'too long'
-}
+import * as rules from './validityRules'
 
-export const handle = (value: string) => {
-  if (value.length < 3) return 'too short'
-  if (value.length > 20) return 'too long'
-  if (/[^\w]/.test(value)) return 'invalid characters'
+export default function(field: string, value: any) {
+  if (!(field in rules)) return `unknown field ${field}`
+  return rules[field](value)
 }

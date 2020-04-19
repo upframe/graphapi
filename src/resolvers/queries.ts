@@ -5,7 +5,7 @@ import knex from '../db'
 import resolver from './resolver'
 import { system } from '../authorization/user'
 import { searchUsers, searchTags } from '../search'
-import * as valid from '../utils/validity'
+import valid from '../utils/validity'
 
 export const me = resolver<User>().loggedIn(
   async ({ query, ctx: { id } }) => await query().findById(id)
@@ -172,8 +172,6 @@ export const checkValidity = resolver<any>()(({ args }) => {
       : { valid: false, ...(typeof v === 'string' && { reason: v }) }
   return Object.entries(args).map(([k, v]) => ({
     field: k,
-    ...(k in valid
-      ? format(valid[k](v))
-      : { valid: false, reason: `unknown field ${k}` }),
+    ...format(valid(k, v)),
   }))
 })
