@@ -173,90 +173,14 @@ export const admin: Group = {
   name: 'admin',
   groups: [mentor],
   policies: [
-    {
-      effect: 'allow',
-      action: 'create',
-      resource: 'lists',
-    },
-    {
-      effect: 'allow',
-      action: 'delete',
-      resource: 'lists',
-    },
-    {
-      effect: 'allow',
-      action: 'create',
-      resource: 'user_lists',
-    },
-    {
-      effect: 'allow',
-      action: 'delete',
-      resource: 'user_lists',
-    },
-    {
-      effect: 'allow',
-      action: 'delete',
-      resource: 'users',
-    },
-    {
-      effect: 'allow',
-      action: 'read',
-      resource: 'users',
-    },
-    {
-      effect: 'allow',
-      action: 'read',
-      resource: 'mentors',
-    },
-    {
-      effect: 'allow',
-      action: 'delete',
-      resource: 'meetups',
-    },
-    {
-      effect: 'allow',
-      action: 'update',
-      resource: 'meetups',
-    },
-    {
-      effect: 'allow',
-      action: 'create',
-      resource: 'mentors',
-    },
-    {
-      effect: 'allow',
-      action: 'delete',
-      resource: 'mentors',
-    },
-    {
-      effect: 'allow',
-      action: 'update',
-      resource: 'users',
-    },
-    {
-      effect: 'allow',
-      action: 'create',
-      resource: 'tokens',
-    },
-    {
-      effect: 'allow',
-      action: 'read',
-      resource: 'tokens',
-    },
-    {
-      effect: 'allow',
-      action: 'delete',
-      resource: 'tokens',
-    },
-    {
-      effect: 'allow',
-      action: 'update',
-      resource: 'tags',
-    },
-    {
-      effect: 'allow',
-      action: 'delete',
-      resource: 'tags',
-    },
+    { effect: 'allow', action: '*', resource: 'users' },
+    { effect: 'allow', action: '*', resource: 'mentors' },
+    { effect: 'allow', action: '*', resource: 'meetups' },
+    { effect: 'allow', action: '*', resource: 'lists' },
+    { effect: 'allow', action: '*', resource: 'user_lists' },
+    { effect: 'allow', action: '*', resource: 'tokens' },
+    { effect: 'allow', action: '*', resource: 'tags' },
+    { effect: 'allow', action: '*', resource: 'connect_google' },
+    { effect: 'allow', action: '*', resource: 'signup' },
   ],
 }
