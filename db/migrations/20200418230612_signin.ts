@@ -6,7 +6,6 @@ export async function up(knex: Knex): Promise<any> {
     t.text('password').notNullable()
     t.uuid('user_id')
       .references('users.id')
-      .notNullable()
       .onDelete('CASCADE')
   })
 
@@ -19,12 +18,14 @@ export async function up(knex: Knex): Promise<any> {
     t.dropColumn('password')
   })
 
-  await knex.schema.createTable('signin_google', t => {
-    t.text('google_id').primary()
+  await knex.schema.createTable('connect_google', t => {
     t.uuid('user_id')
       .references('users.id')
-      .notNullable()
       .onDelete('CASCADE')
+    t.text('google_id').primary()
+    t.text('refresh_token').notNullable()
+    t.text('access_token')
+    t.specificType('scopes', 'text[]')
   })
 }
 
@@ -50,5 +51,5 @@ export async function down(knex: Knex): Promise<any> {
   await knex.schema.raw('ALTER TABLE users ALTER COLUMN password SET NOT NULL')
 
   await knex.schema.dropTable('signin_upframe')
-  await knex.schema.dropTable('signin_google')
+  await knex.schema.dropTable('connect_google')
 }
