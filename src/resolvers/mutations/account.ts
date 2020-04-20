@@ -68,6 +68,15 @@ export const signInGoogle = resolver<User>()(
         await client.revokeToken(tokens.refresh_token)
         throw new UserInputError('invalid credentials')
       }
+      if (signIn.refresh_token !== tokens.refresh_token)
+        await query
+          .raw(ConnectGoogle)
+          .findById(data.id)
+          .patch({
+            refresh_token: tokens.refresh_token,
+            access_token: tokens.access_token,
+          })
+          .asUser(system)
       const user = await query()
         .findById(signIn.user_id)
         .asUser(system)
@@ -161,11 +170,11 @@ export const connectGoogle = resolver<User>()(
         .userinfo.get()
 
       const emailInUse =
-        (
+        ((
           await query()
             .where({ email: data.email })
             .first()
-        )?.id ?? id !== id
+        )?.id ?? id) !== id
       const accountInUse = await query.raw(ConnectGoogle).findById(data.id)
 
       if (emailInUse || accountInUse) {
