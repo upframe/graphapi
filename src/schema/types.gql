@@ -13,6 +13,7 @@ interface Person {
   categories: [String!]
   role: Role
   invites: [Invite]
+  google: Google
 }
 
 type User implements Person {
@@ -30,6 +31,7 @@ type User implements Person {
   categories: [String!]
   role: Role
   invites: [Invite]
+  google: Google
 }
 
 type Mentor implements Person {
@@ -53,6 +55,7 @@ type Mentor implements Person {
   categories: [String!]
   role: Role
   invites: [Invite]
+  google: Google
 }
 
 type Calendar {
@@ -181,4 +184,10 @@ type Validity {
   field: String
   valid: Boolean!
   reason: String
+}
+
+type Google {
+  connected: Boolean
+  email: String
+  canDisconnect: Boolean
 }

@@ -6,6 +6,8 @@ import {
   Tags,
   ProfilePicture,
   Invite,
+  ConnectGoogle,
+  SigninUpframe,
 } from '.'
 
 const regToStr = (reg: RegExp) => reg.toString().replace(/\/(.*)\//, '$1')
@@ -30,6 +32,8 @@ export class User extends Model {
   profile_pictures?: ProfilePicture[]
   lists?: List[]
   invites?: Invite[]
+  connect_google?: ConnectGoogle
+  signin_upframe?: SigninUpframe
 
   static relationMappings = {
     mentors: {
@@ -91,6 +95,22 @@ export class User extends Model {
       join: {
         from: 'users.id',
         to: 'invites.issuer',
+      },
+    },
+    connect_google: {
+      relation: Model.HasOneRelation,
+      modelClass: ConnectGoogle,
+      join: {
+        from: 'users.id',
+        to: 'connect_google.user_id',
+      },
+    },
+    signin_upframe: {
+      relation: Model.HasOneRelation,
+      modelClass: SigninUpframe,
+      join: {
+        from: 'users.id',
+        to: 'signin_upframe.user_id',
       },
     },
   }

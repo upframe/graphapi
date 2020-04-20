@@ -120,6 +120,12 @@ export const user: Group = {
       resource: 'signin_upframe',
       where: 'signin_upframe.user_id = current.id',
     },
+    {
+      effect: 'allow',
+      action: 'read, update, delete',
+      resource: 'connect_google',
+      where: 'connect_google.user_id = current.id',
+    },
   ],
 }
 

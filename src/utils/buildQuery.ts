@@ -10,6 +10,8 @@ import {
   List,
   Tags,
   Invite,
+  ConnectGoogle,
+  SigninUpframe,
 } from '../models'
 import getQueryFields from './queryFields'
 import { fromPaths } from '../utils/path'
@@ -48,6 +50,8 @@ set(User)
   .add(List, 'categories')
   .add(Tags, 'tags')
   .add(Invite, 'invites')
+  .add(ConnectGoogle, 'google')
+  .add(SigninUpframe, 'google')
 set(Mentor).add(Slots, 'slots')
 set(Slots).add(Meetup, __ALWAYS__)
 set(List).add(User, 'users')
