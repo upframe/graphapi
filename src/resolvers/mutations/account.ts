@@ -150,6 +150,46 @@ export const signUpGoogle = resolver<any>()(
   }
 )
 
+export const connectGoogle = resolver<User>()(
+  async ({ args: { redirect, code }, ctx: { id }, query }) => {
+    try {
+      const client = createClient(redirect)
+      const { tokens } = await client.getToken(code)
+      client.setCredentials(tokens)
+      const { data } = await google
+        .oauth2({ auth: client, version: 'v2' })
+        .userinfo.get()
+
+      const emailInUse =
+        (
+          await query()
+            .where({ email: data.email })
+            .first()
+        )?.id ?? id !== id
+      const accountInUse = await query.raw(ConnectGoogle).findById(data.id)
+
+      if (emailInUse || accountInUse) {
+        await client.revokeToken(tokens.refresh_token)
+        if (emailInUse) throw new ForbiddenError('email already in use')
+        if (accountInUse) throw new ForbiddenError('account already in use')
+      }
+
+      await query.raw(ConnectGoogle).insert({
+        user_id: id,
+        google_id: data.id,
+        refresh_token: tokens.refresh_token,
+        access_token: tokens.access_token,
+        scopes: ((tokens as any).scope ?? '').split(' '),
+      })
+    } catch (e) {
+      if (e.message === 'invalid_grant') throw InvalidGrantError()
+      throw e
+    }
+
+    return await query().findById(id)
+  }
+)
+
 export const disconnectGoogle = resolver<User>()(
   async ({ ctx: { id }, query }) => {
     const tokens = await query

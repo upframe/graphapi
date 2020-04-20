@@ -74,6 +74,7 @@ type Mutation {
     biography: String!
   ): Person
 
+  connectGoogle(code: ID!, redirect: String!): Person
   disconnectGoogle: Person
 
   deleteAccount(handle: String!): Int
