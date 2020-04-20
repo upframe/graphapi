@@ -13,7 +13,7 @@ import knex from '../db'
 import resolver from './resolver'
 import { system } from '../authorization/user'
 import { searchUsers, searchTags } from '../search'
-import valid from '../utils/validity'
+import validate from '../utils/validity'
 import { google } from 'googleapis'
 
 export const me = resolver<User>().loggedIn(
@@ -168,7 +168,7 @@ export const signUpInfo = resolver<any>()(
       .asUser(system)
 
     let name: string
-    if (signup.google_id) {
+    if (signup?.google_id) {
       const creds = await query
         .raw(ConnectGoogle)
         .findById(signup.google_id)
@@ -182,6 +182,7 @@ export const signUpInfo = resolver<any>()(
     }
 
     return {
+      id: token,
       email: invite.email,
       role: invite.role.toUpperCase(),
       authComplete: !!signup,
@@ -190,17 +191,6 @@ export const signUpInfo = resolver<any>()(
   }
 )
 
-export const checkValidity = resolver<any>()(async ({ args }) => {
-  const format = (v: boolean | string) =>
-    v === true || v === undefined
-      ? { valid: true }
-      : { valid: false, ...(typeof v === 'string' && { reason: v }) }
-
-  return (
-    await Promise.all(
-      Object.entries(args).map(([k, v]) =>
-        valid(k, v).then(res => [k, res])
-      ) as Promise<[string, any]>[]
-    )
-  ).map(([k, v]) => ({ field: k, ...format(v) }))
-})
+export const checkValidity = resolver<any>()(
+  async ({ args }) => await validate.batch(args)
+)

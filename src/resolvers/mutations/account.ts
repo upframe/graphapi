@@ -5,6 +5,7 @@ import {
   ConnectGoogle,
   Signup,
   SigninUpframe,
+  Invite,
 } from '../../models'
 import { checkPassword, signInToken, cookie, hashPassword } from '../../auth'
 import {
@@ -19,6 +20,9 @@ import { sendMJML } from '../../email'
 import genToken from '../../utils/token'
 import { createClient } from '../../google'
 import { google } from 'googleapis'
+import validate from '../../utils/validity'
+import uuid from 'uuid/v4'
+import { filterKeys } from '../../utils/object'
 
 export const signIn = resolver<User>()(
   async ({
@@ -56,6 +60,12 @@ export const signOut = resolver()(({ ctx }) => {
 export const signUpGoogle = resolver<any>()(
   async ({ args: { token, code, redirect }, query }) => {
     try {
+      const invite = await query
+        .raw(Invite)
+        .findById(token)
+        .asUser(system)
+      if (!invite) throw new UserInputError('invalid invite token')
+
       const client = createClient(redirect)
       const { tokens } = await client.getToken(code)
       client.setCredentials(tokens)
@@ -95,10 +105,101 @@ export const signUpGoogle = resolver<any>()(
         .raw(Signup)
         .insert({ token, google_id: data.id })
         .asUser(system)
+
+      return {
+        id: token,
+        email: data.email,
+        role: invite.role.toUpperCase(),
+        authComplete: true,
+        name: data.name,
+      }
     } catch (e) {
       if (e.message === 'invalid_grant') throw InvalidGrantError()
       throw e
     }
+  }
+)
+
+export const completeSignup = resolver<User>()(
+  async ({ args: { token, name, handle, biography }, ctx, query }) => {
+    const signup = await query
+      .raw(Signup)
+      .findById(token)
+      .asUser(system)
+    if (!signup) throw new UserInputError('invalid signup token')
+
+    let user: Partial<User> = {
+      id: uuid(),
+      role: (await query.raw(Invite).findById(token)).role,
+      name,
+      handle,
+      biography,
+      allow_emails: true,
+    }
+
+    if (signup.email) user.email = signup.email
+
+    if (signup.google_id) {
+      const client = createClient()
+      client.setCredentials(
+        await query
+          .raw(ConnectGoogle)
+          .findById(signup.google_id)
+          .asUser(system)
+      )
+      const { data } = await google
+        .oauth2({ auth: client, version: 'v2' })
+        .userinfo.get()
+      user.email = data.email
+    }
+
+    const validStatus = await validate.batch(
+      filterKeys(user, ['name', 'handle', 'biography'])
+    )
+    validStatus.forEach(({ valid, field, reason }) => {
+      if (!valid) throw new UserInputError(`${field}: ${reason}`)
+    })
+
+    await query().insert(user)
+
+    if (signup.password) {
+      await query
+        .raw(SigninUpframe)
+        .insert({
+          user_id: user.id,
+          email: signup.email,
+          password: signup.password,
+        })
+        .asUser(system)
+    }
+    if (signup.google_id) {
+      await query
+        .raw(ConnectGoogle)
+        .findById(signup.google_id)
+        .patch({ user_id: user.id })
+        .asUser(system)
+    }
+
+    const finalUser = await query()
+      .findById(user.id)
+      .asUser(system)
+
+    await Promise.all([
+      query
+        .raw(Signup)
+        .deleteById(signup.token)
+        .asUser(system),
+      query
+        .raw(Invite)
+        .findById(signup.token)
+        .patch({ redeemed: finalUser.id })
+        .asUser(system),
+    ])
+
+    ctx.setHeader('Set-Cookie', cookie('auth', signInToken(finalUser)))
+    ctx.id = finalUser.id
+
+    return finalUser
   }
 )
 
