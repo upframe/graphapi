@@ -335,10 +335,22 @@ export const changePassword = resolver<User>()(
         .asUser(system)
     }
 
-    await query
+    const signin = await query
       .raw(SigninUpframe)
       .where({ user_id: token?.subject ?? ctx.id })
-      .patch({ password: hashPassword(password) })
+      .first()
+
+    if (signin)
+      await query
+        .raw(SigninUpframe)
+        .where({ user_id: token?.subject ?? ctx.id })
+        .patch({ password: hashPassword(password) })
+    else {
+      const { id, email } = await query().findById(token?.subject ?? ctx.id)
+      await query
+        .raw(SigninUpframe)
+        .insert({ email, password: hashPassword(password), user_id: id })
+    }
 
     const user = await query()
       .findById(token?.subject ?? ctx.id)

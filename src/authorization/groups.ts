@@ -116,13 +116,13 @@ export const user: Group = {
     },
     {
       effect: 'allow',
-      action: 'update, delete',
+      action: '*',
       resource: 'signin_upframe',
       where: 'signin_upframe.user_id = current.id',
     },
     {
       effect: 'allow',
-      action: 'read, update, delete',
+      action: '*',
       resource: 'connect_google',
       where: 'connect_google.user_id = current.id',
     },
