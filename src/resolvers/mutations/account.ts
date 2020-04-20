@@ -64,7 +64,10 @@ export const signInGoogle = resolver<User>()(
         .raw(ConnectGoogle)
         .findById(data.id)
         .asUser(system)
-      if (!signIn) throw new UserInputError('invalid credentials')
+      if (!signIn) {
+        await client.revokeToken(tokens.refresh_token)
+        throw new UserInputError('invalid credentials')
+      }
       const user = await query()
         .findById(signIn.user_id)
         .asUser(system)
@@ -144,6 +147,30 @@ export const signUpGoogle = resolver<any>()(
       if (e.message === 'invalid_grant') throw InvalidGrantError()
       throw e
     }
+  }
+)
+
+export const disconnectGoogle = resolver<User>()(
+  async ({ ctx: { id }, query }) => {
+    const tokens = await query
+      .raw(ConnectGoogle)
+      .where({ user_id: id })
+      .first()
+    if (!tokens) throw new UserInputError('google account not connected')
+    if (
+      !(await query
+        .raw(SigninUpframe)
+        .where({ user_id: id })
+        .first())
+    )
+      throw new UserInputError('must first set account password')
+    const client = createClient()
+    client.setCredentials(tokens)
+
+    await client.revokeToken(tokens.refresh_token)
+    await query.raw(ConnectGoogle).deleteById(tokens.google_id)
+
+    return await query().findById(id)
   }
 )
 
