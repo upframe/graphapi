@@ -1,4 +1,12 @@
-import { User, Tags, List, Tokens, Invite, Signup } from '../models'
+import {
+  User,
+  Tags,
+  List,
+  Tokens,
+  Invite,
+  Signup,
+  ConnectGoogle,
+} from '../models'
 import { handleError, UserInputError } from '../error'
 import { scopes, createClient } from '../google'
 import knex from '../db'
@@ -6,6 +14,7 @@ import resolver from './resolver'
 import { system } from '../authorization/user'
 import { searchUsers, searchTags } from '../search'
 import valid from '../utils/validity'
+import { google } from 'googleapis'
 
 export const me = resolver<User>().loggedIn(
   async ({ query, ctx: { id } }) => await query().findById(id)
@@ -157,21 +166,41 @@ export const signUpInfo = resolver<any>()(
       .raw(Signup)
       .findById(token)
       .asUser(system)
+
+    let name: string
+    if (signup.google_id) {
+      const creds = await query
+        .raw(ConnectGoogle)
+        .findById(signup.google_id)
+        .asUser(system)
+      const client = createClient()
+      client.setCredentials(creds)
+      const { data } = await google
+        .oauth2({ auth: client, version: 'v2' })
+        .userinfo.get()
+      name = data.name
+    }
+
     return {
       email: invite.email,
       role: invite.role.toUpperCase(),
       authComplete: !!signup,
+      name,
     }
   }
 )
 
-export const checkValidity = resolver<any>()(({ args }) => {
+export const checkValidity = resolver<any>()(async ({ args }) => {
   const format = (v: boolean | string) =>
     v === true || v === undefined
       ? { valid: true }
       : { valid: false, ...(typeof v === 'string' && { reason: v }) }
-  return Object.entries(args).map(([k, v]) => ({
-    field: k,
-    ...format(valid(k, v)),
-  }))
+
+  return (
+    await Promise.all(
+      Object.entries(args).map(([k, v]) =>
+        valid(k, v).then(res => [k, res])
+      ) as Promise<[string, any]>[]
+    )
+  ).map(([k, v]) => ({ field: k, ...format(v) }))
 })
