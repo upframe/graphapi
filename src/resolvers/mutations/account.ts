@@ -51,6 +51,33 @@ export const signIn = resolver<User>()(
   }
 )
 
+export const signInGoogle = resolver<User>()(
+  async ({ args: { code, redirect }, query, ctx }) => {
+    try {
+      const client = createClient(redirect)
+      const { tokens } = await client.getToken(code)
+      client.setCredentials(tokens)
+      const { data } = await google
+        .oauth2({ auth: client, version: 'v2' })
+        .userinfo.get()
+      const signIn = await query
+        .raw(ConnectGoogle)
+        .findById(data.id)
+        .asUser(system)
+      if (!signIn) throw new UserInputError('invalid credentials')
+      const user = await query()
+        .findById(signIn.user_id)
+        .asUser(system)
+      ctx.setHeader('Set-Cookie', cookie('auth', signInToken(user)))
+      ctx.id = user.id
+      return user
+    } catch (e) {
+      if (e.message === 'invalid_grant') throw InvalidGrantError()
+      throw e
+    }
+  }
+)
+
 export const signOut = resolver()(({ ctx }) => {
   if (!ctx.id) throw new AuthenticationError('not logged in')
   ctx.setHeader('Set-Cookie', cookie('auth', 'deleted', -1))

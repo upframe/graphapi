@@ -63,6 +63,7 @@ input RequestSlotInput {
 
 type Mutation {
   signIn(input: LoginInput!): Person
+  signInGoogle(code: ID!, redirect: String!): Person
   signOut: Int
 
   signUpGoogle(token: ID!, code: ID!, redirect: String!): SignUpInfo
