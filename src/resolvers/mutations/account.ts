@@ -443,6 +443,25 @@ export const deleteAccount = resolver().loggedIn(
   async ({ args: { handle }, ctx: { id, setHeader }, query }) => {
     const user = await query.raw(User).findById(id)
     if (user.handle !== handle) throw new ForbiddenError('wrong username')
+    const gTokens = await query
+      .raw(ConnectGoogle)
+      .where({ user_id: id })
+      .first()
+    if (gTokens) {
+      const client = createClient()
+      client.setCredentials(gTokens)
+      if (gTokens.calendar_id) {
+        try {
+          const calendar = google.calendar({ version: 'v3', auth: client })
+          await calendar.calendars.delete({
+            calendarId: gTokens.calendar_id,
+          })
+        } catch (e) {
+          console.warn(`couldn't delete calendar ${gTokens.calendar_id}`)
+        }
+      }
+      await client.revokeToken(gTokens.refresh_token)
+    }
     await query.raw(User).deleteById(id)
     setHeader('Set-Cookie', cookie('auth', 'deleted', -1))
   }
