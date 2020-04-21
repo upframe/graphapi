@@ -8,9 +8,6 @@ export class Mentor extends Model {
   listed: boolean
   title: string
   company: string
-  google_refresh_token: string
-  google_access_token: string
-  google_calendar_id: string
   slot_reminder_email: string
 
   time_slots?: Slots[]

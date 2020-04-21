@@ -9,4 +9,5 @@ export class ConnectGoogle extends Model {
   refresh_token!: string
   access_token: string
   scopes: string[]
+  calendar_id: string
 }
