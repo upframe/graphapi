@@ -1,12 +1,12 @@
 import uuidv4 from 'uuid/v4'
 import { sendMeetupRequest, sendMeetupConfirmation } from '../../email'
-import { getClient } from '../../google'
 import { addMeetup, deleteMeetup } from '../../gcal'
-import { User, Mentor, Slots, Meetup } from '../../models'
+import { User, Slots, Meetup, ConnectGoogle } from '../../models'
 import resolver from '../resolver'
 import { system } from '../../authorization/user'
 import { UserInputError, ForbiddenError } from '../../error'
 import { UniqueViolationError } from 'objection'
+import { userClient } from '../../google'
 
 export const updateSlots = resolver<User>().loggedIn(
   async ({
@@ -41,34 +41,34 @@ export const updateSlots = resolver<User>().loggedIn(
           .whereIn('id', deleted),
     ])
 
-    const user = await query({ include: 'mentors' }).findById(id)
+    const user = await query({ include: 'connect_google' }).findById(id)
 
-    if (user.mentors.google_refresh_token) {
-      const client = await getClient(id, user.mentors.google_refresh_token)
-      await Promise.all([
-        ...addList.map(
-          ({ id, start, end }) =>
-            client.calendar.events.insert({
-              calendarId: user.mentors.google_calendar_id,
-              requestBody: {
-                id: id.replace(/[^\w]/g, ''),
-                summary: 'Upframe Slot',
-                start: { dateTime: start },
-                end: { dateTime: end },
-                transparency: 'transparent',
-              },
-            }) as Promise<any>
-        ),
-        ...deleted.map(id =>
-          client.calendar.events
-            .delete({
-              calendarId: user.mentors.google_calendar_id,
-              eventId: id.replace(/[^\w]/g, ''),
-            })
-            .catch(() => Promise.resolve())
-        ),
-      ])
-    }
+    if (!user.connect_google.calendar_id) return user
+
+    const client = await userClient(user.connect_google)
+    await Promise.all([
+      ...addList.map(
+        ({ id, start, end }) =>
+          client.calendar.events.insert({
+            calendarId: user.connect_google.calendar_id,
+            requestBody: {
+              id: id.replace(/[^\w]/g, ''),
+              summary: 'Upframe Slot',
+              start: { dateTime: start },
+              end: { dateTime: end },
+              transparency: 'transparent',
+            },
+          }) as Promise<any>
+      ),
+      ...deleted.map(id =>
+        client.calendar.events
+          .delete({
+            calendarId: user.connect_google.calendar_id,
+            eventId: id.replace(/[^\w]/g, ''),
+          })
+          .catch(() => Promise.resolve())
+      ),
+    ])
 
     return user
   }
@@ -88,7 +88,7 @@ export const requestSlot = resolver()(
 
     const mentor = await query
       .raw(User)
-      .withGraphFetched('mentors')
+      .withGraphFetched('connect_google')
       .findById(slot.mentor_id)
       .asUser(system)
 
@@ -124,17 +124,22 @@ export const requestSlot = resolver()(
     }
     await sendMeetupRequest(mentor, mentee, { ...meetup, slot })
 
-    if (mentor.mentors?.google_refresh_token)
-      await (
-        await getClient(mentor.id, mentor.mentors.google_refresh_token)
-      ).calendar.events.patch({
-        calendarId: mentor.mentors.google_calendar_id,
+    if (!mentor.connect_google?.calendar_id) return
+    console.log('trace')
+    try {
+      const client = await userClient(mentor.connect_google)
+      client.calendar.events.patch({
+        calendarId: mentor.connect_google.calendar_id,
         eventId: slot.id.replace(/[^\w]/g, ''),
         requestBody: {
           summary: 'Upframe Slot (requested)',
           description: `<p>Slot was requested by <a href="mailto:${mentee.email}">${mentee.name}</a></p><p><i>${input.message}</i></p><p><a href="https://upframe.io/meetup/confirm/${meetup.slot_id}">accept</a> | <a href="https://upframe.io/meetup/cancel/${meetup.slot_id}">decline</a></p>`,
         },
       })
+    } catch (e) {
+      console.log(e)
+      console.warn(`couldn't update gcal event ${slot.id}`)
+    }
   }
 )
 
@@ -156,7 +161,7 @@ export const acceptMeetup = resolver<any>().loggedIn(
     const [parts] = await Promise.all([
       query
         .raw(User)
-        .withGraphFetched('mentors')
+        .withGraphFetched('connect_google')
         .whereIn('id', [slot.mentor_id, slot.meetups.mentee_id]),
       query
         .raw(Meetup)
@@ -203,19 +208,21 @@ export const cancelMeetup = resolver().loggedIn(
         "Can't cancel meetup. Please make sure that you are logged in with the correct account."
       )
 
-    const mentor = await query.raw(Mentor).findById(meetup.mentor_id)
+    const connectGoogle = await query
+      .raw(ConnectGoogle)
+      .where({ user_id: meetup.mentor_id })
+      .first()
+
+    let client = connectGoogle ? await userClient(connectGoogle) : undefined
 
     await Promise.all([
       query
         .raw(Meetup)
         .deleteById(meetupId)
         .asUser(system),
-      mentor.google_refresh_token &&
-        mentor.google_refresh_token &&
-        (
-          await getClient(mentor.id, mentor.google_refresh_token)
-        ).calendar.events.patch({
-          calendarId: mentor.google_calendar_id,
+      connectGoogle &&
+        client.calendar.events.patch({
+          calendarId: connectGoogle.calendar_id,
           eventId: meetup.id.replace(/[^\w]/g, ''),
           requestBody: {
             summary: 'Upframe Slot',
@@ -223,7 +230,7 @@ export const cancelMeetup = resolver().loggedIn(
             attendees: [],
           },
         }),
-      deleteMeetup(meetup, mentor).catch(() =>
+      deleteMeetup(meetup, client).catch(() =>
         console.warn("couldn't delete gcal meetup")
       ),
     ])

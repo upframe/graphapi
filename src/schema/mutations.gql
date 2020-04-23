@@ -97,7 +97,7 @@ type Mutation {
   acceptMeetup(meetupId: ID!): Meetup
   cancelMeetup(meetupId: ID!): Int
 
-  connectCalendar(code: ID!): Mentor
+  connectCalendar(code: ID!, redirect: String!): Mentor
   disconnectCalendar: Mentor
 
   createList(name: String!): List

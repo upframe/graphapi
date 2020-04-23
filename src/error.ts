@@ -14,4 +14,7 @@ export const CredentialsError = (msg = 'invalid credentials') =>
 export const InvalidGrantError = (msg = 'invalid grant') =>
   new ApolloError(msg, 'INVALID_GRANT')
 
+export const GoogleNotConnectedError = (msg = 'google account not connected') =>
+  new ApolloError(msg, 'GOOGLE_NOT_CONNECTED')
+
 export { AuthenticationError, ForbiddenError, ApolloError, UserInputError }

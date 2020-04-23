@@ -23,6 +23,7 @@ import { google } from 'googleapis'
 import validate from '../../utils/validity'
 import uuid from 'uuid/v4'
 import { filterKeys } from '../../utils/object'
+import * as account from '../../account'
 
 export const signIn = resolver<User>()(
   async ({
@@ -105,52 +106,19 @@ export const signUpGoogle = resolver<any>()(
         .asUser(system)
       if (!invite) throw new UserInputError('invalid invite token')
 
-      const client = createClient(redirect)
-      const { tokens } = await client.getToken(code)
-      client.setCredentials(tokens)
-      const { data } = await google
-        .oauth2({ auth: client, version: 'v2' })
-        .userinfo.get()
-
-      if (
-        (
-          await Promise.all([
-            query
-              .raw(User)
-              .where({ email: data.email })
-              .asUser(system)
-              .first(),
-            query
-              .raw(ConnectGoogle)
-              .where({ google_id: data.id })
-              .asUser(system)
-              .first(),
-          ])
-        ).some(Boolean)
-      )
-        throw new UserInputError(`email "${data.email}" already in use`)
-
-      await query
-        .raw(ConnectGoogle)
-        .insert({
-          google_id: data.id,
-          refresh_token: tokens.refresh_token,
-          access_token: tokens.access_token,
-          scopes: ((tokens as any).scope ?? '').split(' '),
-        })
-        .asUser(system)
+      const { info } = await account.connectGoogle(code, redirect)
 
       await query
         .raw(Signup)
-        .insert({ token, google_id: data.id })
+        .insert({ token, google_id: info.id })
         .asUser(system)
 
       return {
         id: token,
-        email: data.email,
+        email: info.email,
         role: invite.role.toUpperCase(),
         authComplete: true,
-        name: data.name,
+        name: info.name,
       }
     } catch (e) {
       if (e.message === 'invalid_grant') throw InvalidGrantError()
@@ -161,40 +129,7 @@ export const signUpGoogle = resolver<any>()(
 
 export const connectGoogle = resolver<User>()(
   async ({ args: { redirect, code }, ctx: { id }, query }) => {
-    try {
-      const client = createClient(redirect)
-      const { tokens } = await client.getToken(code)
-      client.setCredentials(tokens)
-      const { data } = await google
-        .oauth2({ auth: client, version: 'v2' })
-        .userinfo.get()
-
-      const emailInUse =
-        ((
-          await query()
-            .where({ email: data.email })
-            .first()
-        )?.id ?? id) !== id
-      const accountInUse = await query.raw(ConnectGoogle).findById(data.id)
-
-      if (emailInUse || accountInUse) {
-        await client.revokeToken(tokens.refresh_token)
-        if (emailInUse) throw new ForbiddenError('email already in use')
-        if (accountInUse) throw new ForbiddenError('account already in use')
-      }
-
-      await query.raw(ConnectGoogle).insert({
-        user_id: id,
-        google_id: data.id,
-        refresh_token: tokens.refresh_token,
-        access_token: tokens.access_token,
-        scopes: ((tokens as any).scope ?? '').split(' '),
-      })
-    } catch (e) {
-      if (e.message === 'invalid_grant') throw InvalidGrantError()
-      throw e
-    }
-
+    await account.connectGoogle(code, redirect, id)
     return await query().findById(id)
   }
 )

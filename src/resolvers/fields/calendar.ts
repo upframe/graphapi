@@ -1,4 +1,4 @@
-import { getClient } from '../../google'
+import { userClient } from '../../google'
 import resolver from '../resolver'
 
 const buildDate = (date: string): string => {
@@ -12,7 +12,7 @@ export const name = resolver<string, any>()(({ parent }) => parent.summary)
 
 export const events = resolver<any[], any>()(
   async ({ parent, args: { max, start } }) => {
-    const client = await getClient(parent.user_id)
+    const client = await userClient(parent)
     const { data } = await client.calendar.events.list({
       calendarId: parent.id,
       maxResults: max,

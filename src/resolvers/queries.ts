@@ -8,13 +8,14 @@ import {
   ConnectGoogle,
 } from '../models'
 import { handleError, UserInputError } from '../error'
-import { scopes, createClient } from '../google'
+import { createClient } from '../google'
 import knex from '../db'
 import resolver from './resolver'
 import { system } from '../authorization/user'
 import { searchUsers, searchTags } from '../search'
 import validate from '../utils/validity'
 import { google } from 'googleapis'
+import { requestScopes, userClient, scopes } from '../google'
 
 export const me = resolver<User>().loggedIn(
   async ({ query, ctx: { id } }) => await query().findById(id)
@@ -56,22 +57,29 @@ export const user = resolver<User>()(
 )
 
 export const calendarConnectUrl = resolver<string>().loggedIn(
-  async ({ args: { redirect } }) =>
-    await createClient(redirect).generateAuthUrl({
-      access_type: 'offline',
-      scope: scopes.calendar,
-      prompt: 'consent',
-    })
+  async ({ args: { redirect }, ctx: { id }, query }) => {
+    const googleConnect = await query
+      .raw(ConnectGoogle)
+      .where({ user_id: id })
+      .first()
+    if (!googleConnect)
+      return requestScopes(redirect)([...scopes.SIGNIN, ...scopes.CALENDAR])
+    const client = await userClient(googleConnect)
+    const info = await client.userInfo()
+    return requestScopes(redirect)('CALENDAR', { login_hint: info.email }, true)
+  }
 )
 
-export const googleSigninUrl = resolver<string>()(
-  async ({ args: { redirect, state } }) =>
-    await createClient(redirect).generateAuthUrl({
-      access_type: 'offline',
-      scope: scopes.signIn,
-      prompt: 'consent',
-      ...{ state },
-    })
+export const googleSigninUrl = resolver<
+  string
+>()(({ args: { redirect, state } }) =>
+  requestScopes(redirect)('SIGNIN', state ? { state } : {}, true)
+)
+
+export const googleSignupUrl = resolver<
+  string
+>()(({ args: { redirect, state } }) =>
+  requestScopes(redirect)('SIGNIN', { state })
 )
 
 export const tag = resolver<Tags>()(async ({ query, args: { id, name } }) => {

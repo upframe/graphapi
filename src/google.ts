@@ -1,5 +1,11 @@
-import { google, calendar_v3 } from 'googleapis'
-import { Mentor } from './models'
+import { google, oauth2_v2, calendar_v3 } from 'googleapis'
+import { OAuth2Client } from 'google-auth-library/build/src/auth/oauth2client'
+import { ConnectGoogle } from './models'
+import knex from './db'
+import { GoogleNotConnectedError } from './error'
+
+export { google }
+export type UserInfo = oauth2_v2.Schema$Userinfoplus
 
 export const createClient = (redirect?: string) =>
   new google.auth.OAuth2(
@@ -8,50 +14,117 @@ export const createClient = (redirect?: string) =>
     redirect
   )
 
-const clients: {
-  [userId: string]: {
-    auth: ReturnType<typeof createClient>
-    calendar: calendar_v3.Calendar
-  }
-} = {}
-
-export async function getClient(
-  userId: string = 'upframe',
-  refreshToken?: string
-) {
-  if (userId === 'upframe' && !refreshToken)
-    refreshToken = process.env.CALENDAR_REFRESH_TOKEN
-
-  if (!(userId in clients)) {
-    const auth = createClient()
-    if (!refreshToken) {
-      const { google_refresh_token } = await Mentor.query()
-        .select('google_refresh_token', 'google_access_token')
-        .findById(userId)
-      if (!google_refresh_token)
-        throw new Error(`no tokens available for ${userId}`)
-      refreshToken = google_refresh_token
-    }
-    auth.setCredentials({
-      refresh_token: refreshToken,
-    })
-    clients[userId] = {
-      auth,
-      calendar: google.calendar({ version: 'v3', auth }),
-    }
-  }
-  return clients[userId]
-}
-
-export const removeClient = (userId: string) => {
-  delete clients[userId]
-}
+export const calendar = (client: OAuth2Client) =>
+  google.calendar({ version: 'v3', auth: client })
+export const oauth = (client: OAuth2Client) =>
+  google.oauth2({ auth: client, version: 'v2' })
 
 export const scopes = {
-  signIn: [
+  SIGNIN: [
     'https://www.googleapis.com/auth/plus.me',
     'https://www.googleapis.com/auth/userinfo.email',
     'https://www.googleapis.com/auth/userinfo.profile',
   ],
-  calendar: ['https://www.googleapis.com/auth/calendar'],
+  CALENDAR: ['https://www.googleapis.com/auth/calendar'],
 }
+
+export const requestScopes = (redirect: string) => (
+  scope: string[] | keyof typeof scopes,
+  opts?: Parameters<OAuth2Client['generateAuthUrl']>[0],
+  isConnected = false
+) => {
+  if (!Array.isArray(scope)) scope = scopes[scope]
+  const client = createClient(redirect)
+  return client.generateAuthUrl({
+    access_type: 'offline',
+    scope,
+    include_granted_scopes: true,
+    ...(!isConnected && { prompt: 'consent' }),
+    ...opts,
+  })
+}
+
+export const getTokens = async (code: string, redirect: string) =>
+  (await createClient(redirect).getToken(code)).tokens
+
+type Tokens = {
+  refresh_token: string
+  access_token: string
+  id?: string
+  google_id?: string
+} & Partial<ConnectGoogle>
+
+const userClients: { [userId: string]: UserClient } = {}
+
+export class UserClient {
+  private user_id: string
+  public google_id: string
+  private info: UserInfo
+  public calendar: calendar_v3.Calendar
+  public ready: Promise<UserClient>
+  public calendarId: string
+
+  public client: OAuth2Client
+
+  constructor(userId: string, tokens?: Tokens) {
+    if (!userId) throw new Error('must provide user id to get client')
+    this.user_id = userId
+    this.client = createClient()
+
+    if (tokens?.refresh_token) {
+      this.setCreds(tokens)
+      this.ready = Promise.resolve(this)
+    } else
+      this.ready = new Promise(res => {
+        knex('connect_google')
+          .where({ user_id: userId })
+          .first()
+          .then(tokens => {
+            if (!tokens) throw GoogleNotConnectedError()
+            this.setCreds(tokens)
+            res(this)
+          })
+      })
+
+    this.client.on('tokens', async ({ refresh_token, access_token }) => {
+      if (this.google_id)
+        await knex('connect_google')
+          .where({ google_id: this.google_id })
+          .update({ refresh_token, access_token })
+    })
+  }
+
+  public async userInfo(): Promise<UserInfo> {
+    return (
+      this.info ?? (this.info = (await oauth(this.client).userinfo.get()).data)
+    )
+  }
+
+  public async setAccessToken(access_token) {
+    console.log('set new access token')
+    this.client.setCredentials({ access_token })
+    await knex('connect_google')
+      .where({ google_id: this.google_id })
+      .update({ access_token })
+  }
+
+  private setCreds(tokens: Tokens) {
+    this.calendarId = tokens.calendar_id
+    this.google_id = tokens.google_id ?? tokens.id
+    this.client.setCredentials(tokens)
+    userClients[this.user_id] = this
+    this.calendar = calendar(this.client)
+  }
+}
+
+export const userClient = async (info: Partial<ConnectGoogle>) => {
+  return (
+    userClients.user_id ??
+    (await new UserClient(info.user_id, info as Tokens).ready)
+  )
+}
+
+export const upframeClient = createClient()
+upframeClient.setCredentials({
+  refresh_token: process.env.CALENDAR_REFRESH_TOKEN,
+})
