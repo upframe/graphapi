@@ -176,6 +176,7 @@ export const signUpInfo = resolver<any>()(
       .asUser(system)
 
     let name: string
+    let picture
     if (signup?.google_id) {
       const creds = await query
         .raw(ConnectGoogle)
@@ -187,6 +188,7 @@ export const signUpInfo = resolver<any>()(
         .oauth2({ auth: client, version: 'v2' })
         .userinfo.get()
       name = data.name
+      if (!data.picture?.endsWith('photo.jpg')) picture = data.picture
     }
 
     return {
@@ -195,6 +197,14 @@ export const signUpInfo = resolver<any>()(
       role: invite.role.toUpperCase(),
       authComplete: !!signup,
       name,
+      ...(picture && {
+        picture: {
+          url: picture,
+        },
+      }),
+      defaultPicture: {
+        url: `https://${process.env.BUCKET_NAME}.s3.eu-west-2.amazonaws.com/default.png`,
+      },
     }
   }
 )

@@ -1,12 +1,11 @@
 import knex from './db'
-import { Model, Mentor } from './models'
+import { Model } from './models'
 Model.knex(knex)
 import AuthUser from './authorization/user'
 import {
   ApolloServer,
   makeExecutableSchema,
   UserInputError,
-  ForbiddenError,
 } from 'apollo-server-lambda'
 import resolvers from './resolvers'
 import { parseCookies } from './utils/cookie'

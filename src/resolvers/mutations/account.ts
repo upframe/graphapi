@@ -65,10 +65,8 @@ export const signInGoogle = resolver<User>()(
         .raw(ConnectGoogle)
         .findById(data.id)
         .asUser(system)
-      if (!signIn) {
-        await client.revokeToken(tokens.refresh_token)
-        throw new UserInputError('invalid credentials')
-      }
+      if (!signIn) throw new UserInputError('invalid credentials')
+
       if (signIn.refresh_token !== tokens.refresh_token)
         await query
           .raw(ConnectGoogle)

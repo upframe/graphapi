@@ -1,8 +1,9 @@
 import resolver from '../resolver'
 import { User, Invite } from '../../models'
-import { ForbiddenError } from 'apollo-server-lambda'
+import { ForbiddenError, UserInputError } from 'apollo-server-lambda'
 import { sendMJML } from '../../email'
 import genToken from '../../utils/token'
+import { system } from '../../authorization/user'
 
 export const invite = resolver<User>().loggedIn(
   async ({ args: { emails, role }, ctx: { id, user }, query }) => {
@@ -10,6 +11,14 @@ export const invite = resolver<User>().loggedIn(
       throw new ForbiddenError('not allowed to invite as mentor')
     if (!['USER', 'MENTOR'].includes(role))
       throw new ForbiddenError('can only invite as user or mentor')
+
+    const exists = await query()
+      .whereIn('email', emails)
+      .asUser(system)
+    if (exists.length)
+      throw new UserInputError(
+        `${exists.map(({ email }) => email).join(', ')} is already a user`
+      )
 
     const invites = ((await query.raw(Invite).insertAndFetch(
       emails.map(email => ({

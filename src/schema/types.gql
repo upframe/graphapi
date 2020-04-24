@@ -178,6 +178,8 @@ type SignUpInfo {
   role: Role
   authComplete: Boolean
   name: String
+  picture: ProfilePicture
+  defaultPicture: ProfilePicture
 }
 
 type Validity {
