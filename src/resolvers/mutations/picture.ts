@@ -28,7 +28,7 @@ export const uploadProfilePicture = resolver<User>()(
     }
 
     const data = new Buffer(
-      await file.replace(/^data:image\/\w+;base64,/, ''),
+      file.replace(/^data:image\/\w+;base64,/, ''),
       'base64'
     )
     await s3

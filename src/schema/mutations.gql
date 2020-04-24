@@ -70,8 +70,11 @@ type Mutation {
   completeSignup(
     token: ID!
     name: String!
-    handle: String
+    handle: String!
     biography: String!
+    location: String
+    headline: String
+    photo: String
   ): Person
 
   connectGoogle(code: ID!, redirect: String!): Person

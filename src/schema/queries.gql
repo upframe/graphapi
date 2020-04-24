@@ -19,5 +19,11 @@ type Query {
   googleSigninUrl(redirect: String!, state: String): String
   googleSignupUrl(redirect: String!, state: String): String
   calendarConnectUrl(redirect: String!): String
-  checkValidity(name: String, handle: String, biography: String): [Validity!]!
+  checkValidity(
+    name: String
+    handle: String
+    biography: String
+    location: String
+    headline: String
+  ): [Validity!]!
 }

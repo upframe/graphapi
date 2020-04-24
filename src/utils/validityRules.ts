@@ -42,6 +42,14 @@ export const biography = (value: string) => {
   if (value.length < 20) return 'too short'
 }
 
+export const location = (value: string) => {
+  if (value.length < 4) return 'too short'
+}
+
+export const headline = (value: string) => {
+  if (value.length < 3) return 'too short'
+}
+
 const reserved = [
   '404',
   'about',

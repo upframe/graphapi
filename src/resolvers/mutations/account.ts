@@ -24,6 +24,8 @@ import validate from '../../utils/validity'
 import uuid from 'uuid/v4'
 import { filterKeys } from '../../utils/object'
 import * as account from '../../account'
+import { s3 } from '../../utils/aws'
+import axios from 'axios'
 
 export const signIn = resolver<User>()(
   async ({
@@ -157,19 +159,26 @@ export const disconnectGoogle = resolver<User>()(
 )
 
 export const completeSignup = resolver<User>()(
-  async ({ args: { token, name, handle, biography }, ctx, query }) => {
+  async ({
+    args: { token, name, handle, biography, location, headline, photo },
+    ctx,
+    query,
+  }) => {
     const signup = await query
       .raw(Signup)
       .findById(token)
       .asUser(system)
     if (!signup) throw new UserInputError('invalid signup token')
 
+    const role = (await query.raw(Invite).findById(token)).role
+
     let user: Partial<User> = {
       id: uuid(),
-      role: (await query.raw(Invite).findById(token)).role,
+      role,
       name,
       handle,
       biography,
+      location,
       allow_emails: true,
     }
 
@@ -189,14 +198,58 @@ export const completeSignup = resolver<User>()(
       user.email = data.email
     }
 
-    const validStatus = await validate.batch(
-      filterKeys(user, ['name', 'handle', 'biography'])
-    )
+    const validStatus = await validate.batch({
+      ...filterKeys(user, ['name', 'handle', 'biography', 'location']),
+      ...(role !== 'user' && { headline }),
+    })
     validStatus.forEach(({ valid, field, reason }) => {
       if (!valid) throw new UserInputError(`${field}: ${reason}`)
     })
 
     await query().insert(user)
+
+    if (role !== 'user') {
+      const mentor = {
+        id: user.id,
+        listed: false,
+        title: headline,
+      }
+      await query
+        .raw(Mentor)
+        .insert(mentor)
+        .asUser(system)
+    }
+
+    if (
+      photo &&
+      photo !==
+        `https://${process.env.BUCKET_NAME}.s3.eu-west-2.amazonaws.com/default.png`
+    ) {
+      try {
+        let fileExt = 'png'
+        const data = photo.startsWith('data:')
+          ? new Buffer(photo.replace(/^data:image\/\w+;base64,/, ''), 'base64')
+          : await axios
+              .get(photo, { responseType: 'arraybuffer' })
+              .then(({ data, headers }) => {
+                const [type, ext] = headers['content-type']?.split('/') ?? []
+                if (type !== 'image') throw new Error('not an image')
+                fileExt = ext ?? fileExt
+                return data
+              })
+
+        await s3
+          .upload({
+            Bucket: process.env.BUCKET_NAME,
+            Key: `${user.id}.${fileExt}`,
+            Body: data,
+            ACL: 'public-read',
+          })
+          .promise()
+      } catch (e) {
+        console.warn(`couldn't upload photo for user ${user.id}`)
+      }
+    }
 
     if (signup.password) {
       await query
