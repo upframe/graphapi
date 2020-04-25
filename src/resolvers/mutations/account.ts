@@ -97,6 +97,50 @@ export const signOut = resolver()(({ ctx }) => {
   ctx.id = null
 })
 
+export const signUpPassword = resolver<any>()(
+  async ({ args: { token, email, password }, query }) => {
+    const invite = await query
+      .raw(Invite)
+      .findById(token)
+      .asUser(system)
+    if (!invite) throw new UserInputError('invalid invite token')
+
+    if (
+      await query
+        .raw(User)
+        .where({ email })
+        .first()
+    )
+      throw new UserInputError('email already in use')
+
+    const validState = await validate.batch({ email, password })
+    validState
+      .filter(({ valid }) => !valid)
+      .forEach(({ reason, field }) => {
+        throw new UserInputError(`${field} ${reason}`)
+      })
+
+    await query
+      .raw(Signup)
+      .insert({ token, email, password: hashPassword(password) })
+      .asUser(system)
+
+    return {
+      id: token,
+      email,
+      password,
+      role: invite.role.toUpperCase(),
+      authComplete: true,
+      name: email
+        .split('@')[0]
+        .replace(/[^a-zA-Z]+/g, ' ')
+        .toLowerCase()
+        .trim()
+        .replace(/(\s|^)[a-z]/g, v => v.toUpperCase()),
+    }
+  }
+)
+
 export const signUpGoogle = resolver<any>()(
   async ({ args: { token, code, redirect }, query }) => {
     try {

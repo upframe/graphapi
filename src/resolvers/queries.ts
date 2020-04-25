@@ -189,6 +189,13 @@ export const signUpInfo = resolver<any>()(
         .userinfo.get()
       name = data.name
       if (!data.picture?.endsWith('photo.jpg')) picture = data.picture
+    } else if (signup?.email) {
+      name = signup.email
+        .split('@')[0]
+        .replace(/[^a-zA-Z]+/g, ' ')
+        .toLowerCase()
+        .trim()
+        .replace(/(\s|^)[a-z]/g, v => v.toUpperCase())
     }
 
     return {

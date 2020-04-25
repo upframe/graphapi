@@ -21,6 +21,25 @@ const whitelistChars = (whitelist: RegExp) =>
       if (!whitelist.test(c)) return `invalid character "${c}"`
   })
 
+export const email = async (value: string) => {
+  if (
+    !/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(
+      value
+    )
+  )
+    return 'invalid'
+  if (
+    await knex('users')
+      .where({ email: value.toLowerCase() })
+      .first()
+  )
+    return 'already in use'
+}
+
+export const password = (value: string) => {
+  if (value.length < 8) return 'password to short'
+}
+
 export const name = blacklistChars(/[\d_.!?,;@+=<>]/)((value: string) => {
   if (value.length < 3) return 'too short'
   if (value.length > 50) return 'too long'

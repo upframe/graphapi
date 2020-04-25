@@ -66,6 +66,7 @@ type Mutation {
   signInGoogle(code: ID!, redirect: String!): Person
   signOut: Int
 
+  signUpPassword(token: ID!, email: String!, password: String!): SignUpInfo
   signUpGoogle(token: ID!, code: ID!, redirect: String!): SignUpInfo
   completeSignup(
     token: ID!
