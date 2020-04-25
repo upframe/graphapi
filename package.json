@@ -9,8 +9,8 @@
     "deploy": "docker build .",
     "prettier:check": "prettier --check \"./*.{js,ts}\" \"./**/*.{js,ts}\"",
     "prettier:write": "prettier --write \"./*.{js,ts}\" \"./**/*.{js,ts}\"",
-    "eslint:check": "eslint . --ext .js,.ts,",
-    "eslint:write": "eslint . --ext .js,.ts, --fix",
+    "eslint:check": "eslint . --ext .js,.ts",
+    "eslint:write": "eslint . --ext .js,.ts --fix",
     "lint": "npm run eslint:check && npm run prettier:check",
     "format": "npm run eslint:write && npm run prettier:write"
   },

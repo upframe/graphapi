@@ -1,15 +1,31 @@
-import { User, Mentor, Tokens } from '../../models'
-import * as auth from '../../auth'
+import {
+  User,
+  Mentor,
+  Tokens,
+  ConnectGoogle,
+  Signup,
+  SigninUpframe,
+  Invite,
+} from '../../models'
+import { checkPassword, signInToken, cookie, hashPassword } from '../../auth'
 import {
   AuthenticationError,
   UserInputError,
   ForbiddenError,
+  InvalidGrantError,
 } from '../../error'
-import uuidv4 from 'uuid/v4'
 import resolver from '../resolver'
 import { system } from '../../authorization/user'
 import { sendMJML } from '../../email'
 import genToken from '../../utils/token'
+import { createClient } from '../../google'
+import { google } from 'googleapis'
+import validate from '../../utils/validity'
+import uuid from 'uuid/v4'
+import { filterKeys } from '../../utils/object'
+import * as account from '../../account'
+import { s3 } from '../../utils/aws'
+import axios from 'axios'
 
 export const signIn = resolver<User>()(
   async ({
@@ -19,66 +35,304 @@ export const signIn = resolver<User>()(
     ctx,
     query,
   }) => {
-    const user = await query()
-      .where({ email })
-      .first()
+    const creds = await query
+      .raw(SigninUpframe)
+      .findById(email)
       .asUser(system)
-    const token = auth.signIn(user, password)
-    if (!token) throw new UserInputError('invalid credentials')
-    ctx.setHeader('Set-Cookie', auth.cookie('auth', token))
+
+    if (!checkPassword(password, creds.password))
+      throw new UserInputError('invalid credentials')
+
+    const user = await query()
+      .findById(creds.user_id)
+      .asUser(system)
+
+    ctx.setHeader('Set-Cookie', cookie('auth', signInToken(user)))
     ctx.id = user.id
+
     return user
+  }
+)
+
+export const signInGoogle = resolver<User>()(
+  async ({ args: { code, redirect }, query, ctx }) => {
+    try {
+      const client = createClient(redirect)
+      const { tokens } = await client.getToken(code)
+      client.setCredentials(tokens)
+      const { data } = await google
+        .oauth2({ auth: client, version: 'v2' })
+        .userinfo.get()
+      const signIn = await query
+        .raw(ConnectGoogle)
+        .findById(data.id)
+        .asUser(system)
+      if (!signIn) throw new UserInputError('invalid credentials')
+
+      if (signIn.refresh_token !== tokens.refresh_token)
+        await query
+          .raw(ConnectGoogle)
+          .findById(data.id)
+          .patch({
+            refresh_token: tokens.refresh_token,
+            access_token: tokens.access_token,
+          })
+          .asUser(system)
+      const user = await query()
+        .findById(signIn.user_id)
+        .asUser(system)
+      ctx.setHeader('Set-Cookie', cookie('auth', signInToken(user)))
+      ctx.id = user.id
+      return user
+    } catch (e) {
+      if (e.message === 'invalid_grant') throw InvalidGrantError()
+      throw e
+    }
   }
 )
 
 export const signOut = resolver()(({ ctx }) => {
   if (!ctx.id) throw new AuthenticationError('not logged in')
-  ctx.setHeader('Set-Cookie', auth.cookie('auth', 'deleted', -1))
+  ctx.setHeader('Set-Cookie', cookie('auth', 'deleted', -1))
   ctx.id = null
 })
 
-export const createAccount = resolver<User>()(
-  async ({
-    args: {
-      input: { email, name, password },
-    },
-    query,
-    ctx,
-  }) => {
-    const existing = await query()
-      .where({ email })
-      .first()
+export const signUpPassword = resolver<any>()(
+  async ({ args: { token, email, password }, query }) => {
+    const invite = await query
+      .raw(Invite)
+      .findById(token)
+      .asUser(system)
+    if (!invite) throw new UserInputError('invalid invite token')
 
-    if (existing?.role === 'nologin')
-      await query()
-        .where({ email })
-        .delete()
-        .asUser(system)
-    else if (existing) throw new ForbiddenError(`email already in use`)
-
-    let handle = name.toLowerCase().replace(/[^\w]+/g, '.')
     if (
-      await User.query()
-        .where({ handle })
+      await query
+        .raw(User)
+        .where({ email })
         .first()
     )
-      handle = uuidv4()
+      throw new UserInputError('email already in use')
 
-    const user = await query().insertAndFetch({
-      id: uuidv4(),
-      handle,
-      name,
+    const validState = await validate.batch({ email, password })
+    validState
+      .filter(({ valid }) => !valid)
+      .forEach(({ reason, field }) => {
+        throw new UserInputError(`${field} ${reason}`)
+      })
+
+    await query
+      .raw(Signup)
+      .insert({ token, email, password: hashPassword(password) })
+      .asUser(system)
+
+    return {
+      id: token,
       email,
-      password: auth.hashPassword(password),
-      role: 'user',
+      password,
+      role: invite.role.toUpperCase(),
+      authComplete: true,
+      name: email
+        .split('@')[0]
+        .replace(/[^a-zA-Z]+/g, ' ')
+        .toLowerCase()
+        .trim()
+        .replace(/(\s|^)[a-z]/g, v => v.toUpperCase()),
+    }
+  }
+)
+
+export const signUpGoogle = resolver<any>()(
+  async ({ args: { token, code, redirect }, query }) => {
+    try {
+      const invite = await query
+        .raw(Invite)
+        .findById(token)
+        .asUser(system)
+      if (!invite) throw new UserInputError('invalid invite token')
+
+      const { info } = await account.connectGoogle(code, redirect)
+
+      await query
+        .raw(Signup)
+        .insert({ token, google_id: info.id })
+        .asUser(system)
+
+      return {
+        id: token,
+        email: info.email,
+        role: invite.role.toUpperCase(),
+        authComplete: true,
+        name: info.name,
+      }
+    } catch (e) {
+      if (e.message === 'invalid_grant') throw InvalidGrantError()
+      throw e
+    }
+  }
+)
+
+export const connectGoogle = resolver<User>()(
+  async ({ args: { redirect, code }, ctx: { id }, query }) => {
+    await account.connectGoogle(code, redirect, id)
+    return await query().findById(id)
+  }
+)
+
+export const disconnectGoogle = resolver<User>()(
+  async ({ ctx: { id }, query }) => {
+    const tokens = await query
+      .raw(ConnectGoogle)
+      .where({ user_id: id })
+      .first()
+    if (!tokens) throw new UserInputError('google account not connected')
+    if (
+      !(await query
+        .raw(SigninUpframe)
+        .where({ user_id: id })
+        .first())
+    )
+      throw new UserInputError('must first set account password')
+    const client = createClient()
+    client.setCredentials(tokens)
+
+    await client.revokeToken(tokens.refresh_token)
+    await query.raw(ConnectGoogle).deleteById(tokens.google_id)
+
+    return await query().findById(id)
+  }
+)
+
+export const completeSignup = resolver<User>()(
+  async ({
+    args: { token, name, handle, biography, location, headline, photo },
+    ctx,
+    query,
+  }) => {
+    const signup = await query
+      .raw(Signup)
+      .findById(token)
+      .asUser(system)
+    if (!signup) throw new UserInputError('invalid signup token')
+
+    const role = (await query.raw(Invite).findById(token)).role
+
+    let user: Partial<User> = {
+      id: uuid(),
+      role,
+      name,
+      handle,
+      biography,
+      location,
+      allow_emails: true,
+    }
+
+    if (signup.email) user.email = signup.email
+
+    if (signup.google_id) {
+      const client = createClient()
+      client.setCredentials(
+        await query
+          .raw(ConnectGoogle)
+          .findById(signup.google_id)
+          .asUser(system)
+      )
+      const { data } = await google
+        .oauth2({ auth: client, version: 'v2' })
+        .userinfo.get()
+      user.email = data.email
+    }
+
+    const validStatus = await validate.batch({
+      ...filterKeys(user, ['name', 'handle', 'biography', 'location']),
+      ...(role !== 'user' && { headline }),
+    })
+    validStatus.forEach(({ valid, field, reason }) => {
+      if (!valid) throw new UserInputError(`${field}: ${reason}`)
     })
 
-    ctx.setHeader(
-      'Set-Cookie',
-      auth.cookie('auth', auth.signIn(user, password))
-    )
-    ctx.id = user.id
-    return user
+    await query().insert(user)
+
+    if (role !== 'user') {
+      const mentor = {
+        id: user.id,
+        listed: false,
+        title: headline,
+      }
+      await query
+        .raw(Mentor)
+        .insert(mentor)
+        .asUser(system)
+    }
+
+    if (
+      photo &&
+      photo !==
+        `https://${process.env.BUCKET_NAME}.s3.eu-west-2.amazonaws.com/default.png`
+    ) {
+      try {
+        let fileExt = 'png'
+        const data = photo.startsWith('data:')
+          ? new Buffer(photo.replace(/^data:image\/\w+;base64,/, ''), 'base64')
+          : await axios
+              .get(photo, { responseType: 'arraybuffer' })
+              .then(({ data, headers }) => {
+                const [type, ext] = headers['content-type']?.split('/') ?? []
+                if (type !== 'image') throw new Error('not an image')
+                fileExt = ext ?? fileExt
+                return data
+              })
+
+        await s3
+          .upload({
+            Bucket: process.env.BUCKET_NAME,
+            Key: `${user.id}.${fileExt}`,
+            Body: data,
+            ACL: 'public-read',
+          })
+          .promise()
+      } catch (e) {
+        console.warn(`couldn't upload photo for user ${user.id}`)
+      }
+    }
+
+    if (signup.password) {
+      await query
+        .raw(SigninUpframe)
+        .insert({
+          user_id: user.id,
+          email: signup.email,
+          password: signup.password,
+        })
+        .asUser(system)
+    }
+    if (signup.google_id) {
+      await query
+        .raw(ConnectGoogle)
+        .findById(signup.google_id)
+        .patch({ user_id: user.id })
+        .asUser(system)
+    }
+
+    const finalUser = await query()
+      .findById(user.id)
+      .asUser(system)
+
+    await Promise.all([
+      query
+        .raw(Signup)
+        .deleteById(signup.token)
+        .asUser(system),
+      query
+        .raw(Invite)
+        .findById(signup.token)
+        .patch({ redeemed: finalUser.id })
+        .asUser(system),
+    ])
+
+    ctx.setHeader('Set-Cookie', cookie('auth', signInToken(finalUser)))
+    ctx.id = finalUser.id
+
+    return finalUser
   }
 )
 
@@ -93,7 +347,6 @@ export const requestEmailChange = resolver()(
       throw new UserInputError(`email ${email} already in use`)
 
     const token = genToken()
-
     const user = await query.raw(User).findById(id)
 
     await Promise.all([
@@ -187,20 +440,29 @@ export const changePassword = resolver<User>()(
         .deleteById(tokenId)
         .asUser(system)
     }
-    await query
-      .raw(User)
-      .findById(token?.subject ?? ctx.id)
-      .patch({ password: auth.hashPassword(password) })
-      .asUser(system)
+
+    const signin = await query
+      .raw(SigninUpframe)
+      .where({ user_id: token?.subject ?? ctx.id })
+      .first()
+
+    if (signin)
+      await query
+        .raw(SigninUpframe)
+        .where({ user_id: token?.subject ?? ctx.id })
+        .patch({ password: hashPassword(password) })
+    else {
+      const { id, email } = await query().findById(token?.subject ?? ctx.id)
+      await query
+        .raw(SigninUpframe)
+        .insert({ email, password: hashPassword(password), user_id: id })
+    }
 
     const user = await query()
       .findById(token?.subject ?? ctx.id)
       .asUser(system)
     if (token?.subject !== ctx.id) {
-      ctx.setHeader(
-        'Set-Cookie',
-        auth.cookie('auth', auth.signIn(user, null, true))
-      )
+      ctx.setHeader('Set-Cookie', cookie('auth', signInToken(user)))
       ctx.id = user.id
     }
     return user
@@ -208,12 +470,30 @@ export const changePassword = resolver<User>()(
 )
 
 export const deleteAccount = resolver().loggedIn(
-  async ({ args: { password }, ctx: { id, setHeader }, query }) => {
+  async ({ args: { handle }, ctx: { id, setHeader }, query }) => {
     const user = await query.raw(User).findById(id)
-    if (!auth.checkPassword(user, password))
-      throw new ForbiddenError('wrong password')
+    if (user.handle !== handle) throw new ForbiddenError('wrong username')
+    const gTokens = await query
+      .raw(ConnectGoogle)
+      .where({ user_id: id })
+      .first()
+    if (gTokens) {
+      const client = createClient()
+      client.setCredentials(gTokens)
+      if (gTokens.calendar_id) {
+        try {
+          const calendar = google.calendar({ version: 'v3', auth: client })
+          await calendar.calendars.delete({
+            calendarId: gTokens.calendar_id,
+          })
+        } catch (e) {
+          console.warn(`couldn't delete calendar ${gTokens.calendar_id}`)
+        }
+      }
+      await client.revokeToken(gTokens.refresh_token)
+    }
     await query.raw(User).deleteById(id)
-    setHeader('Set-Cookie', auth.cookie('auth', 'deleted', -1))
+    setHeader('Set-Cookie', cookie('auth', 'deleted', -1))
   }
 )
 

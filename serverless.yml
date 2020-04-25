@@ -47,16 +47,12 @@ functions:
       AWS_KEY_ID: ${ssm:/API/AwsKeyId}
       AWS_KEY_SECRET: ${ssm:/API/AwsKeySecret~true}
       BUCKET_NAME: ${ssm:/API/PhotoBucket}
-
+      DEV_PASSWORD: ${ssm:/API/DevPassword~true}
       DB_HOST: ${ssm:/DB/Host}
       DB_PORT: ${ssm:/DB/Port}
       DB_NAME: ${ssm:/DB/Name}
       DB_USER: ${ssm:/API/DB/User}
       DB_PASSWORD: ${ssm:/API/DB/Password~true}
-
-      GCAL_REDIRECT_DEV: ${ssm:/API/Dev/GCalRedirect}
-      GCAL_REDIRECT_PROD: ${ssm:/API/Prod/GCalRedirect}
-      DEV_PASSWORD: ${ssm:/API/DevPassword~true}
 
 plugins:
   - serverless-webpack

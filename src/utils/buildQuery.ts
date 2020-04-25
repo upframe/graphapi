@@ -9,6 +9,9 @@ import {
   Meetup,
   List,
   Tags,
+  Invite,
+  ConnectGoogle,
+  SigninUpframe,
 } from '../models'
 import getQueryFields from './queryFields'
 import { fromPaths } from '../utils/path'
@@ -46,6 +49,9 @@ set(User)
   .add(ProfilePicture, 'profilePictures')
   .add(List, 'categories')
   .add(Tags, 'tags')
+  .add(Invite, 'invites')
+  .add(ConnectGoogle, 'google', 'calendarConnected', 'calendars')
+  .add(SigninUpframe, 'google')
 set(Mentor).add(Slots, 'slots')
 set(Slots).add(Meetup, __ALWAYS__)
 set(List).add(User, 'users')

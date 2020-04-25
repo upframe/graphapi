@@ -1,5 +1,7 @@
 import resolver from '../resolver'
 import { SocialMedia, User } from '../../models'
+import { createClient } from '../../google'
+import { google as gapi } from 'googleapis'
 
 export const __resolveType = resolver<string, any>()(({ parent: { role } }) => {
   if (role !== 'user') return 'Mentor'
@@ -46,4 +48,28 @@ export const categories = resolver<
 
 export const role = resolver<string, User>()(({ parent: { role } }) =>
   role.toUpperCase()
+)
+
+export const invites = resolver<any[], User>()(({ parent: { invites } }) =>
+  (invites ?? []).map(invite => ({
+    ...invite,
+    status: invite.redeemed ? 'JOINED' : 'PENDING',
+    role: invite.role.toUpperCase(),
+  }))
+)
+
+export const google = resolver<any, User>()(
+  async ({ parent: { connect_google, signin_upframe } }) => {
+    try {
+      if (!connect_google?.refresh_token) return { connected: false }
+      const client = createClient()
+      client.setCredentials(connect_google)
+      const { data } = await gapi
+        .oauth2({ auth: client, version: 'v2' })
+        .userinfo.get()
+      return { connected: true, canDisconnect: !!signin_upframe, ...data }
+    } catch (e) {
+      return { connected: false }
+    }
+  }
 )

@@ -1,10 +1,21 @@
-import { User, Tags, List, Tokens } from '../models'
+import {
+  User,
+  Tags,
+  List,
+  Tokens,
+  Invite,
+  Signup,
+  ConnectGoogle,
+} from '../models'
 import { handleError, UserInputError } from '../error'
-import { generateAuthUrl } from '../gcal'
+import { createClient } from '../google'
 import knex from '../db'
 import resolver from './resolver'
 import { system } from '../authorization/user'
 import { searchUsers, searchTags } from '../search'
+import validate from '../utils/validity'
+import { google } from 'googleapis'
+import { requestScopes, userClient, scopes } from '../google'
 
 export const me = resolver<User>().loggedIn(
   async ({ query, ctx: { id } }) => await query().findById(id)
@@ -46,7 +57,29 @@ export const user = resolver<User>()(
 )
 
 export const calendarConnectUrl = resolver<string>().loggedIn(
-  async () => await generateAuthUrl()
+  async ({ args: { redirect }, ctx: { id }, query }) => {
+    const googleConnect = await query
+      .raw(ConnectGoogle)
+      .where({ user_id: id })
+      .first()
+    if (!googleConnect)
+      return requestScopes(redirect)([...scopes.SIGNIN, ...scopes.CALENDAR])
+    const client = await userClient(googleConnect)
+    const info = await client.userInfo()
+    return requestScopes(redirect)('CALENDAR', { login_hint: info.email }, true)
+  }
+)
+
+export const googleSigninUrl = resolver<
+  string
+>()(({ args: { redirect, state } }) =>
+  requestScopes(redirect)('SIGNIN', state ? { state } : {}, true)
+)
+
+export const googleSignupUrl = resolver<
+  string
+>()(({ args: { redirect, state } }) =>
+  requestScopes(redirect)('SIGNIN', { state })
 )
 
 export const tag = resolver<Tags>()(async ({ query, args: { id, name } }) => {
@@ -129,4 +162,60 @@ export const search = resolver<any>()(
     }
     return { users, tags }
   }
+)
+
+export const signUpInfo = resolver<any>()(
+  async ({ args: { token }, query }) => {
+    if (!token) throw new UserInputError('must provide token')
+    const invite = await query.raw(Invite).findById(token)
+    if (!invite) throw new UserInputError('invalid invite token')
+    if (invite.redeemed) throw new UserInputError('invite token already used')
+    const signup = await query
+      .raw(Signup)
+      .findById(token)
+      .asUser(system)
+
+    let name: string
+    let picture
+    if (signup?.google_id) {
+      const creds = await query
+        .raw(ConnectGoogle)
+        .findById(signup.google_id)
+        .asUser(system)
+      const client = createClient()
+      client.setCredentials(creds)
+      const { data } = await google
+        .oauth2({ auth: client, version: 'v2' })
+        .userinfo.get()
+      name = data.name
+      if (!data.picture?.endsWith('photo.jpg')) picture = data.picture
+    } else if (signup?.email) {
+      name = signup.email
+        .split('@')[0]
+        .replace(/[^a-zA-Z]+/g, ' ')
+        .toLowerCase()
+        .trim()
+        .replace(/(\s|^)[a-z]/g, v => v.toUpperCase())
+    }
+
+    return {
+      id: token,
+      email: invite.email,
+      role: invite.role.toUpperCase(),
+      authComplete: !!signup,
+      name,
+      ...(picture && {
+        picture: {
+          url: picture,
+        },
+      }),
+      defaultPicture: {
+        url: `https://${process.env.BUCKET_NAME}.s3.eu-west-2.amazonaws.com/default.png`,
+      },
+    }
+  }
+)
+
+export const checkValidity = resolver<any>()(
+  async ({ args }) => await validate.batch(args)
 )

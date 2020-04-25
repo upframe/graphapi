@@ -1,12 +1,11 @@
 import knex from './db'
-import { Model, Mentor } from './models'
+import { Model } from './models'
 Model.knex(knex)
 import AuthUser from './authorization/user'
 import {
   ApolloServer,
   makeExecutableSchema,
   UserInputError,
-  ForbiddenError,
 } from 'apollo-server-lambda'
 import resolvers from './resolvers'
 import { parseCookies } from './utils/cookie'
@@ -65,36 +64,6 @@ export const graphapi = async (event, context) => {
         err.extensions?.exception?.name === 'DBError'
       ) {
         err.message = null
-      }
-      if (
-        err.extensions?.exception?.config?.url.includes(
-          'googleapis.com/calendar'
-        )
-      ) {
-        if (err.message === 'invalid_grant') {
-          const google_refresh_token = decodeURIComponent(
-            (Object.fromEntries(
-              err.extensions?.exception?.config?.body
-                ?.split('&')
-                ?.map(v => v.split('=')) ?? []
-            ).refresh_token as string) ?? ''
-          )
-          if (google_refresh_token)
-            waitFor.push(
-              Mentor.query()
-                .patch({
-                  google_refresh_token: null,
-                  google_access_token: null,
-                })
-                .where({ google_refresh_token })
-            )
-          return new ForbiddenError('google oauth access denied')
-        }
-        if (err.message.toLowerCase() === 'not found') {
-          return new UserInputError(
-            'Google Upframe calendar not found. Please try reconnecting your Google Calendar.'
-          )
-        }
       }
       return err
     },

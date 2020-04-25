@@ -19,17 +19,29 @@ function buildWhere(where: string): WhereFunc {
     )
 }
 
+const actions = ['create', 'read', 'update', 'delete']
+const expandAction = (policy: Policy): Policy[] =>
+  actions.includes(policy.action)
+    ? [policy]
+    : (policy.action === '*'
+        ? actions
+        : policy.action.split(',').map(v => v.trim())
+      ).map(action => ({ ...policy, action }))
+
 const expandPolicy = (policy: any) =>
-  path.expand(policy.resource).map(resource => ({
-    ...policy,
-    resource,
-    ...('where' in policy && {
-      where:
-        typeof policy.where === 'function'
-          ? policy.where
-          : buildWhere(policy.where),
-    }),
-  }))
+  path
+    .expand(policy.resource)
+    .map(resource => ({
+      ...policy,
+      resource,
+      ...('where' in policy && {
+        where:
+          typeof policy.where === 'function'
+            ? policy.where
+            : buildWhere(policy.where),
+      }),
+    }))
+    .flatMap(expandAction)
 
 export const buildPolicies = (policies: any[]) => policies.flatMap(expandPolicy)
 

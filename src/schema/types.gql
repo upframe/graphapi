@@ -12,6 +12,8 @@ interface Person {
   website: String
   categories: [String!]
   role: Role
+  invites: [Invite]
+  google: Google
 }
 
 type User implements Person {
@@ -28,6 +30,8 @@ type User implements Person {
   website: String
   categories: [String!]
   role: Role
+  invites: [Invite]
+  google: Google
 }
 
 type Mentor implements Person {
@@ -50,6 +54,8 @@ type Mentor implements Person {
   calendarConnected: Boolean
   categories: [String!]
   role: Role
+  invites: [Invite]
+  google: Google
 }
 
 type Calendar {
@@ -153,4 +159,37 @@ type SearchResult {
 type TagSearchResult {
   tag: Tag!
   markup: String
+}
+
+type Invite {
+  email: String
+  role: Role
+  status: InviteStatus
+}
+
+enum InviteStatus {
+  PENDING
+  JOINED
+}
+
+type SignUpInfo {
+  id: ID!
+  email: String
+  role: Role
+  authComplete: Boolean
+  name: String
+  picture: ProfilePicture
+  defaultPicture: ProfilePicture
+}
+
+type Validity {
+  field: String
+  valid: Boolean!
+  reason: String
+}
+
+type Google {
+  connected: Boolean
+  email: String
+  canDisconnect: Boolean
 }

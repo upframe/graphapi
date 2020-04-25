@@ -4,7 +4,7 @@ type Fields = { [k: string]: Fields | boolean }
 
 interface Policy {
   effect: 'allow' | 'disallow'
-  action: Action
+  action: Action | string
   resource: string
   where?: WhereFunc | string
 }

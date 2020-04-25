@@ -1,9 +1,8 @@
-import { getClient } from '../../gcal'
 import * as obj from '../../utils/object'
 import { User } from '../../models'
-
 import resolver from '../resolver'
 import { ForbiddenError } from 'apollo-server-lambda'
+import { userClient } from '../../google'
 
 export const visibility = resolver<string, User>()(({ parent: { mentors } }) =>
   typeof mentors?.listed !== 'boolean'
@@ -44,16 +43,19 @@ export const slots = resolver<any, User>()(
   }
 )
 
-export const calendarConnected = resolver<boolean, User>()(
-  ({ parent: { mentors } }) => !!mentors?.google_refresh_token
+export const calendarConnected = resolver<
+  boolean,
+  User
+>()(({ parent: { connect_google, id } }) =>
+  id === connect_google?.user_id ? !!connect_google?.calendar_id : null
 )
 
 export const calendars = resolver<any[], User>()(
-  async ({ parent: { mentors }, ctx: { id }, args: { ids } }) => {
-    if (!mentors?.id || id !== mentors.id)
+  async ({ parent, ctx: { id }, args: { ids } }) => {
+    if (!parent?.id || id !== parent.id)
       throw new ForbiddenError('not allowed to access calendars')
-    if (!mentors?.google_refresh_token) return null
-    const client = await getClient(mentors.id, mentors.google_refresh_token)
+    if (!parent.connect_google?.calendar_id) return
+    const client = await userClient(parent.connect_google)
     if (ids) {
       const res = await Promise.all(
         ids.map(calendarId =>

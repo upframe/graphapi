@@ -67,6 +67,11 @@ export const visitor: Group = {
       action: 'create',
       resource: 'meetups',
     },
+    {
+      effect: 'allow',
+      action: 'read',
+      resource: 'invites',
+    },
   ],
 }
 
@@ -82,7 +87,7 @@ export const user: Group = {
     },
     {
       effect: 'allow',
-      action: 'update',
+      action: 'update, delete',
       resource: 'users',
       where: 'users.id = current.id',
     },
@@ -95,12 +100,6 @@ export const user: Group = {
     {
       effect: 'allow',
       action: 'delete',
-      resource: 'users',
-      where: 'users.id = current.id',
-    },
-    {
-      effect: 'allow',
-      action: 'delete',
       resource: 'profile_pictures',
       where: 'profile_pictures.user_id = current.id',
     },
@@ -108,6 +107,24 @@ export const user: Group = {
       effect: 'allow',
       action: 'create',
       resource: 'tags',
+    },
+    {
+      effect: 'allow',
+      action: 'create',
+      resource: 'invites',
+      where: 'invites.issuer = current.id',
+    },
+    {
+      effect: 'allow',
+      action: '*',
+      resource: 'signin_upframe',
+      where: 'signin_upframe.user_id = current.id',
+    },
+    {
+      effect: 'allow',
+      action: '*',
+      resource: 'connect_google',
+      where: 'connect_google.user_id = current.id',
     },
   ],
 }
@@ -162,90 +179,16 @@ export const admin: Group = {
   name: 'admin',
   groups: [mentor],
   policies: [
-    {
-      effect: 'allow',
-      action: 'create',
-      resource: 'lists',
-    },
-    {
-      effect: 'allow',
-      action: 'delete',
-      resource: 'lists',
-    },
-    {
-      effect: 'allow',
-      action: 'create',
-      resource: 'user_lists',
-    },
-    {
-      effect: 'allow',
-      action: 'delete',
-      resource: 'user_lists',
-    },
-    {
-      effect: 'allow',
-      action: 'delete',
-      resource: 'users',
-    },
-    {
-      effect: 'allow',
-      action: 'read',
-      resource: 'users',
-    },
-    {
-      effect: 'allow',
-      action: 'read',
-      resource: 'mentors',
-    },
-    {
-      effect: 'allow',
-      action: 'delete',
-      resource: 'meetups',
-    },
-    {
-      effect: 'allow',
-      action: 'update',
-      resource: 'meetups',
-    },
-    {
-      effect: 'allow',
-      action: 'create',
-      resource: 'mentors',
-    },
-    {
-      effect: 'allow',
-      action: 'delete',
-      resource: 'mentors',
-    },
-    {
-      effect: 'allow',
-      action: 'update',
-      resource: 'users',
-    },
-    {
-      effect: 'allow',
-      action: 'create',
-      resource: 'tokens',
-    },
-    {
-      effect: 'allow',
-      action: 'read',
-      resource: 'tokens',
-    },
-    {
-      effect: 'allow',
-      action: 'delete',
-      resource: 'tokens',
-    },
-    {
-      effect: 'allow',
-      action: 'update',
-      resource: 'tags',
-    },
-    {
-      effect: 'allow',
-      action: 'delete',
-      resource: 'tags',
-    },
+    { effect: 'allow', action: '*', resource: 'users' },
+    { effect: 'allow', action: '*', resource: 'mentors' },
+    { effect: 'allow', action: '*', resource: 'meetups' },
+    { effect: 'allow', action: '*', resource: 'lists' },
+    { effect: 'allow', action: '*', resource: 'user_lists' },
+    { effect: 'allow', action: '*', resource: 'tokens' },
+    { effect: 'allow', action: '*', resource: 'tags' },
+    { effect: 'allow', action: '*', resource: 'connect_google' },
+    { effect: 'allow', action: '*', resource: 'signup' },
+    { effect: 'allow', action: '*', resource: 'signin_upframe' },
+    { effect: 'allow', action: '*', resource: 'invites' },
   ],
 }
