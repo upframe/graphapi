@@ -14,13 +14,14 @@ export const connectCalendar = resolver<User>().loggedIn(
         user_id: id,
       })
       .first()
-    const tokens = await getTokens(code, redirect)
 
     let client: UserClient
 
     if (!googleConnect)
       client = await userClient(await account.connectGoogle(code, redirect, id))
     else {
+      const tokens = await getTokens(code, redirect)
+
       // check that the same account as the sign in account is used
       client = await userClient(googleConnect)
       const info = await client.userInfo()
@@ -39,14 +40,14 @@ export const connectCalendar = resolver<User>().loggedIn(
             .userinfo.get()) as any).email
         }
         if (newMail && info.email !== newMail) throw Error()
+
+        await client.setAccessToken(tokens.access_token)
       } catch (e) {
         throw new UserInputError(
           `Please use your currently connected Google account (${info.email}).`
         )
       }
     }
-
-    await client.setAccessToken(tokens.access_token)
 
     const { data } = await client.calendar.calendars.insert({
       requestBody: { summary: 'Upframe' },
