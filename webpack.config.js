@@ -9,7 +9,7 @@ module.exports = {
   devtool: 'source-map',
   mode: slsw.lib.webpack.isLocal ? 'development' : 'production',
   optimization: {
-    minimize: true,
+    minimize: !!slsw.lib.webpack.isLocal,
   },
   performance: {
     hints: false,

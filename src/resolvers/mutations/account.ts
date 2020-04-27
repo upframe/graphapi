@@ -9,10 +9,10 @@ import {
 } from '../../models'
 import { checkPassword, signInToken, cookie, hashPassword } from '../../auth'
 import {
-  AuthenticationError,
   UserInputError,
   ForbiddenError,
   InvalidGrantError,
+  NotLoggedInError,
 } from '../../error'
 import resolver from '../resolver'
 import { system } from '../../authorization/user'
@@ -92,7 +92,7 @@ export const signInGoogle = resolver<User>()(
 )
 
 export const signOut = resolver()(({ ctx }) => {
-  if (!ctx.id) throw new AuthenticationError('not logged in')
+  if (!ctx.id) throw NotLoggedInError()
   ctx.setHeader('Set-Cookie', cookie('auth', 'deleted', -1))
   ctx.id = null
 })

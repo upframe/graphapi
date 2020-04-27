@@ -10,3 +10,4 @@ _schema.gql
 Dockerfile
 db/seeds/data
 report.*
+/*.txt

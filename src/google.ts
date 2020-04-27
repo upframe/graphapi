@@ -38,9 +38,9 @@ export const requestScopes = (redirect: string) => (
   return client.generateAuthUrl({
     access_type: 'offline',
     scope,
-    include_granted_scopes: true,
     ...(!isConnected && { prompt: 'consent' }),
     ...opts,
+    include_granted_scopes: true,
   })
 }
 
@@ -90,7 +90,10 @@ export class UserClient {
       if (this.google_id)
         await knex('connect_google')
           .where({ google_id: this.google_id })
-          .update({ refresh_token, access_token })
+          .update({
+            ...(refresh_token && { refresh_token }),
+            ...(access_token && { access_token }),
+          })
     })
   }
 

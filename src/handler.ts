@@ -12,6 +12,7 @@ import { parseCookies } from './utils/cookie'
 import { authenticate } from './auth'
 import typeDefs from './schema'
 import { ValidationError } from 'objection'
+import logger from './logger'
 
 export const graphapi = async (event, context) => {
   context.callbackWaitsForEmptyEventLoop = false
@@ -46,7 +47,9 @@ export const graphapi = async (event, context) => {
       event.headers?.debug === process.env.DEV_PASSWORD ||
       !!process.env.IS_OFFLINE,
     formatError: err => {
-      console.log(err)
+      if (err.extensions?.code && err.path?.includes('me')) return err
+      logger.error(err)
+
       if (err.originalError instanceof ValidationError) {
         const field = err.message.match(/^(\w+):/)[1]
         return new UserInputError(
@@ -80,12 +83,28 @@ export const graphapi = async (event, context) => {
           },
         }
       : { introspection: false, playground: false }),
-    ...(!process.env.IS_OFFLINE && {
-      engine: {
-        apiKey: process.env.APOLLO_KEY,
-        schemaTag: process.env.stage === 'prod' ? 'prod' : 'beta',
-      },
-    }),
+    ...(!process.env.IS_OFFLINE &&
+      process.env.stage === 'dev' && {
+        engine: {
+          apiKey: process.env.APOLLO_KEY,
+          schemaTag: 'beta',
+        },
+      }),
+    extensions: [
+      () => ({
+        requestDidStart({ request, operationName, context }) {
+          const headers = Object.fromEntries(request.headers)
+          logger.info('request', {
+            origin: headers.origin,
+            userAgent: headers['user-agent'],
+            ip: event.requestContext.identity.sourceIp,
+            opName: operationName,
+            user: context.id,
+            roles: (context.roles ?? []).join(', '),
+          })
+        },
+      }),
+    ],
   })
 
   const handler = server.createHandler({

@@ -1,5 +1,5 @@
 import query from '../utils/buildQuery'
-import { AuthenticationError, ForbiddenError } from '../error'
+import { ForbiddenError, NotLoggedInError } from '../error'
 import { Model, QueryBuilder } from '../models'
 import getQueryFields from '../utils/queryFields'
 
@@ -13,7 +13,7 @@ export default function<M = void, P extends Model = null>() {
     loggedIn: {
       get() {
         asserts.push(({ id }) => {
-          if (!id) throw new AuthenticationError('not logged in')
+          if (!id) throw NotLoggedInError()
         })
         return this
       },

@@ -15,6 +15,11 @@ export const map = (
   func: ([string, unknown]) => [string, unknown]
 ) => Object.fromEntries(Object.entries(obj).map(func))
 
+export const mapKeys = (
+  obj: object,
+  func: (k: string, v?: unknown) => string
+) => map(obj, ([k, v]) => [func(k, v), v])
+
 export const mapValues = (
   obj: object,
   func: (v: unknown, k: string) => unknown
