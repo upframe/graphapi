@@ -33,6 +33,8 @@ functions:
               - https://beta.upframe.io
               - https://upframe.io
             allowCredentials: true
+    layers:
+      - arn:aws:lambda:eu-west-2:464622532012:layer:Datadog-Node12-x:22
 
     environment:
       stage: ${self:provider.stage}
@@ -53,6 +55,10 @@ functions:
       DB_NAME: ${ssm:/DB/Name}
       DB_USER: ${ssm:/API/DB/User}
       DB_PASSWORD: ${ssm:/API/DB/Password~true}
+      DD_API_KEY: ${ssm:/API/Datadog/ApiKey}
+      DD_LOG_LEVEL: debug
+      DD_FLUSH_TO_LOG: true
+      DD_ENHANCED_METRICS: true
 
 plugins:
   - serverless-webpack

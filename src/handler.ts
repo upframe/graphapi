@@ -12,12 +12,19 @@ import { parseCookies } from './utils/cookie'
 import { authenticate } from './auth'
 import typeDefs from './schema'
 import { ValidationError } from 'objection'
-import logger from './logger'
+import createLogger from './logger'
+const { datadog } = !process.env.IS_OFFLINE
+  ? require('datadog-lambda-js')
+  : { datadog: handler => handler }
+const tracer = !process.env.IS_OFFLINE
+  ? require('dd-trace').init({ logInjection: true })
+  : { wrap: (_, handler) => (...args) => handler(...args) }
 
-export const graphapi = async (event, context) => {
+const handler = async (event, context) => {
   context.callbackWaitsForEmptyEventLoop = false
   const headers = {}
   const waitFor: Promise<any>[] = []
+  const logger = createLogger(context.awsRequestId)
 
   const server = new ApolloServer({
     schema: makeExecutableSchema({
@@ -97,7 +104,6 @@ export const graphapi = async (event, context) => {
           logger.info('request', {
             origin: headers.origin,
             userAgent: headers['user-agent'],
-            request: event.requestContext.requestId,
             ip: event.requestContext.identity.sourceIp,
             opName: operationName,
             user: context.id,
@@ -126,3 +132,5 @@ export const graphapi = async (event, context) => {
     handler(event, context, callback)
   })
 }
+
+export const graphapi = datadog(tracer.wrap('graphapi', handler))
