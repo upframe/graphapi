@@ -1,3 +1,13 @@
+let datadog: typeof import('datadog-lambda-js').datadog
+let tracer: typeof import('dd-trace').tracer
+import logger from './logger'
+
+if (!process.env.IS_OFFLINE) {
+  datadog = require('datadog-lambda-js').datadog
+  tracer = require('dd-trace').tracer
+  tracer.init({ logger })
+}
+
 import knex from './db'
 import { Model } from './models'
 Model.knex(knex)
@@ -12,19 +22,12 @@ import { parseCookies } from './utils/cookie'
 import { authenticate } from './auth'
 import typeDefs from './schema'
 import { ValidationError } from 'objection'
-import createLogger from './logger'
-const { datadog } = !process.env.IS_OFFLINE
-  ? require('datadog-lambda-js')
-  : { datadog: handler => handler }
-const tracer = !process.env.IS_OFFLINE
-  ? require('dd-trace').init({ logInjection: true })
-  : { wrap: (_, handler) => (...args) => handler(...args) }
 
 const handler = async (event, context) => {
   context.callbackWaitsForEmptyEventLoop = false
   const headers = {}
   const waitFor: Promise<any>[] = []
-  const logger = createLogger(context.awsRequestId)
+  logger.setRequestId(context.awsRequestId)
 
   const server = new ApolloServer({
     schema: makeExecutableSchema({
@@ -133,4 +136,6 @@ const handler = async (event, context) => {
   })
 }
 
-export const graphapi = datadog(tracer.wrap('graphapi-dev-graphapi', handler))
+export let graphapi
+if (process.env.IS_OFFLINE) graphapi = handler
+else graphapi = datadog(tracer.wrap('graphapi', handler))

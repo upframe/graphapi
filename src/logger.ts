@@ -1,8 +1,14 @@
 import { createLogger, format, transports } from 'winston'
 
-export default requestId =>
+let requestId: string
+
+export default Object.assign(
   createLogger({
-    defaultMeta: { 'context.awsRequestId': requestId },
+    defaultMeta: {
+      get 'context.awsRequestId'() {
+        return requestId
+      },
+    },
     transports: [
       new transports.Console({
         format:
@@ -31,4 +37,10 @@ export default requestId =>
               ),
       }),
     ],
-  })
+  }),
+  {
+    setRequestId(id) {
+      requestId = id
+    },
+  }
+)
