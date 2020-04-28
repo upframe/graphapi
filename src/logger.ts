@@ -5,7 +5,7 @@ export default createLogger({
     new transports.Console({
       format:
         process.env.NODE_ENV === 'production'
-          ? format.json()
+          ? format.combine(format.timestamp(), format.json())
           : format.combine(
               format.colorize(),
               format.timestamp({

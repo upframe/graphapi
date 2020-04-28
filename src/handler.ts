@@ -97,6 +97,7 @@ export const graphapi = async (event, context) => {
           logger.info('request', {
             origin: headers.origin,
             userAgent: headers['user-agent'],
+            request: event.requestContext.requestId,
             ip: event.requestContext.identity.sourceIp,
             opName: operationName,
             user: context.id,
