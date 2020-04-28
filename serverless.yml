@@ -11,6 +11,9 @@ provider:
       - ${env:SECURITY_GROUP}
     subnetIds:
       - ${env:SUBNET}
+  tracing:
+    lambda: true
+    apiGateway: true
 
 functions:
   graphapi:

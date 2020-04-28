@@ -133,4 +133,4 @@ const handler = async (event, context) => {
   })
 }
 
-export const graphapi = datadog(tracer.wrap('graphapi', handler))
+export const graphapi = datadog(tracer.wrap('graphapi-dev-graphapi', handler))
