@@ -151,9 +151,13 @@ type List {
 scalar Upload
 
 type SearchResult {
-  users: [User!]
-  userResults: Int
-  tags: [TagSearchResult]
+  users: [UserSearchResult!]
+  tags: [TagSearchResult!]
+}
+
+type UserSearchResult {
+  user: Person!
+  markup: String
 }
 
 type TagSearchResult {

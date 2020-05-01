@@ -3,6 +3,22 @@ import levenshtein from 'fast-levenshtein'
 import _ from 'lodash'
 import { filterKeys } from './utils/object'
 
+const markup = (value: string, term: string) => {
+  const i = value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .indexOf(term.toLowerCase())
+  if (i < 0) return `<span>${value}</span>`
+  return [
+    ...(i > 0 ? [`<b>${value.slice(0, i)}</b>`] : []),
+    `<span>${value.slice(i, i + term.length)}</span>`,
+    ...(i + term.length < value.length
+      ? [`<b>${value.slice(i + term.length)}</b>`]
+      : []),
+  ].join('')
+}
+
 const baseQuery = () =>
   knex('users')
     .select(
@@ -80,7 +96,11 @@ export async function searchUsers(term: string, limit: number, withTags = []) {
 
   users = [mentors, users].flat()
 
-  return users.slice(0, limit)
+  // users = users.map(user => ({ user }))
+
+  return users
+    .slice(0, limit)
+    .map(user => ({ user, markup: markup(user.name, term) }))
 }
 
 const tagSelect = () => knex('tags').select('name', 'id')
@@ -122,17 +142,7 @@ export const searchTags = async (query: string, limit: number) => {
       .sort((a, b) => a.dist - b.dist)
   }
   tags = tags.map(tag => ({ tag }))
-  let term = query?.toLowerCase() ?? ''
-  for (const tag of tags.slice(0, 20)) {
-    const i = tag.tag.name.toLowerCase().indexOf(term)
-    const name = tag.tag.name
-    tag.markup = [
-      ...(i > 0 ? [`<b>${name.slice(0, i)}</b>`] : []),
-      `<span>${name.slice(i, i + term.length)}</span>`,
-      ...(i + term.length < name.length
-        ? [`<b>${name.slice(i + term.length)}</b>`]
-        : []),
-    ].join('')
-  }
+  for (const tag of tags.slice(0, 20))
+    tag.markup = markup(tag.tag.name, query?.toLowerCase() ?? '')
   return tags
 }

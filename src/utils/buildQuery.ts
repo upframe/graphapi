@@ -15,6 +15,7 @@ import {
 } from '../models'
 import getQueryFields from './queryFields'
 import { fromPaths } from '../utils/path'
+import _ from 'lodash'
 
 const ENTRIES = {
   Person: User,
@@ -75,7 +76,7 @@ export default Object.assign(
     if (!entry) throw Error(`no known table for ${entryName ?? type}`)
 
     if (!fields) fields = getQueryFields(info)
-    if (section) fields = fields[section] as Fields
+    if (section) fields = _.get(fields, section) as Fields
 
     const resolve = (model: typeof Model, requested: Fields) => {
       const reqKeys = Object.keys(requested)

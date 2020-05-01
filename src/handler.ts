@@ -1,12 +1,6 @@
-let datadog: typeof import('datadog-lambda-js').datadog
-let tracer: typeof import('dd-trace').tracer
+import tracer from './tracer'
+import { datadog } from 'datadog-lambda-js'
 import logger from './logger'
-
-if (!process.env.IS_OFFLINE) {
-  datadog = require('datadog-lambda-js').datadog
-  tracer = require('dd-trace').tracer
-  tracer.init({ logger })
-}
 
 import knex from './db'
 import { Model } from './models'
@@ -57,7 +51,8 @@ const handler = async (event, context) => {
       event.headers?.debug === process.env.DEV_PASSWORD ||
       !!process.env.IS_OFFLINE,
     formatError: err => {
-      if (err.extensions?.code && err.path?.includes('me')) return err
+      if (err.extensions?.code === 'NOT_LOGGED_IN' && err.path?.includes('me'))
+        return { ...err, status: 403 }
       logger.error(err)
 
       if (err.originalError instanceof ValidationError) {
@@ -138,4 +133,7 @@ const handler = async (event, context) => {
 
 export let graphapi
 if (process.env.IS_OFFLINE) graphapi = handler
-else graphapi = datadog(tracer.wrap('graphapi', handler))
+else
+  graphapi = datadog(tracer.wrap('web.request', handler), {
+    mergeDatadogXrayTraces: true,
+  })

@@ -36,8 +36,6 @@ functions:
               - https://beta.upframe.io
               - https://upframe.io
             allowCredentials: true
-    layers:
-      - arn:aws:lambda:eu-west-2:464622532012:layer:Datadog-Node12-x:22
 
     environment:
       stage: ${self:provider.stage}
@@ -72,7 +70,4 @@ custom:
   serverless-offline:
     port: 5000
   webpack:
-    includeModules:
-      forceExclude:
-        - datadog-lambda-js
-        - dd-trace
+    includeModules: true
