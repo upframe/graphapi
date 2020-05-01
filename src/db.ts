@@ -13,5 +13,5 @@ export default knex({
   connection,
   // @ts-ignore
   pool: { min: 0, max: 20 },
-  debug: !!process.env.IS_OFFLINE,
+  debug: false,
 })

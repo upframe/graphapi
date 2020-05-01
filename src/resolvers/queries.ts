@@ -64,6 +64,7 @@ export const calendarConnectUrl = resolver<string>().loggedIn(
       .first()
     if (!googleConnect)
       return requestScopes(redirect)([...scopes.SIGNIN, ...scopes.CALENDAR])
+    if (googleConnect.calendar_id) return null
     const client = await userClient(googleConnect)
     const info = await client.userInfo()
     return requestScopes(redirect)('CALENDAR', { login_hint: info.email }, true)
@@ -150,15 +151,21 @@ export const search = resolver<any>()(
 
     if (
       users &&
-      Object.keys(fields.users).some(
+      Object.keys((fields.users as Fields).user).some(
         k =>
           !['id', 'name', 'handle', 'profilePictures', '__typename'].includes(k)
       )
     ) {
-      users = await query({ section: 'users', entryName: 'Person' }).whereIn(
+      users = ((await query({
+        section: 'users.user',
+        entryName: 'Person',
+      }).whereIn(
         'id',
-        users.map(({ id }) => id)
-      )
+        users.map(({ user }) => user.id)
+      )) as User[]).map(user => ({
+        user,
+        markup: users.find(({ user: { id } }) => id === user.id).markup,
+      }))
     }
     return { users, tags }
   }
