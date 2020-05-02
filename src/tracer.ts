@@ -3,17 +3,12 @@ import logger from './logger'
 
 if (!process.env.IS_OFFLINE) {
   tracer.init({
-    debug: true,
+    debug: false,
     enabled: true,
     env: process.env.stage,
     logger,
-    plugins: true,
+    plugins: false,
     service: 'graphapi',
-  })
-
-  tracer.use('knex')
-  tracer.use('graphql', {
-    depth: -1,
   })
 }
 

@@ -4,6 +4,7 @@ import _ from 'lodash'
 import { filterKeys } from './utils/object'
 
 const markup = (value: string, term: string) => {
+  if (!term) return `<span>${value}</span>`
   const i = value
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -95,8 +96,6 @@ export async function searchUsers(term: string, limit: number, withTags = []) {
     .flat()
 
   users = [mentors, users].flat()
-
-  // users = users.map(user => ({ user }))
 
   return users
     .slice(0, limit)
