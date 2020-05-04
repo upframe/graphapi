@@ -13,7 +13,7 @@ import {
 } from 'apollo-server-lambda'
 import resolvers from './resolvers'
 import { parseCookies } from './utils/cookie'
-import { authenticate } from './auth'
+import { authenticate, cookie } from './auth'
 import typeDefs from './schema'
 import { ValidationError } from 'objection'
 
@@ -63,6 +63,15 @@ const handler = async (event, context) => {
         )
           return { ...err, status: 403 }
         logger.error(err)
+
+        if (
+          (err.extensions?.exception?.config?.url.includes(
+            'googleapis.com/calendar'
+          ) &&
+            err.message === 'invalid_grant') ||
+          err.extensions?.code === 'GOOGLE_ERROR'
+        )
+          headers['Set-Cookie'] = cookie('auth', 'deleted', -1)
 
         if (err.originalError instanceof ValidationError) {
           const field = err.message.match(/^(\w+):/)[1]

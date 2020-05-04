@@ -3,6 +3,7 @@ import { User } from '../../models'
 import resolver from '../resolver'
 import { ForbiddenError } from 'apollo-server-lambda'
 import { userClient } from '../../google'
+import { GoogleError } from '../../error'
 
 export const visibility = resolver<string, User>()(({ parent: { mentors } }) =>
   typeof mentors?.listed !== 'boolean'
@@ -55,21 +56,26 @@ export const calendars = resolver<any[], User>()(
     if (!parent?.id || id !== parent.id)
       throw new ForbiddenError('not allowed to access calendars')
     if (!parent.connect_google?.calendar_id) return
-    const client = await userClient(parent.connect_google)
-    if (ids) {
-      const res = await Promise.all(
-        ids.map(calendarId =>
-          client.calendar.calendars.get({
-            calendarId,
-          })
+    try {
+      const client = await userClient(parent.connect_google)
+      if (ids) {
+        const res = await Promise.all(
+          ids.map(calendarId =>
+            client.calendar.calendars.get({
+              calendarId,
+            })
+          )
         )
-      )
-      return res.map(({ data }) => ({
-        ...data,
-        user_id: id,
-      }))
+        return res.map(({ data }) => ({
+          ...data,
+          user_id: id,
+        }))
+      }
+      const { data } = await client.calendar.calendarList.list()
+      return data.items.map(cal => ({ ...cal, user_id: id }))
+    } catch (e) {
+      if (e.message !== 'invalid_grant') throw e
+      throw GoogleError("couldn't access google calendar")
     }
-    const { data } = await client.calendar.calendarList.list()
-    return data.items.map(cal => ({ ...cal, user_id: id }))
   }
 )
