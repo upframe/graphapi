@@ -51,16 +51,18 @@ functions:
       AWS_KEY_SECRET: ${ssm:/API/AwsKeySecret~true}
       BUCKET_NAME: ${ssm:/API/PhotoBucket}
       DEV_PASSWORD: ${ssm:/API/DevPassword~true}
+
       DB_HOST: ${ssm:/DB/Host}
       DB_PORT: ${ssm:/DB/Port}
       DB_NAME: ${ssm:/DB/Name}
       DB_USER: ${ssm:/API/DB/User}
       DB_PASSWORD: ${ssm:/API/DB/Password~true}
+
       DD_API_KEY: ${ssm:/API/Datadog/ApiKey}
-      DD_LOG_LEVEL: debug
       DD_FLUSH_TO_LOG: true
       DD_ENHANCED_METRICS: true
       DD_LOGS_INJECTION: true
+      DD_SERVICE_NAME: graphapi
 
 plugins:
   - serverless-webpack

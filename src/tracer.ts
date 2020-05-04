@@ -3,12 +3,9 @@ import logger from './logger'
 
 if (!process.env.IS_OFFLINE) {
   tracer.init({
-    debug: false,
-    enabled: true,
-    env: process.env.stage,
+    debug: true,
     logger,
-    plugins: false,
-    service: 'graphapi',
+    logInjection: true,
   })
 }
 
