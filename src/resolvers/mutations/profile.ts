@@ -116,6 +116,11 @@ export const setProfileVisibility = resolver<User>()(
     })
 )
 
+export const setProfileSearchability = resolver<User>().loggedIn(
+  async ({ args: { searchable }, ctx: { id }, query }) =>
+    await query().patchAndFetchById(id, { searchable })
+)
+
 export const updateNotificationPreferences = resolver<User>()(
   async ({ args: { input }, ctx: { id }, query }) => {
     return query().upsertGraphAndFetch({

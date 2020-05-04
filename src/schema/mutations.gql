@@ -90,6 +90,7 @@ type Mutation {
 
   updateProfile(input: ProfileInput!): Person
   setProfileVisibility(visibility: Visibility!): Mentor
+  setProfileSearchability(searchable: Boolean!): Person
   updateNotificationPreferences(input: NotificationSettingsInput!): Mentor
   uploadProfilePicture(file: Upload!): Person
   removeProfilePicture: Person

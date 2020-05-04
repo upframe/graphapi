@@ -14,6 +14,7 @@ interface Person {
   role: Role
   invites: [Invite]
   google: Google
+  searchable: Boolean
 }
 
 type User implements Person {
@@ -32,6 +33,7 @@ type User implements Person {
   role: Role
   invites: [Invite]
   google: Google
+  searchable: Boolean
 }
 
 type Mentor implements Person {
@@ -56,6 +58,7 @@ type Mentor implements Person {
   role: Role
   invites: [Invite]
   google: Google
+  searchable: Boolean
 }
 
 type Calendar {
