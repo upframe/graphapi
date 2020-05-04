@@ -4,6 +4,7 @@ let requestId: string
 
 export default Object.assign(
   createLogger({
+    level: 'debug',
     defaultMeta: {
       get 'context.awsRequestId'() {
         return requestId

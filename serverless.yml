@@ -11,9 +11,6 @@ provider:
       - ${env:SECURITY_GROUP}
     subnetIds:
       - ${env:SUBNET}
-  tracing:
-    lambda: true
-    apiGateway: true
 
 functions:
   graphapi:
@@ -58,13 +55,8 @@ functions:
       DB_USER: ${ssm:/API/DB/User}
       DB_PASSWORD: ${ssm:/API/DB/Password~true}
 
-      DD_API_KEY: ${ssm:/API/Datadog/ApiKey}
-      DD_FLUSH_TO_LOG: true
-      DD_ENHANCED_METRICS: true
-      DD_LOGS_INJECTION: true
-      DD_SERVICE_NAME: graphapi
-
 plugins:
+  - serverless-plugin-datadog
   - serverless-webpack
   - serverless-offline
 
@@ -72,4 +64,16 @@ custom:
   serverless-offline:
     port: 5000
   webpack:
-    includeModules: true
+    includeModules:
+      forceExclude:
+        - aws-sdk
+        - datadog-lambda-js
+        - dd-trace
+  custom:
+  datadog:
+    addLayers: true
+    logLevel: 'info'
+    flushMetricsToLogs: true
+    apiKey: ${ssm:/API/Datadog/ApiKey}
+    enableXrayTracing: true
+    enableDDTracing: true

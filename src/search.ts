@@ -30,12 +30,14 @@ const baseQuery = () =>
       'score',
       'url',
       'size',
-      'type'
+      'type',
+      'searchable'
     )
     .leftJoin('mentors', { 'users.id': 'mentors.id' })
     .leftJoin('profile_pictures', { 'users.id': 'profile_pictures.user_id' })
     .whereNot('role', 'nologin')
     .andWhere('size', '<=', 128)
+    .andWhere('searchable', true)
 
 export async function searchUsers(term: string, limit: number, withTags = []) {
   let query = baseQuery()

@@ -18,7 +18,7 @@ module.exports = {
     mainFields: ['main', 'module'],
     extensions: ['.ts', '.js'],
   },
-  externals: [nodeExternals()],
+  externals: [nodeExternals(), 'datadog-lambda-js', 'dd-trace'],
   module: {
     rules: [
       {
