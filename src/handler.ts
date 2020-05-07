@@ -174,6 +174,7 @@ const handler = async (event, context) => {
     })
   })
 
+  knex.removeAllListeners()
   if (error) throw error
   return data
 }

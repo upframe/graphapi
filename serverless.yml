@@ -5,12 +5,12 @@ provider:
   runtime: nodejs12.x
   stage: ${opt:stage, 'dev'}
   timeout: 20
-  region: eu-west-2
+  region: eu-west-1
   vpc:
     securityGroupIds:
-      - ${env:SECURITY_GROUP}
+      - ${ssm:/API/SecurityGroup}
     subnetIds:
-      - ${env:SUBNET}
+      - ${ssm:/API/Subnet}
 
 functions:
   graphapi:
@@ -59,6 +59,7 @@ plugins:
   - serverless-plugin-datadog
   - serverless-webpack
   - serverless-offline
+  - serverless-domain-manager
 
 custom:
   serverless-offline:
@@ -69,7 +70,6 @@ custom:
         - aws-sdk
         - datadog-lambda-js
         - dd-trace
-  custom:
   datadog:
     addLayers: true
     logLevel: 'info'
@@ -77,3 +77,10 @@ custom:
     apiKey: ${ssm:/API/Datadog/ApiKey}
     enableXrayTracing: true
     enableDDTracing: true
+  customDomain:
+    RestApiId:
+      Ref: ApiGatewayRestApi
+    domainName: dev.graphapi.upframe.io
+    endpointType: 'regional'
+    stage: ${opt:stage}
+    createRoute53Record: false
