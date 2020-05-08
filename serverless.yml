@@ -50,6 +50,7 @@ functions:
       DEV_PASSWORD: ${ssm:/API/DevPassword~true}
 
       DB_HOST: ${ssm:/DB/Host}
+      DB_PROXY_HOST: ${ssm:/DB/Proxy/Host}
       DB_PORT: ${ssm:/DB/Port}
       DB_NAME: ${ssm:/DB/Name}
       DB_USER: ${ssm:/API/DB/User}

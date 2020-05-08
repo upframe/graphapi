@@ -20,9 +20,9 @@ export const mapKeys = (
   func: (k: string, v?: unknown) => string
 ) => map(obj, ([k, v]) => [func(k, v), v])
 
-export const mapValues = (
-  obj: object,
-  func: (v: unknown, k: string) => unknown
+export const mapValues = <T extends object, K extends keyof T>(
+  obj: T,
+  func: (v: T[K], k: K) => unknown
 ) => map(obj, ([k, v]) => [k, func(v, k)])
 
 export const replace = (

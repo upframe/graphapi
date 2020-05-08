@@ -38,7 +38,9 @@ export const slots = resolver<any, User>()(
       slots = slots.filter(({ start }) => new Date(start) <= new Date(before))
     return slots.map(slot =>
       obj.mapValues(slot, (v, k) =>
-        ['start', 'end'].includes(k) ? (v as Date).toISOString() : v
+        ['start', 'end'].includes(k)
+          ? ((v as unknown) as Date).toISOString()
+          : v
       )
     )
   }
