@@ -2,7 +2,7 @@ import knex from 'knex'
 import { mapValues } from './utils/object'
 import logger from './logger'
 
-const db = {
+const conn_db = {
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
   user: process.env.DB_USER,
@@ -10,12 +10,12 @@ const db = {
   database: process.env.DB_NAME,
 }
 
-const proxy = {
-  ...db,
+const conn_proxy = {
+  ...conn_db,
   host: process.env.DB_PROXY_HOST,
 }
 
-const connection = process.env.IS_OFFLINE ? db : proxy
+const connection = process.env.IS_OFFLINE ? conn_db : conn_proxy
 
 logger.info(
   'db-connect',
@@ -31,5 +31,4 @@ export default knex({
   connection,
   pool: { min: 1, max: 1 },
   acquireConnectionTimeout: 7000,
-  debug: false,
 })

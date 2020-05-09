@@ -7,6 +7,7 @@ import { ForbiddenError } from '../error'
 import AuthUser from 'src/authorization/user'
 import _ from 'lodash'
 import tracer from '../tracer'
+import columnInfo from '../../db/meta/columns.json'
 
 export class QueryBuilder<
   M extends ObjectionModel,
@@ -140,5 +141,11 @@ export class Model extends ObjectionModel {
     return trace
       ? tracer.trace(`${this.tableName}._controlAccess`, _func)
       : _func()
+  }
+
+  static tableMetadata({ table }) {
+    if (!(table in columnInfo))
+      throw new Error(`metadata for table ${table} not available`)
+    return columnInfo[table]
   }
 }

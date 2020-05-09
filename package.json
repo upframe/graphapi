@@ -6,13 +6,13 @@
     "start:offline": "sls offline --stage offline",
     "logs": "sls logs -f graphapi",
     "logs:watch": "sls logs -f graphapi -t",
-    "deploy": "docker build .",
     "prettier:check": "prettier --check \"./*.{js,ts}\" \"./**/*.{js,ts}\"",
     "prettier:write": "prettier --write \"./*.{js,ts}\" \"./**/*.{js,ts}\"",
     "eslint:check": "eslint . --ext .js,.ts",
     "eslint:write": "eslint . --ext .js,.ts --fix",
     "lint": "npm run eslint:check && npm run prettier:check",
-    "format": "npm run eslint:write && npm run prettier:write"
+    "format": "npm run eslint:write && npm run prettier:write",
+    "column-info": "node ./db/meta/gen.js && prettier --write ./db/meta/columns.json"
   },
   "keywords": [],
   "author": "",

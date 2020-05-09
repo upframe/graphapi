@@ -1,0 +1,84 @@
+{
+  "connect_google": {
+    "columns": [
+      "user_id",
+      "google_id",
+      "refresh_token",
+      "access_token",
+      "scopes",
+      "calendar_id"
+    ]
+  },
+  "invites": {
+    "columns": ["id", "issuer", "email", "role", "redeemed", "issued"]
+  },
+  "lists": {
+    "columns": ["id", "name"]
+  },
+  "meetups": {
+    "columns": [
+      "slot_id",
+      "status",
+      "mentee_id",
+      "message",
+      "location",
+      "gcal_user_event_id",
+      "gcal_upframe_event_id"
+    ]
+  },
+  "mentors": {
+    "columns": [
+      "id",
+      "listed",
+      "title",
+      "company",
+      "slot_reminder_email",
+      "score"
+    ]
+  },
+  "profile_pictures": {
+    "columns": ["user_id", "url", "size", "type"]
+  },
+  "signin_upframe": {
+    "columns": ["email", "password", "user_id"]
+  },
+  "signup": {
+    "columns": ["token", "started", "email", "password", "google_id"]
+  },
+  "time_slots": {
+    "columns": ["id", "mentor_id", "start", "end"]
+  },
+  "socialmedia": {
+    "columns": ["id", "name", "url"]
+  },
+  "tags": {
+    "columns": ["id", "name"]
+  },
+  "tokens": {
+    "columns": ["token", "scope", "subject", "payload", "issued", "expires"]
+  },
+  "users": {
+    "columns": [
+      "id",
+      "handle",
+      "name",
+      "email",
+      "location",
+      "biography",
+      "allow_emails",
+      "website",
+      "role",
+      "name_normalized",
+      "searchable"
+    ]
+  },
+  "user_handles": {
+    "columns": ["user_id", "platform_id", "handle"]
+  },
+  "user_lists": {
+    "columns": ["user_id", "list_id"]
+  },
+  "user_tags": {
+    "columns": ["user_id", "tag_id"]
+  }
+}

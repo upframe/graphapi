@@ -16,6 +16,7 @@ import {
 import getQueryFields from './queryFields'
 import { fromPaths } from '../utils/path'
 import _ from 'lodash'
+import tracer from '../tracer'
 
 const ENTRIES = {
   Person: User,
@@ -59,6 +60,7 @@ set(List).add(User, 'users')
 set(Tags).add(User, 'users')
 
 export default Object.assign(
+  // tracer.wrap('query.build',
   function<M extends Model>(
     info: any,
     {
@@ -70,60 +72,64 @@ export default Object.assign(
     } = {},
     fields?: Fields
   ): QueryBuilder<M, M[]> {
-    const type =
-      info.returnType.name ?? info.returnType.ofType?.ofType?.ofType?.name
-    const entry = ENTRIES[entryName ?? type]
-    if (!entry) throw Error(`no known table for ${entryName ?? type}`)
+    let res
+    tracer.trace('query.build', () => {
+      const type =
+        info.returnType.name ?? info.returnType.ofType?.ofType?.ofType?.name
+      const entry = ENTRIES[entryName ?? type]
+      if (!entry) throw Error(`no known table for ${entryName ?? type}`)
 
-    if (!fields) fields = getQueryFields(info)
-    if (section) fields = _.get(fields, section) as Fields
+      if (!fields) fields = getQueryFields(info)
+      if (section) fields = _.get(fields, section) as Fields
 
-    const resolve = (model: typeof Model, requested: Fields) => {
-      const reqKeys = Object.keys(requested)
-      let required = Array.from(GQL_SQL_MAP.get(model)?.entries() ?? [])
-        .map(([model, fields]) => [
-          model,
-          fields.filter(
-            field => reqKeys.includes(field) || field === __ALWAYS__
-          ),
-        ])
-        .filter(([, fields]) => fields.length)
-        .map(([m, fields]) => [
-          m,
-          (fields as string[])
-            .map(field => [field, requested[field]])
-            .map(([f, v]) =>
-              typeof v === 'boolean'
-                ? { [f as string]: true }
-                : [Model.HasOneRelation, Model.BelongsToOneRelation].includes(
-                    model.relationMappings[(m as typeof Model).tableName]
-                      .relation
-                  )
-                ? { [f as string]: v }
-                : v
-            )
-            .reduce((a: Fields, c: Fields) => ({ ...a, ...c }), {}),
-        ])
+      const resolve = (model: typeof Model, requested: Fields) => {
+        const reqKeys = Object.keys(requested)
+        let required = Array.from(GQL_SQL_MAP.get(model)?.entries() ?? [])
+          .map(([model, fields]) => [
+            model,
+            fields.filter(
+              field => reqKeys.includes(field) || field === __ALWAYS__
+            ),
+          ])
+          .filter(([, fields]) => fields.length)
+          .map(([m, fields]) => [
+            m,
+            (fields as string[])
+              .map(field => [field, requested[field]])
+              .map(([f, v]) =>
+                typeof v === 'boolean'
+                  ? { [f as string]: true }
+                  : [Model.HasOneRelation, Model.BelongsToOneRelation].includes(
+                      model.relationMappings[(m as typeof Model).tableName]
+                        .relation
+                    )
+                  ? { [f as string]: v }
+                  : v
+              )
+              .reduce((a: Fields, c: Fields) => ({ ...a, ...c }), {}),
+          ])
 
-      return {
-        [model.tableName]:
-          (required.length ? required : undefined)
-            ?.map(([model, fields]) =>
-              resolve(model as typeof Model, fields as Fields)
-            )
-            ?.reduce((a, c) => ({ ...a, ...c }), {}) ?? true,
+        return {
+          [model.tableName]:
+            (required.length ? required : undefined)
+              ?.map(([model, fields]) =>
+                resolve(model as typeof Model, fields as Fields)
+              )
+              ?.reduce((a, c) => ({ ...a, ...c }), {}) ?? true,
+        }
       }
-    }
 
-    let { [entry.tableName]: graph } = resolve(entry, fields)
-    graph = mergeGraph(
-      graph,
-      typeof include === 'string' ? fromPaths(include) : include
-    )
+      let { [entry.tableName]: graph } = resolve(entry, fields)
+      graph = mergeGraph(
+        graph,
+        typeof include === 'string' ? fromPaths(include) : include
+      )
 
-    let query = entry.query()
-    if (graph) query = query[`withGraph${join ? 'Joined' : 'Fetched'}`](graph)
-    return query.context(ctx)
+      let query = entry.query()
+      if (graph) query = query[`withGraph${join ? 'Joined' : 'Fetched'}`](graph)
+      res = query.context(ctx)
+    })
+    return res
   },
   {
     raw: <M extends Model>(
