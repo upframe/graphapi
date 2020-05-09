@@ -21,13 +21,18 @@ export default Object.assign(
               }),
               format.printf(
                 ({ timestamp, level, message, extensions, opName }) => {
-                  let msg = `${timestamp} ${level}: ${message}`
+                  let msg = `${timestamp} ${level}: ${
+                    typeof message === 'string'
+                      ? message
+                      : JSON.stringify(message)
+                  }`
                   if (opName) msg += ` ${opName}`
                   if (!extensions?.exception?.stacktrace) return msg
                   const stack = []
                   for (const path of extensions.exception.stacktrace.slice(1)) {
-                    if (!path.includes(':/src/')) break
-                    stack.push(path.replace(/\/[\w/.]+:\/src\//, ''))
+                    stack.push(
+                      path.replace(/\/[\w/.]+(:\/src|node_modules)\//, '')
+                    )
                   }
                   return msg + `\n${stack.join('\n')}`
                 }

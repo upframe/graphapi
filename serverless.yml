@@ -11,11 +11,16 @@ provider:
       - ${ssm:/API/SecurityGroup}
     subnetIds:
       - ${ssm:/API/Subnet}
+  tracing:
+    apiGateway: true
+    lambda: true
 
 functions:
   graphapi:
     handler: src/handler.graphapi
     provisionedConcurrency: 1
+    layers:
+      - arn:aws:lambda:eu-west-1:464622532012:layer:Datadog-Node12-x:23
     events:
       - http:
           path: /
@@ -56,8 +61,14 @@ functions:
       DB_USER: ${ssm:/API/DB/User}
       DB_PASSWORD: ${ssm:/API/DB/Password~true}
 
+      DD_SERVICE: graphapi
+      DD_API_KEY: ${ssm:/API/Datadog/ApiKey}
+      DD_FLUSH_TO_LOG: ${file(./sls.conf.js):DD_FLUSH}
+      DD_ENHANCED_METRICS: ${file(./sls.conf.js):DD_ENHANCED}
+      DD_LOGS_INJECTION: ${file(./sls.conf.js):DD_LOG_INJECT}
+      DD_ENV: ${file(./sls.conf.js):DD_ENV}
+
 plugins:
-  - serverless-plugin-datadog
   - serverless-webpack
   - serverless-offline
   - serverless-domain-manager
@@ -65,19 +76,13 @@ plugins:
 custom:
   serverless-offline:
     port: 5000
+    stage: offline
   webpack:
     includeModules:
       forceExclude:
         - aws-sdk
         - datadog-lambda-js
         - dd-trace
-  datadog:
-    addLayers: true
-    logLevel: 'info'
-    flushMetricsToLogs: true
-    apiKey: ${ssm:/API/Datadog/ApiKey}
-    enableXrayTracing: true
-    enableDDTracing: true
   customDomain:
     RestApiId:
       Ref: ApiGatewayRestApi
