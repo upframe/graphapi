@@ -4,6 +4,7 @@ import resolver from '../resolver'
 import { ForbiddenError } from 'apollo-server-lambda'
 import { userClient } from '../../google'
 import { GoogleError } from '../../error'
+import { cookie } from '../../auth'
 
 export const visibility = resolver<string, User>()(({ parent: { mentors } }) =>
   typeof mentors?.listed !== 'boolean'
@@ -54,7 +55,7 @@ export const calendarConnected = resolver<
 )
 
 export const calendars = resolver<any[], User>()(
-  async ({ parent, ctx: { id }, args: { ids } }) => {
+  async ({ parent, ctx: { id, setHeader }, args: { ids } }) => {
     if (!parent?.id || id !== parent.id)
       throw new ForbiddenError('not allowed to access calendars')
     if (!parent.connect_google?.calendar_id) return
@@ -77,6 +78,7 @@ export const calendars = resolver<any[], User>()(
       return data.items.map(cal => ({ ...cal, user_id: id }))
     } catch (e) {
       if (e.message !== 'invalid_grant') throw e
+      setHeader('Set-Cookie', cookie('auth', 'deleted', -1))
       throw GoogleError("couldn't access google calendar")
     }
   }
