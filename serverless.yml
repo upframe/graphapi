@@ -18,7 +18,7 @@ provider:
 functions:
   graphapi:
     handler: src/handler.graphapi
-    provisionedConcurrency: 1
+    provisionedConcurrency: 3
     layers:
       - arn:aws:lambda:eu-west-1:464622532012:layer:Datadog-Node12-x:23
     events:

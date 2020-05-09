@@ -60,7 +60,6 @@ set(List).add(User, 'users')
 set(Tags).add(User, 'users')
 
 export default Object.assign(
-  // tracer.wrap('query.build',
   function<M extends Model>(
     info: any,
     {
