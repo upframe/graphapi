@@ -61,8 +61,8 @@ functions:
       DB_USER: ${ssm:/API/DB/User}
       DB_PASSWORD: ${ssm:/API/DB/Password~true}
 
-      DD_SERVICE: graphapi
       DD_API_KEY: ${ssm:/API/Datadog/ApiKey}
+      DD_SERVICE: ${file(./sls.conf.js):DD_SERVICE}
       DD_FLUSH_TO_LOG: ${file(./sls.conf.js):DD_FLUSH}
       DD_ENHANCED_METRICS: ${file(./sls.conf.js):DD_ENHANCED}
       DD_LOGS_INJECTION: ${file(./sls.conf.js):DD_LOG_INJECT}

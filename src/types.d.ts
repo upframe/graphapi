@@ -29,6 +29,8 @@ interface ResolverCtx {
   user: import('./authorization/user').default
   id: string
   roles: string[]
+  requestId: string
+  clientIp: string
   setHeader(header: string, value: string): void
 }
 

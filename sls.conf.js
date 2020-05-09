@@ -5,6 +5,7 @@ const config = {
     DD_LOG_INJECT: false,
     DD_ENV: 'local',
     DD_LAYERS: false,
+    DD_SERVICE: 'graphapi',
   },
 
   online: {
@@ -16,10 +17,12 @@ const config = {
 
   dev: {
     DD_ENV: 'beta',
+    DD_SERVICE: 'graphapi-dev-graphapi',
   },
 
   prod: {
     DD_ENV: 'prod',
+    DD_SERVICE: 'graphapi-prod-graphapi',
   },
 }
 
