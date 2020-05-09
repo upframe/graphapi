@@ -40,9 +40,12 @@ export class Model extends ObjectionModel {
   QueryBuilderType!: QueryBuilder<this>
   static QueryBuilder = QueryBuilder
 
-  static afterFind({ result, context, relation }: StaticHookArguments) {
+  static afterFind(
+    { result, context, relation }: StaticHookArguments,
+    trace = true
+  ) {
     if (relation || !result || !context.user) return
-    return tracer.trace(`${this.tableName}.afterFind`, () => {
+    const _func = () => {
       tracer
         .scope()
         .active()
@@ -50,9 +53,12 @@ export class Model extends ObjectionModel {
           Array.isArray(result) ? { results: result.length } : { id: result.id }
         )
       return Array.isArray(result)
-        ? result.map(v => this._controlAccess(v, context))
-        : this._controlAccess(result, context)
-    })
+        ? result.map(v =>
+            this._controlAccess(v, context, !!process.env.IS_OFFLINE)
+          )
+        : this._controlAccess(result, context, !!process.env.IS_OFFLINE)
+    }
+    return trace ? tracer.trace(`${this.tableName}.afterFind`, _func) : _func()
   }
 
   static beforeInsert({ context, inputItems }: StaticHookArguments) {
@@ -112,8 +118,8 @@ export class Model extends ObjectionModel {
     })
   }
 
-  static _controlAccess(item: Model, context: ResolverCtx) {
-    return tracer.trace(`${this.tableName}._controlAccess`, () => {
+  static _controlAccess(item: Model, context: ResolverCtx, trace = false) {
+    const _func = () => {
       const data = { [this.tableName]: item }
       const filtered = context.user.filter(data)[this.tableName]
       const relations = Object.fromEntries(
@@ -121,12 +127,18 @@ export class Model extends ObjectionModel {
           .filter(([k]) => k in (this.relationMappings ?? {}) && k in filtered)
           .map(([k, result]) => {
             const relation = (this.relationMappings ?? {})[k]?.modelClass
-            return [k, relation?.afterFind({ result, context }) ?? result]
+            return [
+              k,
+              relation?.afterFind({ result, context }, false) ?? result,
+            ]
           })
       )
       const result = { ...filtered, ...relations }
       Object.setPrototypeOf(result, this.prototype)
       return result
-    })
+    }
+    return trace
+      ? tracer.trace(`${this.tableName}._controlAccess`, _func)
+      : _func()
   }
 }
