@@ -3,6 +3,7 @@ import { User, Meetup, Slots } from './models'
 import { s3 } from './utils/aws'
 import mustache from 'mustache'
 import mjml from 'mjml'
+import logger from './logger'
 
 type Event = Partial<Meetup> & { slot: Partial<Slots> }
 
@@ -48,11 +49,15 @@ async function getTemplate(
 
 function send(receiver: Partial<User>, subject: string, template) {
   if (!receiver.email) throw new Error('must provide email address')
-  mail.messages().send({
+  const email = {
     from: 'Upframe team@upframe.io',
     to: `${(receiver.name?.split(' ') ?? [])[0] ?? ''} ${receiver.email}`,
     subject,
     html: template,
+  }
+  mail.messages().send(email, error => {
+    delete email.html
+    logger.error("couldn't send email", { email, error })
   })
 }
 

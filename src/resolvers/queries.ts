@@ -52,6 +52,16 @@ export const user = resolver<User>()(
   }
 )
 
+export const users = resolver<User[]>()(
+  async ({ query, args: { ids = [], handles = [] } }) => {
+    if (ids.length + handles.length === 0)
+      throw new UserInputError('must provide at least one id or handle')
+    return (await query()
+      .whereIn('id', ids)
+      .orWhereIn('handle', handles)) as User[]
+  }
+)
+
 export const calendarConnectUrl = resolver<string>().loggedIn(
   async ({ args: { redirect }, ctx: { id }, query }) => {
     const googleConnect = await query

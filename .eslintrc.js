@@ -1,7 +1,7 @@
 const path = require('path')
 
 module.exports = {
-  extends: ['eslint:recommended', 'prettier/react'],
+  extends: ['eslint:recommended'],
   parser: '@typescript-eslint/parser',
   plugins: ['prettier', '@typescript-eslint'],
   env: {
