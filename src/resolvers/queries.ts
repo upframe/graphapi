@@ -152,7 +152,7 @@ export const search = resolver<any>()(
 
     let [users, tags] = await Promise.all([
       'users' in fields ? searchUsers(term, maxUsers, withTags) : null,
-      'tags' in fields ? searchTags(term, maxTags) : null,
+      'tags' in fields ? searchTags(term, maxTags, withTags) : null,
     ])
 
     if (
@@ -223,7 +223,7 @@ export const signUpInfo = resolver<any>()(
         },
       }),
       defaultPicture: {
-        url: `https://${process.env.BUCKET_NAME}.s3.eu-west-2.amazonaws.com/default.png`,
+        url: process.env.BUCKET_URL + 'default.png',
       },
     }
   }

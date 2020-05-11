@@ -42,7 +42,7 @@ export const uploadProfilePicture = resolver<User>()(
 
     user.profile_pictures = [
       {
-        url: `https://${process.env.BUCKET_NAME}.s3.eu-west-2.amazonaws.com/${id}.png`,
+        url: `${process.env.BUCKET_URL}${id}.png`,
       } as ProfilePicture,
     ]
     return user

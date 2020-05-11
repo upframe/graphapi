@@ -106,11 +106,12 @@ export async function searchUsers(term: string, limit: number, withTags = []) {
 
 const tagSelect = () => knex('tags').select('name', 'id')
 
-const tagSearchQuick = async (term: string, limit: number) => {
+const tagSearchQuick = async (term: string, limit: number, exclude = []) => {
   return await (term
     ? tagSelect().where('name', 'ilike', `${term}%`)
     : tagSelect()
   )
+    .whereNotIn('name', exclude)
     .orderByRaw('length(name)')
     .limit(limit)
 }
@@ -123,17 +124,21 @@ const tagSearchComplex = async (query: string, limit: number, exclude = []) => {
     .limit(limit)
 }
 
-export const searchTags = async (query: string, limit: number) => {
+export const searchTags = async (
+  query: string,
+  limit: number,
+  withTags = []
+) => {
   let tags = []
-  if (query?.length ?? 0 <= 2) tags = await tagSearchQuick(query, limit)
+  if (query?.length ?? 0 <= 2)
+    tags = await tagSearchQuick(query, limit, withTags)
   const quickNum = tags.length
   if (limit - tags.length > 0) {
     tags.push(
-      ...(await tagSearchComplex(
-        query,
-        limit - tags.length,
-        tags.map(({ name }) => name)
-      ))
+      ...(await tagSearchComplex(query, limit - tags.length, [
+        ...tags.map(({ name }) => name),
+        ...withTags,
+      ]))
     )
     tags = tags
       .map((tag, i) => ({

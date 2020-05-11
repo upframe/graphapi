@@ -51,7 +51,8 @@ functions:
       CALENDAR_REFRESH_TOKEN: ${ssm:/API/CalendarRefreshToken~true}
       AWS_KEY_ID: ${ssm:/API/AwsKeyId}
       AWS_KEY_SECRET: ${ssm:/API/AwsKeySecret~true}
-      BUCKET_NAME: ${ssm:/API/PhotoBucket}
+      BUCKET_NAME: ${ssm:/API/ProfilePictures/BucketName}
+      BUCKET_URL: ${ssm:/API/ProfilePictures/BucketUrl}
       DEV_PASSWORD: ${ssm:/API/DevPassword~true}
 
       DB_HOST: ${ssm:/DB/Host}

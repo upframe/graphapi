@@ -264,11 +264,7 @@ export const completeSignup = resolver<User>()(
         .asUser(system)
     }
 
-    if (
-      photo &&
-      photo !==
-        `https://${process.env.BUCKET_NAME}.s3.eu-west-2.amazonaws.com/default.png`
-    ) {
+    if (photo && photo !== process.env.BUCKET_URL + 'default.png') {
       try {
         let fileExt = 'png'
         const data = photo.startsWith('data:')

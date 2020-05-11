@@ -44,7 +44,7 @@ export const server = new ApolloServer({
   debug: !!process.env.IS_OFFLINE,
   formatError: err => {
     if (err.extensions?.code === 'NOT_LOGGED_IN' && err.path?.includes('me'))
-      return { ...err, status: 403 }
+      return err
     logger.error(err)
 
     if (err.originalError instanceof ValidationError) {
