@@ -14,8 +14,8 @@ export const visibility = resolver<string, User>()(({ parent: { mentors } }) =>
     : 'UNLISTED'
 )
 
-export const title = resolver<string, User>()(
-  ({ parent: { mentors } }) => mentors?.title
+export const headline = resolver<string, User>()(
+  ({ parent: { mentors } }) => mentors?.headline
 )
 export const company = resolver<string, User>()(
   ({ parent: { mentors } }) => mentors?.company

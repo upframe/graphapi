@@ -56,6 +56,7 @@ function send(receiver: Partial<User>, subject: string, template) {
     html: template,
   }
   mail.messages().send(email, error => {
+    if (!error) return
     delete email.html
     logger.error("couldn't send email", { email, error })
   })

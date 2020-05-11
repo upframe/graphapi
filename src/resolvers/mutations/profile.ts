@@ -101,7 +101,7 @@ export const updateProfile = resolver<User>()(
       ...(user.groups.includes('mentor') && {
         mentors: {
           id: user.id,
-          ...obj.filterKeys(input, ['title', 'company']),
+          ...obj.filterKeys(input, ['headline', 'company']),
         },
       }),
     })

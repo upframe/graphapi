@@ -268,7 +268,7 @@ export const completeSignup = resolver<User>()(
       const mentor = {
         id: user.id,
         listed: false,
-        title: headline,
+        headline,
       }
       await query
         .raw(Mentor)

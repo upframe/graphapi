@@ -13,7 +13,7 @@ input ProfileInput {
   name: String
   handle: String
   location: String
-  title: String
+  headline: String
   company: String
   website: String
   biography: String

@@ -6,8 +6,8 @@ export class Mentor extends Model {
 
   id!: string
   listed: boolean
-  title: string
   company: string
+  headline: string
   slot_reminder_email: string
 
   time_slots?: Slots[]

@@ -15,7 +15,7 @@ export const visitor: Group = {
     {
       effect: 'allow',
       action: 'read',
-      resource: 'mentors.[id, title, company, time_slots]',
+      resource: 'mentors.[id, headline, company, time_slots]',
     },
     {
       effect: 'allow',

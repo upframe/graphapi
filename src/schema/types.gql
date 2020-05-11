@@ -41,7 +41,7 @@ type Mentor implements Person {
   handle: String!
   name: String!
   email: String
-  title: String
+  headline: String
   company: String
   location: String
   website: String

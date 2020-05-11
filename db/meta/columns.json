@@ -30,10 +30,10 @@
     "columns": [
       "id",
       "listed",
-      "title",
       "company",
       "slot_reminder_email",
-      "score"
+      "score",
+      "headline"
     ]
   },
   "profile_pictures": {
