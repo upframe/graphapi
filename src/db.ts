@@ -29,6 +29,5 @@ logger.info(
 export default knex({
   client: 'pg',
   connection,
-  pool: { min: 1, max: 1 },
   acquireConnectionTimeout: 7000,
 })

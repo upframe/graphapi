@@ -5,7 +5,7 @@ export const filterKeys = <T extends object>(
   typeof obj === 'object'
     ? Object.fromEntries(
         Object.entries(obj).filter(([k]) =>
-          Array.isArray(filter) ? filter.includes(k) : filter(k)
+          Array.isArray(filter) ? filter.includes(k as keyof T) : filter(k)
         )
       )
     : obj
