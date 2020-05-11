@@ -3,6 +3,8 @@ import { OAuth2Client } from 'google-auth-library/build/src/auth/oauth2client'
 import { ConnectGoogle } from './models'
 import knex from './db'
 import { GoogleNotConnectedError } from './error'
+import logger from './logger'
+import { filterKeys } from './utils/object'
 
 export { google }
 export type UserInfo = oauth2_v2.Schema$Userinfoplus
@@ -131,3 +133,28 @@ export const upframeClient = createClient()
 upframeClient.setCredentials({
   refresh_token: process.env.CALENDAR_REFRESH_TOKEN,
 })
+
+export const signUpInfo = async (
+  creds: ConnectGoogle
+): Promise<{ name?: string; picture?: string }> => {
+  try {
+    const client = createClient()
+    client.setCredentials(creds)
+    const { data } = await google
+      .oauth2({ auth: client, version: 'v2' })
+      .userinfo.get()
+    const picture = !data.picture?.endsWith('photo.jpg')
+      ? data.picture
+      : undefined
+    return {
+      name: data.name,
+      ...(picture && { picture }),
+    }
+  } catch (e) {
+    logger.error(
+      "couldn't get signup info from google",
+      filterKeys(creds, ['user_id', 'google_id'])
+    )
+    return {}
+  }
+}

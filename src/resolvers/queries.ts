@@ -8,14 +8,17 @@ import {
   ConnectGoogle,
 } from '../models'
 import { handleError, UserInputError } from '../error'
-import { createClient } from '../google'
 import knex from '../db'
 import resolver from './resolver'
 import { system } from '../authorization/user'
 import { searchUsers, searchTags } from '../search'
 import validate from '../utils/validity'
-import { google } from 'googleapis'
-import { requestScopes, userClient, scopes } from '../google'
+import {
+  requestScopes,
+  userClient,
+  scopes,
+  signUpInfo as googleInfo,
+} from '../google'
 
 export const me = resolver<User>().loggedIn(
   async ({ query, ctx: { id } }) => await query().findById(id)
@@ -195,13 +198,9 @@ export const signUpInfo = resolver<any>()(
         .raw(ConnectGoogle)
         .findById(signup.google_id)
         .asUser(system)
-      const client = createClient()
-      client.setCredentials(creds)
-      const { data } = await google
-        .oauth2({ auth: client, version: 'v2' })
-        .userinfo.get()
-      name = data.name
-      if (!data.picture?.endsWith('photo.jpg')) picture = data.picture
+      const data = await googleInfo(creds)
+      if (data.name) name = data.name
+      if (data.picture) picture = data.picture
     } else if (signup?.email) {
       name = signup.email
         .split('@')[0]

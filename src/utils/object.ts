@@ -1,6 +1,6 @@
-export const filterKeys = (
-  obj: object,
-  filter: ((k: string) => boolean) | string[]
+export const filterKeys = <T extends object>(
+  obj: T,
+  filter: ((k: string) => boolean) | (keyof T)[]
 ) =>
   typeof obj === 'object'
     ? Object.fromEntries(

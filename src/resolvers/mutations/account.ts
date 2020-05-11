@@ -157,12 +157,24 @@ export const signUpGoogle = resolver<any>()(
         .insert({ token, google_id: info.id })
         .asUser(system)
 
+      const picture = !info.picture?.endsWith('photo.jpg')
+        ? info.picture
+        : undefined
+
       return {
         id: token,
         email: info.email,
         role: invite.role.toUpperCase(),
         authComplete: true,
         name: info.name,
+        ...(picture && {
+          picture: {
+            url: picture,
+          },
+        }),
+        defaultPicture: {
+          url: process.env.BUCKET_URL + 'default.png',
+        },
       }
     } catch (e) {
       if (e.message === 'invalid_grant') throw InvalidGrantError()
@@ -325,6 +337,10 @@ export const completeSignup = resolver<User>()(
         .asUser(system),
     ])
 
+    console.log('== ctx ==')
+    console.log(ctx)
+    console.log('== finalUser ==')
+    console.log(finalUser)
     ctx.setHeader('Set-Cookie', cookie('auth', signInToken(finalUser)))
     ctx.id = finalUser.id
 
