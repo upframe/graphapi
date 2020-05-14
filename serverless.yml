@@ -14,6 +14,12 @@ provider:
   tracing:
     apiGateway: true
     lambda: true
+  iamRoleStatements:
+    - Effect: 'Allow'
+      Action:
+        - 'sns:Publish'
+      Resource:
+        - ${ssm:/email/SNS/arn}
 
 functions:
   graphapi:
