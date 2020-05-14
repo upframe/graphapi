@@ -20,7 +20,6 @@ export class User extends Model {
   handle!: string
   name!: string
   email!: string
-  password: string
   role: string
   location: string
   biography: string
@@ -141,10 +140,6 @@ export class User extends Model {
         pattern: regToStr(
           /^(http(s?):\/\/)?[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+){0,2}\.[a-z]{2,10}(\/([\w-.~!$&'()*+,;=:@]|(%[0-9a-fA-F]{2}))+)*\/?(\?[^?#]*)?(#(([\w!$&'()*+,;=\-.~:@/?]|(%[0-9a-fA-F]{2}))*))?$/
         ),
-      },
-      password: {
-        type: 'string',
-        minLength: 8,
       },
       role: {
         type: 'string',

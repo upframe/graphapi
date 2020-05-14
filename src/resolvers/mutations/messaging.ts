@@ -1,8 +1,9 @@
 import { User } from '../../models'
 import { UserInputError } from '../../error'
-import { sendMessage } from '../../email'
+import { send } from '../../email'
 import resolver from '../resolver'
 import { system } from '../../authorization/user'
+import uuidv4 from 'uuid/v4'
 
 export const messageExt = resolver()(
   async ({ query, args: { input }, ctx: { id } }) => {
@@ -11,7 +12,26 @@ export const messageExt = resolver()(
       .findById(input.to)
       .asUser(system)
     if (!receiver?.email) throw new UserInputError('unknown receiver')
-    const sender = !id ? input : await query.raw(User).findById(id)
+
+    const { email, name, ...rest } = !id
+      ? input
+      : await query.raw(User).findById(id)
+
+    const sender = id
+      ? { email, name, ...rest }
+      : (await query
+          .raw(User)
+          .where({ email })
+          .first()
+          .asUser(system)) ??
+        (await query.raw(User).insertAndFetch({
+          id: uuidv4(),
+          email,
+          name,
+          role: 'nologin',
+          handle: uuidv4(),
+        }))
+
     if (
       !new RegExp(User.jsonSchema.properties.email.pattern).test(sender.email)
     )
@@ -21,6 +41,9 @@ export const messageExt = resolver()(
     if (input.message.length < 10)
       throw new UserInputError('must provide message')
 
-    sendMessage(receiver, sender, input.message)
+    await send({
+      template: 'MESSAGE',
+      ctx: { sender: sender.id, receiver: receiver.id, message: input.message },
+    })
   }
 )

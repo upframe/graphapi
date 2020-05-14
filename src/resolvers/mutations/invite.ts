@@ -1,7 +1,7 @@
 import resolver from '../resolver'
 import { User, Invite } from '../../models'
 import { ForbiddenError, UserInputError } from 'apollo-server-lambda'
-import { sendMJML } from '../../email'
+import { send } from '../../email'
 import genToken from '../../utils/token'
 import { system } from '../../authorization/user'
 
@@ -30,17 +30,12 @@ export const invite = resolver<User>().loggedIn(
     )) as unknown) as Invite[]
 
     const issuer = await query().findById(id)
-    invites.forEach(({ id, email }) =>
-      sendMJML({
-        template: 'invite',
+    invites.forEach(({ id }) =>
+      send({
+        template: 'INVITE',
         ctx: {
-          name: issuer.name,
-          handle: issuer.handle,
-          mentor: role === 'MENTOR',
-          token: id,
+          invite: id,
         },
-        to: { email },
-        subject: `${issuer.name} invited you to join Upframe`,
       })
     )
     return issuer

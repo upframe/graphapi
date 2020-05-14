@@ -8,6 +8,7 @@ Model.knex(knex)
 import { handler as apolloHandler, requests } from './apollo'
 
 const handler = async (event, context) => {
+  context.callbackWaitsForEmptyEventLoop = false
   requests[context.awsRequestId] = { responseHeaders: {} }
 
   logger.setRequestId(context.awsRequestId)

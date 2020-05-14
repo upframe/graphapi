@@ -54,6 +54,7 @@ functions:
       BUCKET_NAME: ${ssm:/API/ProfilePictures/BucketName}
       BUCKET_URL: ${ssm:/API/ProfilePictures/BucketUrl}
       DEV_PASSWORD: ${ssm:/API/DevPassword~true}
+      EMAIL_SNS: ${ssm:/email/SNS/arn}
 
       DB_HOST: ${ssm:/DB/Host}
       DB_PROXY_HOST: ${ssm:/DB/Proxy/Host}
@@ -91,3 +92,6 @@ custom:
     endpointType: 'regional'
     stage: ${opt:stage}
     createRoute53Record: false
+  serverless-offline-sns:
+    port: 4002
+    debug: true

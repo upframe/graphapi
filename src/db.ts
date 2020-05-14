@@ -30,4 +30,8 @@ export default knex({
   client: 'pg',
   connection,
   acquireConnectionTimeout: 7000,
+  pool: {
+    min: 1,
+    max: 1,
+  },
 })

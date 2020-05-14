@@ -1,5 +1,5 @@
 import uuidv4 from 'uuid/v4'
-import { sendMeetupRequest, sendMeetupConfirmation } from '../../email'
+import { send } from '../../email'
 import { addMeetup, deleteMeetup } from '../../gcal'
 import { User, Slots, Meetup, ConnectGoogle } from '../../models'
 import resolver from '../resolver'
@@ -43,7 +43,7 @@ export const updateSlots = resolver<User>().loggedIn(
 
     const user = await query({ include: 'connect_google' }).findById(id)
 
-    if (!user.connect_google.calendar_id) return user
+    if (!user.connect_google?.calendar_id) return user
 
     const client = await userClient(user.connect_google)
     await Promise.all([
@@ -97,14 +97,14 @@ export const requestSlot = resolver()(
       : (await query
           .raw(User)
           .where({ email })
-          .first()) ??
+          .first()
+          .asUser(system)) ??
         (await query.raw(User).insertAndFetch({
           id: uuidv4(),
           email,
           name,
           role: 'nologin',
           handle: uuidv4(),
-          password: '--------',
         }))
 
     const meetup = {
@@ -122,7 +122,10 @@ export const requestSlot = resolver()(
         throw new UserInputError('slot already requested')
       throw e
     }
-    await sendMeetupRequest(mentor, mentee, { ...meetup, slot })
+    await send({
+      template: 'SLOT_REQUEST',
+      ctx: { slot: slot.id, requester: mentee.id },
+    })
 
     if (!mentor.connect_google?.calendar_id) return
     console.log('trace')
@@ -149,6 +152,7 @@ export const acceptMeetup = resolver<any>().loggedIn(
       .raw(Slots)
       .findById(meetupId)
       .withGraphFetched('meetups')
+      .asUser(system)
 
     if (!slot?.meetups) throw new UserInputError('unknown meetup')
     if (slot.mentor_id !== id)
@@ -174,17 +178,19 @@ export const acceptMeetup = resolver<any>().loggedIn(
     const mentor = parts.find(({ id }) => id === slot.mentor_id)
     const mentee = parts.find(({ id }) => id === slot.meetups.mentee_id)
 
-    try {
-      sendMeetupConfirmation(mentor, mentee, slot)
-      await query
-        .raw(Meetup)
-        .findById(slot.id)
-        .patch(await addMeetup(slot, mentor, mentee))
-        .asUser(system)
-    } catch (e) {
-      console.log(e)
-      throw e
-    }
+    if (!slot.meetups.gcal_upframe_event_id)
+      try {
+        await query
+          .raw(Meetup)
+          .findById(slot.id)
+          .patch(await addMeetup(slot, mentor, mentee))
+          .asUser(system)
+      } catch (e) {
+        console.log(e)
+        throw e
+      }
+
+    await send({ template: 'SLOT_CONFIRM', ctx: { slot: slot.id } })
 
     return {
       start: new Date(slot.start).toISOString(),

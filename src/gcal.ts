@@ -40,7 +40,7 @@ export async function addMeetup(
     transparency: 'opaque',
 
     attendees: [
-      ...(mentor.connect_google.calendar_id
+      ...(mentor.connect_google?.calendar_id
         ? []
         : [{ email: mentor.email, displayName: mentor.name }]),
       { email: mentee.email, displayName: mentee.name },
@@ -48,11 +48,12 @@ export async function addMeetup(
   }
 
   let gcal_user_event_id: string
-  if (mentor.connect_google.calendar_id) {
+
+  if (mentor.connect_google?.calendar_id) {
     const { data } = await (
       await userClient(mentor.connect_google)
     ).calendar.events.patch({
-      calendarId: mentor.connect_google.calendar_id,
+      calendarId: mentor.connect_google?.calendar_id,
       eventId: event.id,
       requestBody: event,
     })
