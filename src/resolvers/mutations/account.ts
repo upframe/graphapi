@@ -16,7 +16,7 @@ import {
 } from '../../error'
 import resolver from '../resolver'
 import { system } from '../../authorization/user'
-import { sendMJML } from '../../email'
+import { send } from '../../email'
 import genToken from '../../utils/token'
 import { createClient } from '../../google'
 import { google } from 'googleapis'
@@ -359,19 +359,13 @@ export const requestEmailChange = resolver()(
       throw new UserInputError(`email ${email} already in use`)
 
     const token = genToken()
-    const user = await query.raw(User).findById(id)
 
     await Promise.all([
       query
         .raw(Tokens)
         .insert({ token, scope: 'email', subject: id, payload: email })
         .asUser(system),
-      sendMJML({
-        template: 'reset-email',
-        ctx: { name: user.name, handle: user.handle, token },
-        to: { ...user, email } as User,
-        subject: 'Change of Email',
-      }),
+      send({ template: 'RESET_EMAIL', ctx: { token } }),
     ])
   }
 )
@@ -422,12 +416,7 @@ export const requestPasswordChange = resolver()(
         .raw(Tokens)
         .insert({ token, scope: 'password', subject: user.id })
         .asUser(system),
-      sendMJML({
-        template: 'reset-password',
-        ctx: { name: user.name.split(' ')[0], token },
-        to: user,
-        subject: 'Password Reset',
-      }),
+      send({ template: 'RESET_PASSWORD', ctx: { token } }),
     ])
   }
 )
