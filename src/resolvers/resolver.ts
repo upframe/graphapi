@@ -18,6 +18,15 @@ export default function<M = void, P extends Model = null>() {
         return this
       },
     },
+    isMentor: {
+      get() {
+        asserts.push(({ user }) => {
+          if (!user.groups.includes('mentor'))
+            throw new ForbiddenError('you have to a mentor')
+        })
+        return this
+      },
+    },
     isAdmin: {
       get() {
         asserts.push(({ user }) => {

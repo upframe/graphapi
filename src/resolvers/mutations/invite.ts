@@ -5,7 +5,7 @@ import { send } from '../../email'
 import genToken from '../../utils/token'
 import { system } from '../../authorization/user'
 
-export const invite = resolver<User>().loggedIn(
+export const invite = resolver<User>().isMentor(
   async ({ args: { emails, role }, ctx: { id, user }, query }) => {
     if (role === 'MENTOR' && !user.groups.includes('mentor'))
       throw new ForbiddenError('not allowed to invite as mentor')
