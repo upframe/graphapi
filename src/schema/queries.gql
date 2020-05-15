@@ -1,7 +1,6 @@
 type Query {
   me: Person
   mentors: [Mentor!]!
-  mentor(handle: String, id: ID): Mentor @deprecated
   user(handle: String, id: ID): Person
   users(handles: [String], ids: [ID]): [Person!]!
   tag(id: Int, name: String): Tag

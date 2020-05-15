@@ -33,17 +33,6 @@ export const mentors = resolver<User>()(
       .orderBy('rank', 'DESC')
 )
 
-export const mentor = resolver<User>()(
-  async ({ query, args: { id, handle } }) => {
-    if (!id && !handle) throw new UserInputError('must provide handle or id')
-    const mentor = await query()
-      .where(id ? { 'users.id': id } : { handle })
-      .first()
-    if (!mentor) throw handleError(`can't find mentor ${handle ?? id}`)
-    return mentor
-  }
-)
-
 export const user = resolver<User>()(
   async ({ query, args: { id, handle } }) => {
     if (!id && !handle) throw new UserInputError('must provide handle or id')
