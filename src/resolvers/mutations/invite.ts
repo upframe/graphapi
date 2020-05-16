@@ -30,13 +30,15 @@ export const invite = resolver<User>().isMentor(
     )) as unknown) as Invite[]
 
     const issuer = await query().findById(id)
-    invites.forEach(({ id }) =>
-      send({
-        template: 'INVITE',
-        ctx: {
-          invite: id,
-        },
-      })
+    await Promise.all(
+      invites.map(({ id }) =>
+        send({
+          template: 'INVITE',
+          ctx: {
+            invite: id,
+          },
+        })
+      )
     )
     return issuer
   }

@@ -1,6 +1,4 @@
 import knex from 'knex'
-import { mapValues } from './utils/object'
-import logger from './logger'
 
 const conn_db = {
   host: process.env.DB_HOST,
@@ -16,15 +14,6 @@ const conn_proxy = {
 }
 
 const connection = process.env.IS_OFFLINE ? conn_db : conn_proxy
-
-logger.info(
-  'db-connect',
-  mapValues(connection, (v, k) =>
-    k === 'password'
-      ? v.slice(0, 2) + '*'.repeat(v.length - 4) + v.slice(-2)
-      : v
-  )
-)
 
 export default knex({
   client: 'pg',
