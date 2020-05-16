@@ -26,6 +26,7 @@ import { filterKeys } from '../../utils/object'
 import * as account from '../../account'
 import { s3 } from '../../utils/aws'
 import axios from 'axios'
+import logger from '../../logger'
 
 export const signIn = resolver<User>()(
   async ({
@@ -186,6 +187,7 @@ export const signUpGoogle = resolver<any>()(
 export const connectGoogle = resolver<User>()(
   async ({ args: { redirect, code }, ctx: { id }, query }) => {
     await account.connectGoogle(code, redirect, id)
+    logger.info('google account connected', { user: id })
     return await query().findById(id)
   }
 )
@@ -209,6 +211,8 @@ export const disconnectGoogle = resolver<User>()(
 
     await client.revokeToken(tokens.refresh_token)
     await query.raw(ConnectGoogle).deleteById(tokens.google_id)
+
+    logger.info('google account disconnected', { user: id })
 
     return await query().findById(id)
   }
@@ -499,7 +503,7 @@ export const deleteAccount = resolver().loggedIn(
 )
 
 export const setUserRole = resolver<User>().isAdmin(
-  async ({ args: { userId, role }, query }) => {
+  async ({ args: { userId, role }, query, ctx: { id } }) => {
     const user = await query.raw(User).findById(userId)
     if (!user) throw new UserInputError(`unknown user ${userId}`)
     role = role.toLowerCase()
@@ -520,6 +524,13 @@ export const setUserRole = resolver<User>().isAdmin(
       .raw(User)
       .findById(userId)
       .patch({ role })
+
+    logger.info('user role updated', {
+      actor: id,
+      subject: userId,
+      oldRole: user.role,
+      newRole: role,
+    })
 
     return query().findById(userId)
   }

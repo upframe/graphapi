@@ -5,6 +5,7 @@ import { google } from 'googleapis'
 import { getTokens, userClient, createClient, UserClient } from '../../google'
 import { decode } from 'jsonwebtoken'
 import * as account from '../../account'
+import logger from '../../logger'
 
 export const connectCalendar = resolver<User>().loggedIn(
   async ({ query, ctx: { id }, args: { code, redirect } }) => {
@@ -58,6 +59,8 @@ export const connectCalendar = resolver<User>().loggedIn(
       .where({ user_id: id })
       .patch({ calendar_id: data.id })
 
+    logger.info('google calendar connected', { user: id })
+
     return await query().findById(id)
   }
 )
@@ -82,6 +85,8 @@ export const disconnectCalendar = resolver<User>().loggedIn(
         .findById(user.connect_google.google_id)
         .patch({ calendar_id: null }),
     ])
+
+    logger.info('google calendar disconnected', { user: id })
 
     delete user.connect_google.calendar_id
     return user

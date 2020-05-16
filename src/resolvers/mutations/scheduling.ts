@@ -7,6 +7,7 @@ import { system } from '../../authorization/user'
 import { UserInputError, ForbiddenError } from '../../error'
 import { UniqueViolationError } from 'objection'
 import { userClient } from '../../google'
+import logger from '../../logger'
 
 export const updateSlots = resolver<User>().loggedIn(
   async ({
@@ -40,6 +41,8 @@ export const updateSlots = resolver<User>().loggedIn(
           .delete()
           .whereIn('id', deleted),
     ])
+
+    logger.info('slots updated', { user: id, added: addList, deleted })
 
     const user = await query({ include: 'connect_google' }).findById(id)
 
@@ -127,6 +130,12 @@ export const requestSlot = resolver()(
       ctx: { slot: slot.id, requester: mentee.id },
     })
 
+    logger.info('slot requested', {
+      mentor: mentor.id,
+      mentee: mentee.id,
+      slot,
+    })
+
     if (!mentor.connect_google?.calendar_id) return
     console.log('trace')
     try {
@@ -191,6 +200,11 @@ export const acceptMeetup = resolver<any>().loggedIn(
       }
 
     await send({ template: 'SLOT_CONFIRM', ctx: { slot: slot.id } })
+    logger.info('meetup accepted', {
+      mentor: mentor.id,
+      mentee: mentee.id,
+      slot,
+    })
 
     return {
       start: new Date(slot.start).toISOString(),
@@ -240,5 +254,11 @@ export const cancelMeetup = resolver().loggedIn(
         console.warn("couldn't delete gcal meetup")
       ),
     ])
+
+    logger.info('meetup rejected', {
+      mentor: meetup.mentor_id,
+      mentee: meetup.meetups.mentee_id,
+      slot: meetup,
+    })
   }
 )

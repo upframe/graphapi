@@ -2,6 +2,7 @@ import query from '../utils/buildQuery'
 import { ForbiddenError, NotLoggedInError } from '../error'
 import { Model, QueryBuilder } from '../models'
 import getQueryFields from '../utils/queryFields'
+import logger from '../logger'
 
 export default function<M = void, P extends Model = null>() {
   type Assertions<M, P> = {
@@ -42,7 +43,14 @@ export default function<M = void, P extends Model = null>() {
     (handler: Resolver<M, P>) => (
       ...[parent, args, ctx, info]: Parameters<ApolloResolver>
     ) => {
-      asserts.forEach(assert => assert(ctx))
+      asserts.forEach(assert => {
+        try {
+          assert(ctx)
+        } catch (error) {
+          logger.warn('resolver assertion failed', { error, user: ctx.id })
+          throw error
+        }
+      })
       const fields = getQueryFields(info)
       return handler({
         query: Object.assign(
