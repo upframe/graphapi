@@ -1,6 +1,29 @@
 type Query {
   me: Person
   mentors: [Mentor!]!
-  mentor(keycode: String, id: ID): Mentor
-  calendarConnectUrl: String
+  user(handle: String, id: ID): Person
+  users(handles: [String], ids: [ID]): [Person!]!
+  tag(id: Int, name: String): Tag
+  tags(orderBy: TagOrder = alpha): [Tag!]!
+  lists: [List!]!
+  list(name: String!): List
+  isTokenValid(token: String!): Boolean
+  search(
+    term: String
+    withTags: [Int!]
+    withTagNames: [String!]
+    maxUsers: Int = 5
+    maxTags: Int = 3
+  ): SearchResult
+  signUpInfo(token: ID!): SignUpInfo
+  googleSigninUrl(redirect: String!, state: String): String
+  googleSignupUrl(redirect: String!, state: String): String
+  calendarConnectUrl(redirect: String!): String
+  checkValidity(
+    name: String
+    handle: String
+    biography: String
+    location: String
+    headline: String
+  ): [Validity!]!
 }

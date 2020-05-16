@@ -1,53 +1,128 @@
-import { Model } from 'objection'
-import Slots from './slots'
-
-class ProfilePicture extends Model {
-  static tableName = 'profilePictures'
-}
+import {
+  Model,
+  Mentor,
+  List,
+  SocialMedia,
+  Tags,
+  ProfilePicture,
+  Invite,
+  ConnectGoogle,
+  SigninUpframe,
+} from '.'
 
 const regToStr = (reg: RegExp) => reg.toString().replace(/\/(.*)\//, '$1')
 
-export default class User extends Model {
-  uid!: string
+export class User extends Model {
+  static tableName = 'users'
+  static idColumn = 'id'
+
+  id!: string
+  handle!: string
   name!: string
   email!: string
-  password: string
-  keycode: string
-  newsfeed: string
-  emailNotifications: boolean
-  availabilityReminder: string
-  type: string
-  googleAccessToken: string
-  googleRefreshToken: string
-  upframeCalendarId: string
+  role: string
+  location: string
+  biography: string
+  allow_emails: boolean
+  searchable: boolean
 
-  static tableName = 'users'
-  static idColumn = 'uid'
+  mentors?: Mentor
+  socialmedia?: SocialMedia[]
+  tags?: Tags[]
+  profile_pictures?: ProfilePicture[]
+  lists?: List[]
+  invites?: Invite[]
+  connect_google?: ConnectGoogle
+  signin_upframe?: SigninUpframe
 
   static relationMappings = {
-    profilePictures: {
+    mentors: {
       relation: Model.HasOneRelation,
-      modelClass: ProfilePicture,
+      modelClass: Mentor,
       join: {
-        from: 'users.uid',
-        to: 'profilePictures.uid',
+        from: 'users.id',
+        to: 'mentors.id',
       },
     },
-    timeSlots: {
-      relation: Model.HasManyRelation,
-      modelClass: Slots,
+    socialmedia: {
+      relation: Model.ManyToManyRelation,
+      modelClass: SocialMedia,
       join: {
-        from: 'users.uid',
-        to: 'timeSlots.mentorUID',
+        from: 'users.id',
+        through: {
+          from: 'user_handles.user_id',
+          to: 'user_handles.platform_id',
+          extra: ['handle'],
+        },
+        to: 'socialmedia.id',
+      },
+    },
+    tags: {
+      relation: Model.ManyToManyRelation,
+      modelClass: Tags,
+      join: {
+        from: 'users.id',
+        through: {
+          from: 'user_tags.user_id',
+          to: 'user_tags.tag_id',
+        },
+        to: 'tags.id',
+      },
+    },
+    profile_pictures: {
+      relation: Model.HasManyRelation,
+      modelClass: ProfilePicture,
+      join: {
+        from: 'users.id',
+        to: 'profile_pictures.user_id',
+      },
+    },
+    lists: {
+      relation: Model.ManyToManyRelation,
+      modelClass: List,
+      join: {
+        from: 'users.id',
+        through: {
+          from: 'user_lists.user_id',
+          to: 'user_lists.list_id',
+        },
+        to: 'lists.id',
+      },
+    },
+    invites: {
+      relation: Model.HasManyRelation,
+      modelClass: Invite,
+      join: {
+        from: 'users.id',
+        to: 'invites.issuer',
+      },
+    },
+    connect_google: {
+      relation: Model.HasOneRelation,
+      modelClass: ConnectGoogle,
+      join: {
+        from: 'users.id',
+        to: 'connect_google.user_id',
+      },
+    },
+    signin_upframe: {
+      relation: Model.HasOneRelation,
+      modelClass: SigninUpframe,
+      join: {
+        from: 'users.id',
+        to: 'signin_upframe.user_id',
       },
     },
   }
 
   static jsonSchema = {
     type: 'object',
-    required: ['uid', 'name', 'email'],
+    required: ['id', 'handle', 'name', 'email'],
     properties: {
-      uid: {
+      id: {
+        type: 'string',
+      },
+      handle: {
         type: 'string',
       },
       name: {
@@ -66,24 +141,18 @@ export default class User extends Model {
           /^(http(s?):\/\/)?[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+){0,2}\.[a-z]{2,10}(\/([\w-.~!$&'()*+,;=:@]|(%[0-9a-fA-F]{2}))+)*\/?(\?[^?#]*)?(#(([\w!$&'()*+,;=\-.~:@/?]|(%[0-9a-fA-F]{2}))*))?$/
         ),
       },
-      password: {
+      role: {
         type: 'string',
-        minLength: 8,
+        enum: ['user', 'mentor', 'nologin'],
       },
-      newsfeed: {
+      location: {
         type: 'string',
-        enum: ['Y', 'N'],
       },
-      emailNotifications: {
+      biography: {
+        type: 'string',
+      },
+      allow_emails: {
         type: 'boolean',
-      },
-      availabilityReminder: {
-        type: 'string',
-        enum: ['monthly', 'weekly', 'off'],
-      },
-      type: {
-        type: 'string',
-        enum: ['user', 'mentor'],
       },
     },
   }

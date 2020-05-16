@@ -1,37 +1,64 @@
 interface Person {
   id: ID!
+  handle: String
   name: String!
   email: String
+  location: String
   profilePictures: [ProfilePicture]
-  social: SocialLinks
+  social(includeEmpty: Boolean = false): [SocialHandle!]
+  notificationPrefs: NotificationPreferences
+  biography: String
+  tags: [Tag!]
+  website: String
+  categories: [String!]
+  role: Role
+  invites: [Invite]
+  google: Google
+  searchable: Boolean
 }
 
 type User implements Person {
   id: ID!
+  handle: String
   name: String!
-  email: String @private
+  email: String
+  location: String
   profilePictures: [ProfilePicture]
-  social: SocialLinks
+  social(includeEmpty: Boolean = false): [SocialHandle!]
+  notificationPrefs: UserNotificationPreferences
+  biography: String
+  tags: [Tag!]
+  website: String
+  categories: [String!]
+  role: Role
+  invites: [Invite]
+  google: Google
+  searchable: Boolean
 }
 
 type Mentor implements Person {
   id: ID!
+  handle: String!
   name: String!
-  email: String @private
-  keycode: String!
-  role: String
+  email: String
+  headline: String
   company: String
   location: String
   website: String
-  bio: String
+  biography: String
   profilePictures: [ProfilePicture!]!
-  social: SocialLinks
-  tags: [String!]!
-  visibility: Visibility @private
-  notificationPrefs: NotificationPreferences @private
-  slots(after: String, before: String): [Slot!]!
-  calendars(ids: [ID!]): [Calendar!] @private
-  calendarConnected: Boolean @private
+  social(includeEmpty: Boolean = false): [SocialHandle!]
+  tags: [Tag!]
+  visibility: Visibility
+  notificationPrefs: MentorNotificationPreferences
+  slots(after: String, before: String, includeBooked: Boolean = false): [Slot!]!
+  calendars(ids: [ID!]): [Calendar!]
+  calendarConnected: Boolean
+  categories: [String!]
+  role: Role
+  invites: [Invite]
+  google: Google
+  searchable: Boolean
 }
 
 type Calendar {
@@ -68,7 +95,15 @@ type Slot {
   end: String
 }
 
-type NotificationPreferences {
+interface NotificationPreferences {
+  receiveEmails: Boolean
+}
+
+type UserNotificationPreferences implements NotificationPreferences {
+  receiveEmails: Boolean
+}
+
+type MentorNotificationPreferences implements NotificationPreferences {
   receiveEmails: Boolean
   slotReminder: EmailInterval
 }
@@ -85,10 +120,83 @@ type ProfilePicture {
   url: String
 }
 
-type SocialLinks {
-  dribbble: String
-  facebook: String
-  github: String
-  linkedin: String
-  twitter: String
+type SocialHandle {
+  id: Int!
+  name: String
+  url: String
+  handle: String
+}
+
+enum Role {
+  USER
+  MENTOR
+  NOLOGIN
+  ADMIN
+}
+
+type Tag {
+  id: Int!
+  name: String!
+  users: [Person!]
+}
+
+enum TagOrder {
+  alpha
+  users
+}
+
+type List {
+  id: Int
+  name: String!
+  users: [Person!]
+}
+
+scalar Upload
+
+type SearchResult {
+  users: [UserSearchResult!]
+  tags: [TagSearchResult!]
+}
+
+type UserSearchResult {
+  user: Person!
+  markup: String
+}
+
+type TagSearchResult {
+  tag: Tag!
+  markup: String
+}
+
+type Invite {
+  email: String
+  role: Role
+  status: InviteStatus
+}
+
+enum InviteStatus {
+  PENDING
+  JOINED
+}
+
+type SignUpInfo {
+  id: ID!
+  email: String
+  role: Role
+  authComplete: Boolean
+  name: String
+  picture: ProfilePicture
+  defaultPicture: ProfilePicture
+}
+
+type Validity {
+  field: String
+  valid: Boolean!
+  reason: String
+}
+
+type Google {
+  connected: Boolean
+  email: String
+  canDisconnect: Boolean
 }

@@ -3,20 +3,33 @@ input LoginInput {
   password: String!
 }
 
+input createAccountInput {
+  name: String!
+  email: String!
+  password: String!
+}
+
 input ProfileInput {
   name: String
-  keycode: String
+  handle: String
   location: String
-  role: String
+  headline: String
   company: String
   website: String
-  bio: String
-  dribbble: String
-  facebook: String
-  github: String
-  linkedin: String
-  twitter: String
-  tags: [String!]
+  biography: String
+  social: [SocialInput]
+  tags: TagInput
+}
+
+input TagInput {
+  addedIds: [Int!]
+  addedName: [String!]
+  removedIds: [Int!]
+}
+
+input SocialInput {
+  platform: Int
+  handle: String
 }
 
 input NotificationSettingsInput {
@@ -26,7 +39,7 @@ input NotificationSettingsInput {
 
 input SlotInput {
   start: String!
-  duration: Int
+  end: String
 }
 
 input SlotUpdateInput {
@@ -36,32 +49,70 @@ input SlotUpdateInput {
 
 input MsgExtInput {
   to: ID!
-  name: String!
-  email: String!
   message: String!
+  name: String
+  email: String
 }
 
 input RequestSlotInput {
   slotId: ID!
-  name: String!
-  email: String!
   message: String!
+  name: String
+  email: String
 }
 
 type Mutation {
   signIn(input: LoginInput!): Person
+  signInGoogle(code: ID!, redirect: String!): Person
   signOut: Int
-  updateProfile(input: ProfileInput!): Mentor
-  requestEmailChange: Int
-  requestPasswordChange: Int
-  deleteAccount(password: String!): Int
+
+  signUpPassword(token: ID!, email: String!, password: String!): SignUpInfo
+  signUpGoogle(token: ID!, code: ID!, redirect: String!): SignUpInfo
+  completeSignup(
+    token: ID!
+    name: String!
+    handle: String!
+    biography: String!
+    location: String
+    headline: String
+    photo: String
+  ): Person
+
+  connectGoogle(code: ID!, redirect: String!): Person
+  disconnectGoogle: Person
+
+  deleteAccount(handle: String!): Int
+  requestEmailChange(email: String!): Int
+  changeEmail(token: String!): Person
+  requestPasswordChange(email: String!): Int
+  changePassword(password: String!, token: String): Person
+  setUserRole(userId: ID!, role: Role!): Person
+
+  updateProfile(input: ProfileInput!): Person
   setProfileVisibility(visibility: Visibility!): Mentor
+  setProfileSearchability(searchable: Boolean!): Person
   updateNotificationPreferences(input: NotificationSettingsInput!): Mentor
+  uploadProfilePicture(file: Upload!): Person
+  removeProfilePicture: Person
+
   updateSlots(slots: SlotUpdateInput!): Mentor
   messageExt(input: MsgExtInput!): Int
   requestSlot(input: RequestSlotInput!): Int
+
   acceptMeetup(meetupId: ID!): Meetup
   cancelMeetup(meetupId: ID!): Int
-  connectCalendar(code: ID!): Mentor
+
+  connectCalendar(code: ID!, redirect: String!): Mentor
   disconnectCalendar: Mentor
+
+  createList(name: String!): List
+  deleteList(listId: Int!): Int
+  addToList(listId: Int!, userId: ID!): List
+  removeFromList(listId: Int!, userId: ID!): List
+
+  setTagName(id: Int!, name: String!): Tag
+  mergeTags(from: Int!, into: Int!): Tag
+  deleteTag(id: Int!): Int
+
+  invite(emails: [String!]!, role: Role = USER): Person
 }

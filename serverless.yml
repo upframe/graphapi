@@ -4,21 +4,47 @@ provider:
   name: aws
   runtime: nodejs12.x
   stage: ${opt:stage, 'dev'}
-  timeout: 10
-  region: eu-west-2
+  timeout: 20
+  region: eu-west-1
+  vpc:
+    securityGroupIds:
+      - ${ssm:/API/SecurityGroup}
+    subnetIds:
+      - ${ssm:/API/Subnet}
+  tracing:
+    apiGateway: true
+    lambda: true
+  iamRoleStatements:
+    - Effect: 'Allow'
+      Action:
+        - 'sns:Publish'
+      Resource:
+        - ${ssm:/email/SNS/arn}
 
 functions:
   graphapi:
     handler: src/handler.graphapi
+    provisionedConcurrency: 3
+    layers:
+      - arn:aws:lambda:eu-west-1:464622532012:layer:Datadog-Node12-x:23
     events:
       - http:
           path: /
           method: post
-          cors: true
+          cors:
+            origins:
+              - https://beta.upframe.io
+              - https://upframe.io
+            allowCredentials: true
       - http:
           path: /
           method: get
-          cors: true
+          cors:
+            origins:
+              - https://beta.upframe.io
+              - https://upframe.io
+            allowCredentials: true
+
     environment:
       stage: ${self:provider.stage}
       PUBLIC_KEY: ${ssm:/API/PublicKey}
@@ -29,22 +55,49 @@ functions:
       OAUTH_CLIENT_SECRET: ${ssm:/API/OAuth/ClientSecret~true}
       CALENDAR_ID: ${ssm:/API/CalendarId}
       CALENDAR_REFRESH_TOKEN: ${ssm:/API/CalendarRefreshToken~true}
-      PROD_DB_HOST: ${ssm:/API/Prod/DB/Host}
-      PROD_DB_USER: ${ssm:/API/Prod/DB/User}
-      PROD_DB_PASS: ${ssm:/API/Prod/DB/Password~true}
-      DEV_DB_HOST: ${ssm:/API/Dev/DB/Host}
-      DEV_DB_USER: ${ssm:/API/Dev/DB/User}
-      DEV_DB_PASS: ${ssm:/API/Dev/DB/Password~true}
-      GCAL_REDIRECT_DEV: ${ssm:/API/Dev/GCalRedirect}
-      GCAL_REDIRECT_PROD: ${ssm:/API/Prod/GCalRedirect}
+      AWS_KEY_ID: ${ssm:/API/AwsKeyId}
+      AWS_KEY_SECRET: ${ssm:/API/AwsKeySecret~true}
+      BUCKET_NAME: ${ssm:/API/ProfilePictures/BucketName}
+      BUCKET_URL: ${ssm:/API/ProfilePictures/BucketUrl}
+      DEV_PASSWORD: ${ssm:/API/DevPassword~true}
+      EMAIL_SNS: ${ssm:/email/SNS/arn}
+
+      DB_HOST: ${ssm:/DB/Host}
+      DB_PROXY_HOST: ${ssm:/DB/Proxy/Host}
+      DB_PORT: ${ssm:/DB/Port}
+      DB_NAME: ${ssm:/DB/Name}
+      DB_USER: ${ssm:/API/DB/User}
+      DB_PASSWORD: ${ssm:/API/DB/Password~true}
+
+      DD_API_KEY: ${ssm:/API/Datadog/ApiKey}
+      DD_SERVICE: ${file(./sls.conf.js):DD_SERVICE}
+      DD_FLUSH_TO_LOG: ${file(./sls.conf.js):DD_FLUSH}
+      DD_ENHANCED_METRICS: ${file(./sls.conf.js):DD_ENHANCED}
+      DD_LOGS_INJECTION: ${file(./sls.conf.js):DD_LOG_INJECT}
+      DD_ENV: ${file(./sls.conf.js):DD_ENV}
 
 plugins:
   - serverless-webpack
   - serverless-offline
-  - serverless-dotenv-plugin
+  - serverless-domain-manager
 
 custom:
   serverless-offline:
     port: 5000
+    stage: offline
   webpack:
-    includeModules: true
+    includeModules:
+      forceExclude:
+        - aws-sdk
+        - datadog-lambda-js
+        - dd-trace
+  customDomain:
+    RestApiId:
+      Ref: ApiGatewayRestApi
+    domainName: ${file(./sls.conf.js):DOMAIN}
+    endpointType: 'regional'
+    stage: ${opt:stage}
+    createRoute53Record: false
+  serverless-offline-sns:
+    port: 4002
+    debug: true

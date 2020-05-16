@@ -11,18 +11,36 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
+
       - name: Setup Node
         uses: actions/setup-node@v1.1.0
         with:
           version: 12
+
+      - name: Cache node modules
+        uses: actions/cache@v1
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
       - name: Install Dependencies
         run: npm install
+
       - name: Deploy
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           ENGINE_API_KEY: ${{ secrets.ENGINE_API_KEY }}
+          SECURITY_GROUP: ${{ secrets.SECURITY_GROUP }}
+          SUBNET: ${{ secrets.SUBNET }}
         run: |
           if [ ${GITHUB_REF##*/} = "master" ]; then
             npx apollo service:push --tag=prod

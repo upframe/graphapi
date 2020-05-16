@@ -1,11 +1,34 @@
-import { Model } from 'objection'
+import { Model, Meetup } from '.'
 
-export default class Slots extends Model {
-  sid!: string
-  mentorUID!: string
+export class Slots extends Model {
+  id!: string
+  mentor_id!: string
   start!: string
   end: string
 
-  static tableName = 'timeSlots'
-  static idColumn = 'sid'
+  meetups?: Meetup
+
+  static tableName = 'time_slots'
+  static idColumn = 'id'
 }
+
+import('./user').then(({ User }) => {
+  Slots.relationMappings = {
+    meetups: {
+      relation: Model.HasOneRelation,
+      modelClass: Meetup,
+      join: {
+        from: 'time_slots.id',
+        to: 'meetups.slot_id',
+      },
+    },
+    user: {
+      relation: Model.BelongsToOneRelation,
+      modelClass: User,
+      join: {
+        from: 'time_slots.mentor_id',
+        to: 'users.id',
+      },
+    },
+  }
+})

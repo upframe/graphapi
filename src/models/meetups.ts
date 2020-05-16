@@ -1,26 +1,24 @@
-import { Model } from 'objection'
+import { Model } from '.'
 
-export default class Meetup extends Model {
-  mid!: string
-  sid!: string
-  mentorUID!: string
-  menteeUID!: string
-  start!: string
-  message: string
+export class Meetup extends Model {
+  slot_id!: string
   status: string
+  mentee_id: string
+  message: string
   location: string
-  googleId: string
+  gcal_user_event_id: string
+  gcal_upframe_event_id: string
 
   static tableName = 'meetups'
-  static idColumn = 'mid'
+  static idColumn = 'slot_id'
 
   jsonSchema: {
     type: 'object'
-    required: ['mid', 'sid', 'mentorUID', 'menteeUID', 'start']
+    required: ['slot_id']
     properties: {
       status: {
         type: 'string'
-        enum: ['confirmed', 'refused', 'pending']
+        enum: ['pending', 'confirmed', 'cancelled']
       }
     }
   }

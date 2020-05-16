@@ -1,7 +1,7 @@
 const path = require('path')
 
 module.exports = {
-  extends: ['eslint:recommended', 'prettier/react'],
+  extends: ['eslint:recommended'],
   parser: '@typescript-eslint/parser',
   plugins: ['prettier', '@typescript-eslint'],
   env: {
@@ -24,5 +24,6 @@ module.exports = {
   rules: {
     semi: ['error', 'never'],
     '@typescript-eslint/no-unused-vars': 'error',
+    'no-unreachable': 'warn',
   },
 }

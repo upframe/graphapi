@@ -1,9 +1,17 @@
-import { Model } from 'objection'
-import knex from '../db'
-import User from './user'
-import Slots from './slots'
-import Meetups from './meetups'
-
-Model.knex(knex)
-
-export { User, Slots, Meetups }
+export * from './model'
+export * from './list'
+export * from './userLists'
+export * from './tags'
+export * from './meetups'
+export * from './slots'
+export * from './socialmedia'
+export * from './userHandles'
+export * from './profilePicture'
+export * from './userTags'
+export * from './tokens'
+export * from './connectGoogle'
+export * from './signinUpframe'
+export * from './invite'
+export * from './signup'
+export * from './mentor'
+export * from './user'
