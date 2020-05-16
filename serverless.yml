@@ -94,7 +94,7 @@ custom:
   customDomain:
     RestApiId:
       Ref: ApiGatewayRestApi
-    domainName: dev.graphapi.upframe.io
+    domainName: ${file(./sls.conf.js):DOMAIN}
     endpointType: 'regional'
     stage: ${opt:stage}
     createRoute53Record: false

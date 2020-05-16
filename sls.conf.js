@@ -18,11 +18,13 @@ const config = {
   dev: {
     DD_ENV: 'beta',
     DD_SERVICE: 'graphapi-dev-graphapi',
+    DOMAIN: 'dev.graphapi.upframe.io',
   },
 
   prod: {
     DD_ENV: 'prod',
     DD_SERVICE: 'graphapi-prod-graphapi',
+    DOMAIN: 'graphapi.upframe.io',
   },
 }
 
