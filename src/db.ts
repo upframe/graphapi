@@ -20,7 +20,7 @@ export default knex({
   connection,
   acquireConnectionTimeout: 7000,
   pool: {
-    min: 1,
+    min: 0,
     max: 1,
   },
 })

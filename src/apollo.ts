@@ -64,6 +64,13 @@ export const server = new ApolloServer({
     ) {
       err.message = null
     }
+    if (
+      /^(select|update|insert|delete|create|drop)\s/i.test(err.message.trim())
+    )
+      err.message = /^[\w\s]+$/.test(err.message.split('-').pop())
+        ? err.message.split('-').pop()
+        : null
+
     return err
   },
   ...(process.env.stage !== 'prod'
