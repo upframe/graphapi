@@ -30,6 +30,14 @@ export class QueryBuilder<
     })
     return super.findById(id)
   }
+
+  patchAndFetchById(id, patch) {
+    this.context({
+      ...this.context(),
+      byId: { [(this as any)._modelClass?.tableName]: id },
+    })
+    return super.patchAndFetchById(id, patch)
+  }
 }
 
 type StaticHookArguments = Parameters<typeof ObjectionModel.beforeInsert>[0] & {
