@@ -6,6 +6,8 @@ import {
   Signup,
   SigninUpframe,
   Invite,
+  Tags,
+  UserTags,
 } from '../../models'
 import { checkPassword, signInToken, cookie, hashPassword } from '../../auth'
 import {
@@ -220,7 +222,16 @@ export const disconnectGoogle = resolver<User>()(
 
 export const completeSignup = resolver<User>()(
   async ({
-    args: { token, name, handle, biography, location, headline, photo },
+    args: {
+      token,
+      name,
+      handle,
+      biography,
+      location,
+      headline,
+      photo,
+      tags = [],
+    },
     ctx,
     query,
   }) => {
@@ -278,6 +289,34 @@ export const completeSignup = resolver<User>()(
         .raw(Mentor)
         .insert(mentor)
         .asUser(system)
+
+      if (tags.length) {
+        const existing = await query
+          .raw(Tags)
+          .whereRaw(
+            `name ILIKE ANY (ARRAY[${tags.map(v => `'${v}'`).join(',')}])`
+          )
+          .asUser(system)
+
+        const newTags = tags.filter(
+          tag => !existing.find(({ name }) => name === tag)
+        )
+
+        const created = ((await query
+          .raw(Tags)
+          .insertAndFetch(newTags.map(name => ({ name })))
+          .asUser(system)) as unknown) as Tags[]
+
+        const userTags = [...existing, ...created].map(({ id }) => ({
+          user_id: user.id,
+          tag_id: id,
+        }))
+
+        await query
+          .raw(UserTags)
+          .insert(userTags)
+          .asUser(system)
+      }
     }
 
     if (photo && photo !== process.env.BUCKET_URL + 'default.png') {
@@ -341,10 +380,6 @@ export const completeSignup = resolver<User>()(
         .asUser(system),
     ])
 
-    console.log('== ctx ==')
-    console.log(ctx)
-    console.log('== finalUser ==')
-    console.log(finalUser)
     ctx.setHeader('Set-Cookie', cookie('auth', signInToken(finalUser)))
     ctx.id = finalUser.id
 

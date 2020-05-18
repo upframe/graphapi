@@ -76,6 +76,7 @@ type Mutation {
     location: String
     headline: String
     photo: String
+    tags: [String]
   ): Person
 
   connectGoogle(code: ID!, redirect: String!): Person
