@@ -6,6 +6,7 @@ import { getTokens, userClient, createClient, UserClient } from '../../google'
 import { decode } from 'jsonwebtoken'
 import * as account from '../../account'
 import logger from '../../logger'
+import { system } from '../../authorization/user'
 
 export const connectCalendar = resolver<User>().loggedIn(
   async ({ query, ctx: { id }, args: { code, redirect } }) => {
@@ -58,6 +59,7 @@ export const connectCalendar = resolver<User>().loggedIn(
       .raw(ConnectGoogle)
       .where({ user_id: id })
       .patch({ calendar_id: data.id })
+      .asUser(system)
 
     logger.info('google calendar connected', { user: id })
 
