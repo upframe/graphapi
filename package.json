@@ -12,7 +12,8 @@
     "eslint:write": "eslint . --ext .js,.ts --fix",
     "lint": "npm run eslint:check && npm run prettier:check",
     "format": "npm run eslint:write && npm run prettier:write",
-    "column-info": "node ./db/meta/gen.js && prettier --write ./db/meta/columns.json"
+    "column-info": "node ./db/meta/gen.js && prettier --write ./db/meta/columns.json",
+    "publish:local": "npx apollo service:push -v=local-$(whoami)"
   },
   "keywords": [],
   "author": "",

@@ -6,6 +6,7 @@ const config = {
     DD_ENV: 'local',
     DD_LAYERS: false,
     DD_SERVICE: 'graphapi',
+    DOMAIN: 'localhost',
   },
 
   online: {

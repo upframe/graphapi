@@ -33,6 +33,21 @@ export const updateSlots = resolver<User>().loggedIn(
       return { start, end, mentor_id: id, id: uuidv4() }
     })
 
+    const existing = (
+      await query.raw(Slots).where({ mentor_id: id })
+    ).map(({ start, end }) => ({ start: new Date(start), end: new Date(end) }))
+
+    if (
+      addList.some(added =>
+        [...existing, ...addList.filter(v => v !== added)].some(
+          slot =>
+            added.start.getTime() < new Date(slot.end).getTime() &&
+            new Date(slot.start).getTime() < added.end.getTime()
+        )
+      )
+    )
+      throw new UserInputError("can't add overlapping slots")
+
     await Promise.all([
       addList.length && query.raw(Slots).insert(addList),
       deleted.length &&

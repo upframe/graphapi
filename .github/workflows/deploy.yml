@@ -43,9 +43,9 @@ jobs:
           SUBNET: ${{ secrets.SUBNET }}
         run: |
           if [ ${GITHUB_REF##*/} = "master" ]; then
-            npx apollo service:push --tag=prod
+            npx apollo service:push -v=prod
             npx sls deploy --stage prod
           else
-            npx apollo service:push --tag=beta
+            npx apollo service:push -v=beta
             npx sls deploy --stage dev
           fi

@@ -76,6 +76,7 @@ type Mutation {
     location: String
     headline: String
     photo: String
+    tags: [String]
   ): Person
 
   connectGoogle(code: ID!, redirect: String!): Person
@@ -89,21 +90,21 @@ type Mutation {
   setUserRole(userId: ID!, role: Role!): Person
 
   updateProfile(input: ProfileInput!): Person
-  setProfileVisibility(visibility: Visibility!): Mentor
+  setProfileVisibility(visibility: Visibility!): Person
   setProfileSearchability(searchable: Boolean!): Person
-  updateNotificationPreferences(input: NotificationSettingsInput!): Mentor
+  updateNotificationPreferences(input: NotificationSettingsInput!): Person
   uploadProfilePicture(file: Upload!): Person
   removeProfilePicture: Person
 
-  updateSlots(slots: SlotUpdateInput!): Mentor
+  updateSlots(slots: SlotUpdateInput!): Person
   messageExt(input: MsgExtInput!): Int
   requestSlot(input: RequestSlotInput!): Int
 
   acceptMeetup(meetupId: ID!): Meetup
   cancelMeetup(meetupId: ID!): Int
 
-  connectCalendar(code: ID!, redirect: String!): Mentor
-  disconnectCalendar: Mentor
+  connectCalendar(code: ID!, redirect: String!): Person
+  disconnectCalendar: Person
 
   createList(name: String!): List
   deleteList(listId: Int!): Int
