@@ -85,9 +85,13 @@ export const tag = resolver<Tags>()(async ({ query, args: { id, name } }) => {
   if (!!id === !!name)
     throw new UserInputError('must provide either id or name')
   if (id) return await query().findById(id)
-  return await query()
+  const res = await query()
     .where('name', 'ilike', name)
     .first()
+  return {
+    ...res,
+    users: res.users.filter(({ searchable }) => searchable),
+  } as Tags
 })
 
 export const tags = resolver<Tags>()(async ({ query, args: { orderBy } }) => {
