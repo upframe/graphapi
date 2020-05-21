@@ -200,7 +200,7 @@ export const connectGoogle = resolver<User>()(
 )
 
 export const disconnectGoogle = resolver<User>()(
-  async ({ ctx: { id }, query }) => {
+  async ({ ctx: { id, user }, query }) => {
     const tokens = await query
       .raw(ConnectGoogle)
       .where({ user_id: id })
@@ -209,7 +209,7 @@ export const disconnectGoogle = resolver<User>()(
     if (
       !(await query
         .raw(SigninUpframe)
-        .where({ user_id: id })
+        .findById(user.email)
         .first())
     )
       throw new UserInputError('must first set account password')
@@ -490,15 +490,12 @@ export const changePassword = resolver<User>()(
         .asUser(system)
     }
 
-    const signin = await query
-      .raw(SigninUpframe)
-      .where({ user_id: token?.subject ?? ctx.id })
-      .first()
+    const signin = await query.raw(SigninUpframe).findById(ctx.user.email)
 
     if (signin)
       await query
         .raw(SigninUpframe)
-        .where({ user_id: token?.subject ?? ctx.id })
+        .findById(ctx.user.email)
         .patch({ password: hashPassword(password) })
     else {
       const { id, email } = await query().findById(token?.subject ?? ctx.id)

@@ -9,7 +9,11 @@ export default class AuthUser {
   private _expanded: Policy[] = []
   public denied: string[] = []
 
-  constructor(public readonly id: string, ...groups: string[]) {
+  constructor(
+    public readonly id: string,
+    public readonly email: string,
+    ...groups: string[]
+  ) {
     this.groups = groups
   }
 
@@ -118,4 +122,4 @@ enum PolicyEffect {
   ALLOW = 1,
 }
 
-export const system = new AuthUser('system', 'admin')
+export const system = new AuthUser('system', undefined, 'admin')

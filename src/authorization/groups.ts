@@ -118,7 +118,7 @@ export const user: Group = {
       effect: 'allow',
       action: '*',
       resource: 'signin_upframe',
-      where: 'signin_upframe.user_id = current.id',
+      where: 'signin_upframe.email = current.email',
     },
     {
       effect: 'allow',

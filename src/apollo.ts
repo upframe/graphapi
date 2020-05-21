@@ -22,12 +22,12 @@ const schema = makeExecutableSchema({
 export const server = new ApolloServer({
   schema,
   context: ({ event, context }): ResolverCtx => {
-    const { id, role } =
+    const { id, role, sub } =
       authenticate(
         parseCookies(event.headers?.Cookie ?? event.headers?.cookie).auth
       ) ?? {}
     const roles = role?.split('.').map(v => v.trim()) ?? []
-    const user = new AuthUser(id)
+    const user = new AuthUser(id, sub)
     user.groups = roles.length ? roles : ['visitor']
     const requestId = context.awsRequestId
     return {
