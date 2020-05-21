@@ -470,7 +470,13 @@ export const requestPasswordChange = resolver()(
 )
 
 export const changePassword = resolver<User>()(
-  async ({ args: { password }, ctx, query, args: { token: tokenId } }) => {
+  async ({
+    args: { password },
+    ctx,
+    query,
+    knex,
+    args: { token: tokenId },
+  }) => {
     if (!ctx.id && !tokenId)
       throw new UserInputError('must be logged in or provide token')
     if (password.length < 8) throw new UserInputError('invalid password')
@@ -490,19 +496,35 @@ export const changePassword = resolver<User>()(
         .asUser(system)
     }
 
-    const signin = await query.raw(SigninUpframe).findById(ctx.user.email)
+    const email =
+      ctx.user.email ??
+      (token &&
+        (
+          await knex('users')
+            .select('email')
+            .where({ id: token.subject })
+            .first()
+        ).email)
+
+    const signin =
+      email &&
+      (await query
+        .raw(SigninUpframe)
+        .findById(email)
+        .asUser(system))
 
     if (signin)
       await query
         .raw(SigninUpframe)
-        .findById(ctx.user.email)
+        .findById(email)
         .patch({ password: hashPassword(password) })
-    else {
-      const { id, email } = await query().findById(token?.subject ?? ctx.id)
-      await query
-        .raw(SigninUpframe)
-        .insert({ email, password: hashPassword(password), user_id: id })
-    }
+        .asUser(system)
+    else
+      await query.raw(SigninUpframe).insert({
+        email,
+        password: hashPassword(password),
+        user_id: token.subject,
+      })
 
     const user = await query()
       .findById(token?.subject ?? ctx.id)
