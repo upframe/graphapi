@@ -1,11 +1,19 @@
-import * as rules from './validityRules'
+import * as _rules from './validityRules'
+const rules: { [name: string]: _rules.Rule } = _rules
 
-export async function validate(field: string, value: any) {
+export async function validate(
+  field: string,
+  value: any,
+  knex: ResolverCtx['knex']
+) {
   if (!(field in rules)) return `unknown field ${field}`
-  return await rules[field](value)
+  return await rules[field](value, knex)
 }
 
-export async function batchValidate(fields: { [field: string]: any }) {
+export async function batchValidate(
+  fields: { [field: string]: any },
+  knex: ResolverCtx['knex']
+) {
   const format = (v: boolean | string): { valid: boolean; reason?: string } =>
     v === true || v === undefined
       ? { valid: true }
@@ -14,7 +22,7 @@ export async function batchValidate(fields: { [field: string]: any }) {
   return (
     await Promise.all(
       Object.entries(fields).map(([k, v]) =>
-        validate(k, v).then(res => [k, res])
+        validate(k, v, knex).then(res => [k, res])
       ) as Promise<[string, any]>[]
     )
   ).map(([k, v]) => ({ field: k, ...format(v) }))

@@ -1,7 +1,6 @@
 import resolver from '../resolver'
 import { UserInputError } from '../../error'
 import { Tags } from '../../models'
-import knex from '../../db'
 
 export const setTagName = resolver<Tags>().isAdmin(
   async ({ query, args: { id, name } }) =>
@@ -10,7 +9,7 @@ export const setTagName = resolver<Tags>().isAdmin(
 )
 
 export const mergeTags = resolver<Tags>().isAdmin(
-  async ({ query, args: { from, into } }) => {
+  async ({ query, knex, args: { from, into } }) => {
     await knex.transaction(async trx => {
       await trx('user_tags')
         .where({ tag_id: from })

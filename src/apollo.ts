@@ -39,6 +39,7 @@ export const server = new ApolloServer({
       setHeader(header, value) {
         requests[requestId].responseHeaders[header] = value
       },
+      knex: requests[requestId].knex,
     }
   },
   debug: !!process.env.IS_OFFLINE,

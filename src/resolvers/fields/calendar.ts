@@ -11,8 +11,8 @@ const buildDate = (date: string): string => {
 export const name = resolver<string, any>()(({ parent }) => parent.summary)
 
 export const events = resolver<any[], any>()(
-  async ({ parent, args: { max, start } }) => {
-    const client = await userClient(parent)
+  async ({ parent, args: { max, start }, knex }) => {
+    const client = await userClient(knex, parent)
     const { data } = await client.calendar.events.list({
       calendarId: parent.id,
       maxResults: max,

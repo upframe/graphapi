@@ -1,4 +1,3 @@
-import knex from './db'
 import levenshtein from 'fast-levenshtein'
 import _ from 'lodash'
 import { filterKeys } from './utils/object'
@@ -20,7 +19,7 @@ const markup = (value: string, term: string) => {
   ].join('')
 }
 
-const baseQuery = () =>
+const baseQuery = (knex: ResolverCtx['knex']) =>
   knex('users')
     .select(
       'users.id',
@@ -39,8 +38,13 @@ const baseQuery = () =>
     .andWhere('size', '<=', 128)
     .andWhere('searchable', true)
 
-export async function searchUsers(term: string, limit: number, withTags = []) {
-  let query = baseQuery()
+export async function searchUsers(
+  term: string,
+  limit: number,
+  withTags = [],
+  knex: ResolverCtx['knex']
+) {
+  let query = baseQuery(knex)
   if (term?.length)
     query = query.andWhere(
       'name_normalized',
@@ -104,20 +108,31 @@ export async function searchUsers(term: string, limit: number, withTags = []) {
     .map(user => ({ user, markup: markup(user.name, term) }))
 }
 
-const tagSelect = () => knex('tags').select('name', 'id')
+const tagSelect = (knex: ResolverCtx['knex']) =>
+  knex('tags').select('name', 'id')
 
-const tagSearchQuick = async (term: string, limit: number, exclude = []) => {
+const tagSearchQuick = async (
+  term: string,
+  limit: number,
+  exclude = [],
+  knex: ResolverCtx['knex']
+) => {
   return await (term
-    ? tagSelect().where('name', 'ilike', `${term}%`)
-    : tagSelect()
+    ? tagSelect(knex).where('name', 'ilike', `${term}%`)
+    : tagSelect(knex)
   )
     .whereNotIn('name', exclude)
     .orderByRaw('length(name)')
     .limit(limit)
 }
 
-const tagSearchComplex = async (query: string, limit: number, exclude = []) => {
-  return await tagSelect()
+const tagSearchComplex = async (
+  query: string,
+  limit: number,
+  exclude = [],
+  knex: ResolverCtx['knex']
+) => {
+  return await tagSelect(knex)
     .where('name', 'ilike', `%${query}%`)
     .whereNotIn('name', exclude)
     .orderByRaw('length(name)')
@@ -127,18 +142,21 @@ const tagSearchComplex = async (query: string, limit: number, exclude = []) => {
 export const searchTags = async (
   query: string,
   limit: number,
-  withTags = []
+  withTags = [],
+  knex: ResolverCtx['knex']
 ) => {
   let tags = []
   if (query?.length ?? 0 <= 2)
-    tags = await tagSearchQuick(query, limit, withTags)
+    tags = await tagSearchQuick(query, limit, withTags, knex)
   const quickNum = tags.length
   if (limit - tags.length > 0) {
     tags.push(
-      ...(await tagSearchComplex(query, limit - tags.length, [
-        ...tags.map(({ name }) => name),
-        ...withTags,
-      ]))
+      ...(await tagSearchComplex(
+        query,
+        limit - tags.length,
+        [...tags.map(({ name }) => name), ...withTags],
+        knex
+      ))
     )
     tags = tags
       .map((tag, i) => ({

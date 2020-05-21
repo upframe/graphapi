@@ -12,6 +12,7 @@ import logger from '../../logger'
 export const updateSlots = resolver<User>().loggedIn(
   async ({
     query,
+    knex,
     args: {
       slots: { added = [], deleted = [] },
     },
@@ -63,7 +64,7 @@ export const updateSlots = resolver<User>().loggedIn(
 
     if (!user.connect_google?.calendar_id) return user
 
-    const client = await userClient(user.connect_google)
+    const client = await userClient(knex, user.connect_google)
     await Promise.all([
       ...addList.map(
         ({ id, start, end }) =>
@@ -93,7 +94,7 @@ export const updateSlots = resolver<User>().loggedIn(
 )
 
 export const requestSlot = resolver()(
-  async ({ query, args: { input }, ctx: { id } }) => {
+  async ({ query, knex, args: { input }, ctx: { id } }) => {
     const { email, name, ...rest } = !id
       ? input
       : await query.raw(User).findById(id)
@@ -154,7 +155,7 @@ export const requestSlot = resolver()(
     if (!mentor.connect_google?.calendar_id) return
     console.log('trace')
     try {
-      const client = await userClient(mentor.connect_google)
+      const client = await userClient(knex, mentor.connect_google)
       client.calendar.events.patch({
         calendarId: mentor.connect_google.calendar_id,
         eventId: slot.id.replace(/[^\w]/g, ''),
@@ -171,7 +172,7 @@ export const requestSlot = resolver()(
 )
 
 export const acceptMeetup = resolver<any>().loggedIn(
-  async ({ args: { meetupId }, ctx: { id }, query }) => {
+  async ({ args: { meetupId }, ctx: { id }, query, knex }) => {
     const slot = await query
       .raw(Slots)
       .findById(meetupId)
@@ -207,7 +208,7 @@ export const acceptMeetup = resolver<any>().loggedIn(
         await query
           .raw(Meetup)
           .findById(slot.id)
-          .patch(await addMeetup(slot, mentor, mentee))
+          .patch(await addMeetup(slot, mentor, mentee, knex))
           .asUser(system)
       } catch (e) {
         console.log(e)
@@ -231,7 +232,7 @@ export const acceptMeetup = resolver<any>().loggedIn(
 )
 
 export const cancelMeetup = resolver().loggedIn(
-  async ({ query, args: { meetupId }, ctx: { id } }) => {
+  async ({ query, knex, args: { meetupId }, ctx: { id } }) => {
     const meetup = await query
       .raw(Slots)
       .withGraphFetched('meetups')
@@ -248,7 +249,9 @@ export const cancelMeetup = resolver().loggedIn(
       .where({ user_id: meetup.mentor_id })
       .first()
 
-    let client = connectGoogle ? await userClient(connectGoogle) : undefined
+    let client = connectGoogle
+      ? await userClient(knex, connectGoogle)
+      : undefined
 
     await Promise.all([
       query

@@ -32,6 +32,7 @@ interface ResolverCtx {
   requestId: string
   clientIp: string
   setHeader(header: string, value: string): void
+  knex: import('knex')
 }
 
 type ModelContent<M extends Model> = {

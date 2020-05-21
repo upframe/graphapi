@@ -1,17 +1,12 @@
-import knex from './db'
 import { createClient, google, UserInfo } from './google'
 import { UserInputError, InvalidGrantError } from './error'
 import { ConnectGoogle } from './models'
 
-export const emailInUse = async (email: string) =>
-  await knex('users')
-    .where({ email })
-    .first()
-
 export const connectGoogle = async (
   code: string,
   redirect: string,
-  user_id: string = null
+  user_id: string = null,
+  knex
 ): Promise<Partial<ConnectGoogle> & { info: UserInfo }> => {
   try {
     const client = createClient(redirect)
@@ -22,7 +17,9 @@ export const connectGoogle = async (
       .userinfo.get()
 
     const [emailGone, accountGone] = await Promise.all([
-      emailInUse(data.email),
+      knex('users')
+        .where({ email: data.email })
+        .first(),
       knex('connect_google')
         .where({ google_id: data.id })
         .first(),
