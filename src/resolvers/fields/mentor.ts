@@ -55,12 +55,12 @@ export const calendarConnected = resolver<
 )
 
 export const calendars = resolver<any[], User>()(
-  async ({ parent, ctx: { id, setHeader }, args: { ids } }) => {
+  async ({ parent, ctx: { id, setHeader }, args: { ids }, knex }) => {
     if (!parent?.id || id !== parent.id)
       throw new ForbiddenError('not allowed to access calendars')
     if (!parent.connect_google?.calendar_id) return
     try {
-      const client = await userClient(parent.connect_google)
+      const client = await userClient(knex, parent.connect_google)
       if (ids) {
         const res = await Promise.all(
           ids.map(calendarId =>

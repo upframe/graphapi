@@ -4,7 +4,8 @@ import { UserClient, userClient, calendar, upframeClient } from './google'
 export async function addMeetup(
   slot: Slots,
   mentor: User,
-  mentee: User
+  mentee: User,
+  knex: ResolverCtx['knex']
 ): Promise<Partial<Meetup>> {
   const event = {
     id: slot.id.replace(/[^\w]/g, ''),
@@ -51,7 +52,7 @@ export async function addMeetup(
 
   if (mentor.connect_google?.calendar_id) {
     const { data } = await (
-      await userClient(mentor.connect_google)
+      await userClient(knex, mentor.connect_google)
     ).calendar.events.patch({
       calendarId: mentor.connect_google?.calendar_id,
       eventId: event.id,

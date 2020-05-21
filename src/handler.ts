@@ -1,17 +1,19 @@
 import tracer from './tracer'
 import { datadog } from 'datadog-lambda-js'
 import logger from './logger'
-
-import knex from './db'
-import { Model } from './models'
-Model.knex(knex)
 import { handler as apolloHandler, requests } from './apollo'
+import dbConnect from './db'
 
 const handler = async (event, context) => {
   context.callbackWaitsForEmptyEventLoop = false
   requests[context.awsRequestId] = { responseHeaders: {} }
 
   logger.setRequestId(context.awsRequestId)
+
+  const { Model } = await import('./models')
+  const knex = dbConnect()
+  Model.knex(knex)
+  requests[context.awsRequestId].knex = knex
 
   const span = tracer.startSpan('web.request')
   let res: [any, any]
@@ -36,6 +38,7 @@ const handler = async (event, context) => {
   const [error, data] = res
 
   knex.removeAllListeners()
+  await knex.destroy()
 
   if (error) throw error
   return data

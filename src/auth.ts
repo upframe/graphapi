@@ -2,7 +2,9 @@ import jwt from 'jsonwebtoken'
 import * as bcrypt from 'bcrypt'
 import { User } from './models'
 
-export function authenticate(token: string): { id: string; role: string } {
+export function authenticate(
+  token: string
+): { id: string; role: string; sub: string } {
   if (!token) return
   try {
     return jwt.verify(token, process.env.PUBLIC_KEY) as any

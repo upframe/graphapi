@@ -1,4 +1,5 @@
 import knex from 'knex'
+import logger from './logger'
 
 const conn_db = {
   host: process.env.DB_HOST,
@@ -15,8 +16,19 @@ const conn_proxy = {
 
 const connection = process.env.IS_OFFLINE ? conn_db : conn_proxy
 
-export default knex({
-  client: 'pg',
-  connection,
-  acquireConnectionTimeout: 7000,
-})
+export default () =>
+  knex({
+    client: 'pg',
+    connection,
+    acquireConnectionTimeout: 7000,
+    pool: {
+      min: 1,
+      max: 1,
+      afterCreate(conn, done) {
+        conn.on('error', error => {
+          logger.error('db connection error', { error })
+        })
+        done()
+      },
+    },
+  })

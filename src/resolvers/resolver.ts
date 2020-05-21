@@ -67,6 +67,7 @@ export default function<M = void, P extends Model = null>() {
             raw: (model?: any) => query.raw(info, ctx, model),
           }
         ) as Query<M extends Model ? M : Model>,
+        knex: ctx.knex,
         parent,
         args,
         ctx,
@@ -80,6 +81,7 @@ export default function<M = void, P extends Model = null>() {
 
 type Resolver<M = void, P = null> = (args: {
   query: Query<M extends Model ? M : Model>
+  knex: ResolverCtx['knex']
   parent: P
   args: any
   ctx: ResolverCtx

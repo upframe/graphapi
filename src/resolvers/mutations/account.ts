@@ -101,7 +101,7 @@ export const signOut = resolver()(({ ctx }) => {
 })
 
 export const signUpPassword = resolver<any>()(
-  async ({ args: { token, email, password }, query }) => {
+  async ({ args: { token, email, password }, query, knex }) => {
     const invite = await query
       .raw(Invite)
       .findById(token)
@@ -116,7 +116,7 @@ export const signUpPassword = resolver<any>()(
     )
       throw new UserInputError('email already in use')
 
-    const validState = await validate.batch({ email, password })
+    const validState = await validate.batch({ email, password }, knex)
     validState
       .filter(({ valid }) => !valid)
       .forEach(({ reason, field }) => {
@@ -145,7 +145,7 @@ export const signUpPassword = resolver<any>()(
 )
 
 export const signUpGoogle = resolver<any>()(
-  async ({ args: { token, code, redirect }, query }) => {
+  async ({ args: { token, code, redirect }, query, knex }) => {
     try {
       const invite = await query
         .raw(Invite)
@@ -153,7 +153,12 @@ export const signUpGoogle = resolver<any>()(
         .asUser(system)
       if (!invite) throw new UserInputError('invalid invite token')
 
-      const { info } = await account.connectGoogle(code, redirect)
+      const { info } = await account.connectGoogle(
+        code,
+        redirect,
+        undefined,
+        knex
+      )
 
       await query
         .raw(Signup)
@@ -187,15 +192,15 @@ export const signUpGoogle = resolver<any>()(
 )
 
 export const connectGoogle = resolver<User>()(
-  async ({ args: { redirect, code }, ctx: { id }, query }) => {
-    await account.connectGoogle(code, redirect, id)
+  async ({ args: { redirect, code }, ctx: { id }, query, knex }) => {
+    await account.connectGoogle(code, redirect, id, knex)
     logger.info('google account connected', { user: id })
     return await query().findById(id)
   }
 )
 
 export const disconnectGoogle = resolver<User>()(
-  async ({ ctx: { id }, query }) => {
+  async ({ ctx: { id, user }, query }) => {
     const tokens = await query
       .raw(ConnectGoogle)
       .where({ user_id: id })
@@ -204,7 +209,7 @@ export const disconnectGoogle = resolver<User>()(
     if (
       !(await query
         .raw(SigninUpframe)
-        .where({ user_id: id })
+        .findById(user.email)
         .first())
     )
       throw new UserInputError('must first set account password')
@@ -234,6 +239,7 @@ export const completeSignup = resolver<User>()(
     },
     ctx,
     query,
+    knex,
   }) => {
     const signup = await query
       .raw(Signup)
@@ -269,10 +275,13 @@ export const completeSignup = resolver<User>()(
       user.email = data.email
     }
 
-    const validStatus = await validate.batch({
-      ...filterKeys(user, ['name', 'handle', 'biography', 'location']),
-      ...(role !== 'user' && { headline }),
-    })
+    const validStatus = await validate.batch(
+      {
+        ...filterKeys(user, ['name', 'handle', 'biography', 'location']),
+        ...(role !== 'user' && { headline }),
+      },
+      knex
+    )
     validStatus.forEach(({ valid, field, reason }) => {
       if (!valid) throw new UserInputError(`${field}: ${reason}`)
     })
@@ -461,7 +470,13 @@ export const requestPasswordChange = resolver()(
 )
 
 export const changePassword = resolver<User>()(
-  async ({ args: { password }, ctx, query, args: { token: tokenId } }) => {
+  async ({
+    args: { password },
+    ctx,
+    query,
+    knex,
+    args: { token: tokenId },
+  }) => {
     if (!ctx.id && !tokenId)
       throw new UserInputError('must be logged in or provide token')
     if (password.length < 8) throw new UserInputError('invalid password')
@@ -481,22 +496,35 @@ export const changePassword = resolver<User>()(
         .asUser(system)
     }
 
-    const signin = await query
-      .raw(SigninUpframe)
-      .where({ user_id: token?.subject ?? ctx.id })
-      .first()
+    const email =
+      ctx.user.email ??
+      (token &&
+        (
+          await knex('users')
+            .select('email')
+            .where({ id: token.subject })
+            .first()
+        ).email)
+
+    const signin =
+      email &&
+      (await query
+        .raw(SigninUpframe)
+        .findById(email)
+        .asUser(system))
 
     if (signin)
       await query
         .raw(SigninUpframe)
-        .where({ user_id: token?.subject ?? ctx.id })
+        .findById(email)
         .patch({ password: hashPassword(password) })
-    else {
-      const { id, email } = await query().findById(token?.subject ?? ctx.id)
-      await query
-        .raw(SigninUpframe)
-        .insert({ email, password: hashPassword(password), user_id: id })
-    }
+        .asUser(system)
+    else
+      await query.raw(SigninUpframe).insert({
+        email,
+        password: hashPassword(password),
+        user_id: token.subject,
+      })
 
     const user = await query()
       .findById(token?.subject ?? ctx.id)

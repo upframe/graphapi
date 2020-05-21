@@ -1,4 +1,3 @@
-import knex from '../../db'
 import * as obj from '../../utils/object'
 import { User, UserHandles, UserTags, Tags } from '../../models'
 import _ from 'lodash'
@@ -8,7 +7,8 @@ import { UserInputError } from 'apollo-server-lambda'
 
 const updateSocial = async (
   user: AuthUser,
-  social: { platform: number; handle: string }[]
+  social: { platform: number; handle: string }[],
+  knex: ResolverCtx['knex']
 ) => {
   const [added, removed] = _.partition(social ?? [], ({ handle }) => handle)
   await Promise.all([
@@ -83,9 +83,9 @@ const updateTags = async (
 }
 
 export const updateProfile = resolver<User>()(
-  async ({ args: { input }, ctx: { user }, query }) => {
+  async ({ args: { input }, ctx: { user }, query, knex }) => {
     await Promise.all([
-      updateSocial(user, input.social),
+      updateSocial(user, input.social, knex),
       updateTags(user, input.tags),
     ])
 

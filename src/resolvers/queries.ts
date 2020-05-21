@@ -8,7 +8,6 @@ import {
   ConnectGoogle,
 } from '../models'
 import { handleError, UserInputError } from '../error'
-import knex from '../db'
 import resolver from './resolver'
 import { system } from '../authorization/user'
 import { searchUsers, searchTags } from '../search'
@@ -24,13 +23,13 @@ export const me = resolver<User>().loggedIn(
   async ({ query, ctx: { id } }) => await query().findById(id)
 )
 
-export const mentors = resolver<User>()(
-  async ({ query }) =>
+export const mentors = resolver<User>()(async ({ query, knex }) =>
+  (
     await query({ join: true, include: 'mentors' })
-      .select(knex.raw('mentors.score + RANDOM() as rank'))
+      .select(knex.raw('LEAST(mentors.score, 1) as rank'))
       .whereIn('role', ['mentor', 'admin'])
       .andWhere({ listed: true })
-      .orderBy('rank', 'DESC')
+  ).sort((a: any, b: any) => b.rank + Math.random() - (a.rank + Math.random()))
 )
 
 export const user = resolver<User>()(
@@ -55,7 +54,7 @@ export const users = resolver<User[]>()(
 )
 
 export const calendarConnectUrl = resolver<string>().loggedIn(
-  async ({ args: { redirect }, ctx: { id }, query }) => {
+  async ({ args: { redirect }, ctx: { id }, query, knex }) => {
     const googleConnect = await query
       .raw(ConnectGoogle)
       .where({ user_id: id })
@@ -63,7 +62,7 @@ export const calendarConnectUrl = resolver<string>().loggedIn(
     if (!googleConnect)
       return requestScopes(redirect)([...scopes.SIGNIN, ...scopes.CALENDAR])
     if (googleConnect.calendar_id) return null
-    const client = await userClient(googleConnect)
+    const client = await userClient(knex, googleConnect)
     const info = await client.userInfo()
     return requestScopes(redirect)('CALENDAR', { login_hint: info.email }, true)
   }
@@ -105,15 +104,21 @@ export const tags = resolver<Tags>()(async ({ query, args: { orderBy } }) => {
 
 export const lists = resolver<List>()(async ({ query }) => await query())
 
-export const list = resolver<List>()(
-  async ({ query, args: { name } }) =>
-    await query({ join: true, include: 'users.mentors' })
-      .where({ 'lists.name': name })
-      .andWhere(function() {
-        this.where({ listed: true }).orWhereNull('listed')
-      })
-      .first()
-)
+export const list = resolver<List>()(async ({ query, args: { name } }) => {
+  const res = await query({ join: true, include: 'users.mentors' })
+    .where({ 'lists.name': name })
+    .andWhere(function() {
+      this.where({ listed: true }).orWhereNull('listed')
+    })
+    .first()
+  res.users = res.users.sort(
+    (a, b) =>
+      Math.min(b.mentors?.score ?? 0, 1) +
+      Math.random() -
+      (Math.min(a.mentors?.score ?? 0, 1) + Math.random())
+  )
+  return res
+})
 
 export const isTokenValid = resolver<boolean>()(
   async ({ args: { token: tokenId }, ctx: { id }, query }) => {
@@ -129,6 +134,7 @@ export const search = resolver<any>()(
   async ({
     args: { term, maxUsers, maxTags, withTags = [], withTagNames = [] },
     query,
+    knex,
     fields,
   }) => {
     if (withTagNames?.length)
@@ -147,8 +153,8 @@ export const search = resolver<any>()(
       ]
 
     let [users, tags] = await Promise.all([
-      'users' in fields ? searchUsers(term, maxUsers, withTags) : null,
-      'tags' in fields ? searchTags(term, maxTags, withTags) : null,
+      'users' in fields ? searchUsers(term, maxUsers, withTags, knex) : null,
+      'tags' in fields ? searchTags(term, maxTags, withTags, knex) : null,
     ])
 
     if (
@@ -222,5 +228,5 @@ export const signUpInfo = resolver<any>()(
 )
 
 export const checkValidity = resolver<any>()(
-  async ({ args }) => await validate.batch(args)
+  async ({ args, knex }) => await validate.batch(args, knex)
 )

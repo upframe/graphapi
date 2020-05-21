@@ -6,6 +6,8 @@ export class List extends Model {
 
   id!: number
   name!: string
+
+  users?: import('./user').User[]
 }
 
 import('./user').then(

@@ -1,7 +1,6 @@
 import { google, oauth2_v2, calendar_v3 } from 'googleapis'
 import { OAuth2Client } from 'google-auth-library/build/src/auth/oauth2client'
 import { ConnectGoogle } from './models'
-import knex from './db'
 import { GoogleNotConnectedError } from './error'
 import logger from './logger'
 import { filterKeys } from './utils/object'
@@ -68,7 +67,7 @@ export class UserClient {
 
   public client: OAuth2Client
 
-  constructor(userId: string, tokens?: Tokens) {
+  constructor(knex: ResolverCtx['knex'], userId: string, tokens?: Tokens) {
     if (!userId) throw new Error('must provide user id to get client')
     this.user_id = userId
     this.client = createClient()
@@ -105,7 +104,7 @@ export class UserClient {
     )
   }
 
-  public async setAccessToken(access_token) {
+  public async setAccessToken(knex: ResolverCtx['knex'], access_token) {
     console.log('set new access token')
     this.client.setCredentials({ access_token })
     await knex('connect_google')
@@ -122,10 +121,13 @@ export class UserClient {
   }
 }
 
-export const userClient = async (info: Partial<ConnectGoogle>) => {
+export const userClient = async (
+  knex: ResolverCtx['knex'],
+  info: Partial<ConnectGoogle>
+) => {
   return (
     userClients.user_id ??
-    (await new UserClient(info.user_id, info as Tokens).ready)
+    (await new UserClient(knex, info.user_id, info as Tokens).ready)
   )
 }
 

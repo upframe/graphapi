@@ -9,7 +9,7 @@ import logger from '../../logger'
 import { system } from '../../authorization/user'
 
 export const connectCalendar = resolver<User>().loggedIn(
-  async ({ query, ctx: { id }, args: { code, redirect } }) => {
+  async ({ query, knex, ctx: { id }, args: { code, redirect } }) => {
     const googleConnect = await query
       .raw(ConnectGoogle)
       .where({
@@ -20,12 +20,15 @@ export const connectCalendar = resolver<User>().loggedIn(
     let client: UserClient
 
     if (!googleConnect)
-      client = await userClient(await account.connectGoogle(code, redirect, id))
+      client = await userClient(
+        knex,
+        await account.connectGoogle(code, redirect, id, knex)
+      )
     else {
       const tokens = await getTokens(code, redirect)
 
       // check that the same account as the sign in account is used
-      client = await userClient(googleConnect)
+      client = await userClient(knex, googleConnect)
       const info = await client.userInfo()
       let newMail = tokens.id_token
         ? (decode(tokens.id_token) as any).email
@@ -43,7 +46,7 @@ export const connectCalendar = resolver<User>().loggedIn(
         }
         if (newMail && info.email !== newMail) throw Error()
 
-        await client.setAccessToken(tokens.access_token)
+        await client.setAccessToken(knex, tokens.access_token)
       } catch (e) {
         throw new UserInputError(
           `Please use your currently connected Google account (${info.email}).`
@@ -68,13 +71,13 @@ export const connectCalendar = resolver<User>().loggedIn(
 )
 
 export const disconnectCalendar = resolver<User>().loggedIn(
-  async ({ query, ctx: { id } }) => {
+  async ({ query, knex, ctx: { id } }) => {
     const user = await query({ include: 'connect_google' }).findById(id)
 
     if (!user?.connect_google?.calendar_id)
       throw new UserInputError('calendar not connected')
 
-    const client = await userClient(user.connect_google)
+    const client = await userClient(knex, user.connect_google)
 
     await Promise.all([
       client.calendar.calendars
