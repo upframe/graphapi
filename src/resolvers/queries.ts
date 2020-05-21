@@ -23,13 +23,13 @@ export const me = resolver<User>().loggedIn(
   async ({ query, ctx: { id } }) => await query().findById(id)
 )
 
-export const mentors = resolver<User>()(
-  async ({ query, knex }) =>
+export const mentors = resolver<User>()(async ({ query, knex }) =>
+  (
     await query({ join: true, include: 'mentors' })
-      .select(knex.raw('mentors.score + RANDOM() as rank'))
+      .select(knex.raw('LEAST(mentors.score, 1) as rank'))
       .whereIn('role', ['mentor', 'admin'])
       .andWhere({ listed: true })
-      .orderBy('rank', 'DESC')
+  ).sort((a: any, b: any) => b.rank + Math.random() - (a.rank + Math.random()))
 )
 
 export const user = resolver<User>()(
@@ -104,15 +104,21 @@ export const tags = resolver<Tags>()(async ({ query, args: { orderBy } }) => {
 
 export const lists = resolver<List>()(async ({ query }) => await query())
 
-export const list = resolver<List>()(
-  async ({ query, args: { name } }) =>
-    await query({ join: true, include: 'users.mentors' })
-      .where({ 'lists.name': name })
-      .andWhere(function() {
-        this.where({ listed: true }).orWhereNull('listed')
-      })
-      .first()
-)
+export const list = resolver<List>()(async ({ query, args: { name } }) => {
+  const res = await query({ join: true, include: 'users.mentors' })
+    .where({ 'lists.name': name })
+    .andWhere(function() {
+      this.where({ listed: true }).orWhereNull('listed')
+    })
+    .first()
+  res.users = res.users.sort(
+    (a, b) =>
+      Math.min(b.mentors?.score ?? 0, 1) +
+      Math.random() -
+      (Math.min(a.mentors?.score ?? 0, 1) + Math.random())
+  )
+  return res
+})
 
 export const isTokenValid = resolver<boolean>()(
   async ({ args: { token: tokenId }, ctx: { id }, query }) => {

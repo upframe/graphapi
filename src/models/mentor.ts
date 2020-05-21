@@ -9,6 +9,7 @@ export class Mentor extends Model {
   company: string
   headline: string
   slot_reminder_email: string
+  score: number
 
   time_slots?: Slots[]
 

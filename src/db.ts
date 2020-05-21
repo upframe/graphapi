@@ -16,8 +16,6 @@ const conn_proxy = {
 
 const connection = process.env.IS_OFFLINE ? conn_db : conn_proxy
 
-export const foo = 'bar'
-
 export default () =>
   knex({
     client: 'pg',
