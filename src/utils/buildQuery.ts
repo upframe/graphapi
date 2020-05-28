@@ -40,7 +40,6 @@ set(User)
   .add(
     Mentor,
     'company',
-    'headline',
     'slots',
     'notificationPrefs',
     'visibility',

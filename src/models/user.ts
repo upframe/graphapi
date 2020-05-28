@@ -25,6 +25,7 @@ export class User extends Model {
   biography: string
   allow_emails: boolean
   searchable: boolean
+  headline: string
 
   mentors?: Mentor
   socialmedia?: SocialMedia[]

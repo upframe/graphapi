@@ -257,6 +257,7 @@ export const completeSignup = resolver<User>()(
       biography,
       location,
       allow_emails: true,
+      headline,
     }
 
     if (signup.email) user.email = signup.email
@@ -277,8 +278,13 @@ export const completeSignup = resolver<User>()(
 
     const validStatus = await validate.batch(
       {
-        ...filterKeys(user, ['name', 'handle', 'biography', 'location']),
-        ...(role !== 'user' && { headline }),
+        ...filterKeys(user, [
+          'name',
+          'handle',
+          'biography',
+          'location',
+          'headline',
+        ]),
       },
       knex
     )
@@ -292,7 +298,6 @@ export const completeSignup = resolver<User>()(
       const mentor = {
         id: user.id,
         listed: false,
-        headline,
       }
       await query
         .raw(Mentor)

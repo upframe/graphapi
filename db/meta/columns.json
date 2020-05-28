@@ -10,7 +10,15 @@
     ]
   },
   "invites": {
-    "columns": ["id", "issuer", "email", "role", "redeemed", "issued"]
+    "columns": [
+      "id",
+      "issuer",
+      "email",
+      "role",
+      "redeemed",
+      "issued",
+      "email_id"
+    ]
   },
   "lists": {
     "columns": ["id", "name"]
@@ -69,7 +77,8 @@
       "website",
       "role",
       "name_normalized",
-      "searchable"
+      "searchable",
+      "headline"
     ]
   },
   "user_handles": {
