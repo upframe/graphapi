@@ -3,6 +3,7 @@ interface Person {
   handle: String
   name: String!
   email: String
+  headline: String
   location: String
   profilePictures: [ProfilePicture]
   social(includeEmpty: Boolean = false): [SocialHandle!]
@@ -22,6 +23,7 @@ type User implements Person {
   handle: String
   name: String!
   email: String
+  headline: String
   location: String
   profilePictures: [ProfilePicture]
   social(includeEmpty: Boolean = false): [SocialHandle!]
