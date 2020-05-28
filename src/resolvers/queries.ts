@@ -36,7 +36,13 @@ export const user = resolver<User>()(
   async ({ query, args: { id, handle } }) => {
     if (!id && !handle) throw new UserInputError('must provide handle or id')
     const user = await query()
-      .where(id ? { 'users.id': id } : { handle })
+      .where(
+        ...((id ? ['users.id', '=', id] : ['handle', 'ilike', handle]) as [
+          string,
+          string,
+          string
+        ])
+      )
       .first()
     if (!user) throw handleError(`can't find user ${handle ?? id}`)
     return user
