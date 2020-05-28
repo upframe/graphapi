@@ -1,5 +1,6 @@
 import { User, Slots, Meetup } from './models'
 import { UserClient, userClient, calendar, upframeClient } from './google'
+import logger from './logger'
 
 export async function addMeetup(
   slot: Slots,
@@ -21,7 +22,7 @@ export async function addMeetup(
     }</a>
     <b>Mentee</b>: ${
       mentee.handle
-        ? `<a href="https://upframe.io/${mentee.handle}">${mentor.name}</a>`
+        ? `<a href="https://upframe.io/${mentee.handle}">${mentee.name}</a>`
         : mentee.name
     }
 
@@ -50,16 +51,21 @@ export async function addMeetup(
 
   let gcal_user_event_id: string
 
-  if (mentor.connect_google?.calendar_id) {
-    const { data } = await (
-      await userClient(knex, mentor.connect_google)
-    ).calendar.events.patch({
-      calendarId: mentor.connect_google?.calendar_id,
-      eventId: event.id,
-      requestBody: event,
-    })
-    gcal_user_event_id = data.id
-    delete event.attendees
+  try {
+    if (mentor.connect_google?.calendar_id) {
+      const { data } = await (
+        await userClient(knex, mentor.connect_google)
+      ).calendar.events.patch({
+        calendarId: mentor.connect_google?.calendar_id,
+        eventId: event.id,
+        requestBody: event,
+      })
+      gcal_user_event_id = data.id
+      delete event.attendees
+    }
+  } catch (error) {
+    logger.error("couldn't create meetup in mentor's calendar", { error, slot })
+    event.attendees.push({ email: mentor.email, displayName: mentor.name })
   }
 
   const { data } = await calendar(upframeClient).events.insert({

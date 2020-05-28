@@ -204,16 +204,11 @@ export const acceptMeetup = resolver<any>().loggedIn(
     const mentee = parts.find(({ id }) => id === slot.meetups.mentee_id)
 
     if (!slot.meetups.gcal_upframe_event_id)
-      try {
-        await query
-          .raw(Meetup)
-          .findById(slot.id)
-          .patch(await addMeetup(slot, mentor, mentee, knex))
-          .asUser(system)
-      } catch (e) {
-        console.log(e)
-        throw e
-      }
+      await query
+        .raw(Meetup)
+        .findById(slot.id)
+        .patch(await addMeetup(slot, mentor, mentee, knex))
+        .asUser(system)
 
     await send({ template: 'SLOT_CONFIRM', ctx: { slot: slot.id } })
     logger.info('meetup accepted', {
