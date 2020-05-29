@@ -3,8 +3,10 @@ import { datadog } from 'datadog-lambda-js'
 import logger from './logger'
 import { handler as apolloHandler, requests } from './apollo'
 import dbConnect from './db'
+import { APIGatewayEvent, Context } from 'aws-lambda'
+import { dynamodb, gateway } from './utils/aws'
 
-const handler = async (event, context) => {
+const handler = async (event: APIGatewayEvent, context: Context) => {
   context.callbackWaitsForEmptyEventLoop = false
   requests[context.awsRequestId] = { responseHeaders: {} }
 
@@ -55,3 +57,49 @@ export const graphapi = datadog(
         logger,
       }
 )
+
+export const wsConnect = async (event: APIGatewayEvent) => {
+  console.log('\n\n\n== WSCONNECT ==\n')
+  console.log(event.requestContext.eventType)
+  if (event.requestContext.eventType === 'CONNECT') {
+    console.log('connect')
+    try {
+      await dynamodb
+        .put({
+          TableName: 'messaging',
+          Item: {
+            pk: `CHANNEL|${'GLOBAL'}`,
+            sk: `CONNECTION|${event.requestContext.connectionId}`,
+          },
+        })
+        .promise()
+    } catch (e) {
+      console.error(e)
+      throw e
+    }
+    try {
+      await gateway
+        .postToConnection({
+          ConnectionId: event.requestContext.connectionId,
+          Data: 'hello',
+        })
+        .promise()
+    } catch (e) {
+      console.error(e)
+      throw e
+    }
+  } else if (event.requestContext.eventType === 'DISCONNECT') {
+    console.log('disconnect')
+    console.log(event.requestContext)
+    await dynamodb
+      .delete({
+        TableName: 'messaging',
+        Key: {
+          pk: 'CHANNEL|GLOBAL',
+          sk: `CONNECTION|${event.requestContext.connectionId}`,
+        },
+      })
+      .promise()
+  }
+  return { statusCode: 200 }
+}

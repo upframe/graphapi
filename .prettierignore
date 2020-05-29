@@ -1,4 +1,5 @@
 node_modules
 .webpack
 .serverless
+.dynamodb
 db/seeds/data

@@ -13,3 +13,15 @@ export const sns = new AWS.SNS({
   }),
   region: 'eu-west-1',
 })
+
+export const dynamodb = new AWS.DynamoDB.DocumentClient({
+  region: 'localhost',
+  endpoint: 'http://localhost:8000',
+  accessKeyId: process.env.AWS_KEY_ID,
+  secretAccessKey: process.env.AWS_KEY_SECRET,
+})
+
+export const gateway = new AWS.ApiGatewayManagementApi({
+  apiVersion: '2018-11-29',
+  endpoint: 'http://localhost:3001',
+})

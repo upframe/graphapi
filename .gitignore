@@ -1,6 +1,7 @@
 node_modules
 .webpack
 .serverless
+.dynamodb
 .env*
 *.key
 .DS_STORE

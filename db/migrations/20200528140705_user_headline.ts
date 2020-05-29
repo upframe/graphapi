@@ -5,14 +5,21 @@ export async function up(knex: Knex): Promise<any> {
     t.text('headline')
   })
 
-  const headlines = await knex('mentors').select('id', 'headline')
+  const headlines = await knex('mentors')
+    .select('id', 'headline')
+    .whereNot('headline', null)
 
   await Promise.all(
-    headlines.map(({ id, headline }) =>
-      knex.schema.raw(
-        `UPDATE users SET headline = '${headline}' WHERE id = '${id}'`
+    headlines
+      .filter(({ headline }) => headline)
+      .map(({ id, headline }) =>
+        knex.schema.raw(
+          `UPDATE users SET headline = '${headline.replace(
+            /'/g,
+            "''"
+          )}' WHERE id = '${id}'`
+        )
       )
-    )
   )
 }
 

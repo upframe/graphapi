@@ -44,6 +44,8 @@ functions:
               - https://beta.upframe.io
               - https://upframe.io
             allowCredentials: true
+      - websocket:
+          route: $default
 
     environment:
       stage: ${self:provider.stage}
@@ -76,10 +78,19 @@ functions:
       DD_LOGS_INJECTION: ${file(./sls.conf.js):DD_LOG_INJECT}
       DD_ENV: ${file(./sls.conf.js):DD_ENV}
 
+  wsConnect:
+    handler: src/handler.wsConnect
+    events:
+      - websocket:
+          route: $connect
+      - websocket:
+          route: $disconnect
+
 plugins:
   - serverless-webpack
   - serverless-offline
   - serverless-domain-manager
+  - serverless-dynamodb-local
 
 custom:
   serverless-offline:
@@ -101,3 +112,28 @@ custom:
   serverless-offline-sns:
     port: 4002
     debug: true
+  dynamodb:
+    stages:
+      - ${self:provider.stage}
+    start:
+      migrate: true
+
+resources:
+  Resources:
+    usersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: messaging
+        AttributeDefinitions:
+          - AttributeName: pk
+            AttributeType: S
+          - AttributeName: sk
+            AttributeType: S
+        KeySchema:
+          - AttributeName: pk
+            KeyType: HASH
+          - AttributeName: sk
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
