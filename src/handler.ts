@@ -5,12 +5,30 @@ import { handler as apolloHandler, requests } from './apollo'
 import dbConnect from './db'
 import { APIGatewayEvent, Context } from 'aws-lambda'
 import { dynamodb, gateway } from './utils/aws'
+import uuidv4 from 'uuid/v4'
 
 const handler = async (event: APIGatewayEvent, context: Context) => {
   context.callbackWaitsForEmptyEventLoop = false
   requests[context.awsRequestId] = { responseHeaders: {} }
 
   logger.setRequestId(context.awsRequestId)
+
+  const body = JSON.parse(event.body)
+  if (body.type === 'connection_init') {
+    console.log('\n\n== CONNECTION INIT==\n')
+    console.log(event)
+    await gateway
+      .postToConnection({
+        ConnectionId: event.requestContext.connectionId,
+        Data: JSON.stringify({
+          id: uuidv4(),
+          type: 'connection_ack',
+          payload: {},
+        }),
+      })
+      .promise()
+    return { statusCode: 200 }
+  }
 
   const { Model } = await import('./models')
   const knex = dbConnect()
@@ -59,10 +77,8 @@ export const graphapi = datadog(
 )
 
 export const wsConnect = async (event: APIGatewayEvent) => {
-  console.log('\n\n\n== WSCONNECT ==\n')
-  console.log(event.requestContext.eventType)
+  console.log(`\n\n\n== WSCONNECT ${event.requestContext.eventType} ==\n\n`)
   if (event.requestContext.eventType === 'CONNECT') {
-    console.log('connect')
     try {
       await dynamodb
         .put({
@@ -77,20 +93,7 @@ export const wsConnect = async (event: APIGatewayEvent) => {
       console.error(e)
       throw e
     }
-    try {
-      await gateway
-        .postToConnection({
-          ConnectionId: event.requestContext.connectionId,
-          Data: 'hello',
-        })
-        .promise()
-    } catch (e) {
-      console.error(e)
-      throw e
-    }
   } else if (event.requestContext.eventType === 'DISCONNECT') {
-    console.log('disconnect')
-    console.log(event.requestContext)
     await dynamodb
       .delete({
         TableName: 'messaging',

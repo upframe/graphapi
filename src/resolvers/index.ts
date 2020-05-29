@@ -1,5 +1,6 @@
 import * as Query from './queries'
 import * as Mutation from './mutations'
+import * as Subscription from './subscriptions'
 import * as Person from './fields/person'
 import * as Mentor from './fields/mentor'
 import * as Meetup from './fields/meetup'
@@ -11,6 +12,7 @@ import * as MentorNotificationPreferences from './fields/mentorNotificationPrefe
 export default {
   Query,
   Mutation,
+  Subscription,
   Person,
   Mentor,
   Meetup,

@@ -7,14 +7,14 @@ import {
 import resolvers from './resolvers'
 import { parseCookies } from './utils/cookie'
 import { authenticate } from './auth'
-import typeDefs from './schema'
+import * as typeDefs from './schema'
 import { ValidationError } from 'objection'
 import logger from './logger'
 
 export const requests = {}
 
 const schema = makeExecutableSchema({
-  typeDefs,
+  typeDefs: Object.values(typeDefs),
   resolvers,
   inheritResolversFromInterfaces: true,
 })

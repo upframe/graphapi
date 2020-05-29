@@ -202,3 +202,8 @@ type Google {
   email: String
   canDisconnect: Boolean
 }
+
+type Message {
+  author: ID
+  content: String
+}

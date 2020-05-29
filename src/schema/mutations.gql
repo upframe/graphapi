@@ -1,3 +1,62 @@
+type Mutation {
+  signIn(input: LoginInput!): Person
+  signInGoogle(code: ID!, redirect: String!): Person
+  signOut: Int
+
+  signUpPassword(token: ID!, email: String!, password: String!): SignUpInfo
+  signUpGoogle(token: ID!, code: ID!, redirect: String!): SignUpInfo
+  completeSignup(
+    token: ID!
+    name: String!
+    handle: String!
+    biography: String!
+    location: String
+    headline: String
+    photo: String
+    tags: [String]
+  ): Person
+
+  connectGoogle(code: ID!, redirect: String!): Person
+  disconnectGoogle: Person
+
+  deleteAccount(handle: String!): Int
+  requestEmailChange(email: String!): Int
+  changeEmail(token: String!): Person
+  requestPasswordChange(email: String!): Int
+  changePassword(password: String!, token: String): Person
+  setUserRole(userId: ID!, role: Role!): Person
+
+  updateProfile(input: ProfileInput!): Person
+  setProfileVisibility(visibility: Visibility!): Person
+  setProfileSearchability(searchable: Boolean!): Person
+  updateNotificationPreferences(input: NotificationSettingsInput!): Person
+  uploadProfilePicture(file: Upload!): Person
+  removeProfilePicture: Person
+
+  updateSlots(slots: SlotUpdateInput!): Person
+  messageExt(input: MsgExtInput!): Int
+  requestSlot(input: RequestSlotInput!): Int
+
+  acceptMeetup(meetupId: ID!): Meetup
+  cancelMeetup(meetupId: ID!): Int
+
+  connectCalendar(code: ID!, redirect: String!): Person
+  disconnectCalendar: Person
+
+  createList(name: String!): List
+  deleteList(listId: Int!): Int
+  addToList(listId: Int!, userId: ID!): List
+  removeFromList(listId: Int!, userId: ID!): List
+
+  setTagName(id: Int!, name: String!): Tag
+  mergeTags(from: Int!, into: Int!): Tag
+  deleteTag(id: Int!): Int
+
+  invite(emails: [String!]!, role: Role = USER): Person
+
+  sendMessage(content: String): Int
+}
+
 input LoginInput {
   email: String!
   password: String!
@@ -59,61 +118,4 @@ input RequestSlotInput {
   message: String!
   name: String
   email: String
-}
-
-type Mutation {
-  signIn(input: LoginInput!): Person
-  signInGoogle(code: ID!, redirect: String!): Person
-  signOut: Int
-
-  signUpPassword(token: ID!, email: String!, password: String!): SignUpInfo
-  signUpGoogle(token: ID!, code: ID!, redirect: String!): SignUpInfo
-  completeSignup(
-    token: ID!
-    name: String!
-    handle: String!
-    biography: String!
-    location: String
-    headline: String
-    photo: String
-    tags: [String]
-  ): Person
-
-  connectGoogle(code: ID!, redirect: String!): Person
-  disconnectGoogle: Person
-
-  deleteAccount(handle: String!): Int
-  requestEmailChange(email: String!): Int
-  changeEmail(token: String!): Person
-  requestPasswordChange(email: String!): Int
-  changePassword(password: String!, token: String): Person
-  setUserRole(userId: ID!, role: Role!): Person
-
-  updateProfile(input: ProfileInput!): Person
-  setProfileVisibility(visibility: Visibility!): Person
-  setProfileSearchability(searchable: Boolean!): Person
-  updateNotificationPreferences(input: NotificationSettingsInput!): Person
-  uploadProfilePicture(file: Upload!): Person
-  removeProfilePicture: Person
-
-  updateSlots(slots: SlotUpdateInput!): Person
-  messageExt(input: MsgExtInput!): Int
-  requestSlot(input: RequestSlotInput!): Int
-
-  acceptMeetup(meetupId: ID!): Meetup
-  cancelMeetup(meetupId: ID!): Int
-
-  connectCalendar(code: ID!, redirect: String!): Person
-  disconnectCalendar: Person
-
-  createList(name: String!): List
-  deleteList(listId: Int!): Int
-  addToList(listId: Int!, userId: ID!): List
-  removeFromList(listId: Int!, userId: ID!): List
-
-  setTagName(id: Int!, name: String!): Tag
-  mergeTags(from: Int!, into: Int!): Tag
-  deleteTag(id: Int!): Int
-
-  invite(emails: [String!]!, role: Role = USER): Person
 }

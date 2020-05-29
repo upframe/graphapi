@@ -1,6 +1,5 @@
-import schema from './schema.gql'
-import types from './types.gql'
-import queries from './queries.gql'
-import mutations from './mutations.gql'
-
-export default [schema, types, queries, mutations]
+export { default as schema } from './schema.gql'
+export { default as types } from './types.gql'
+export { default as queries } from './queries.gql'
+export { default as mutations } from './mutations.gql'
+export { default as subscriptions } from './subscriptions.gql'
