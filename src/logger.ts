@@ -71,18 +71,55 @@ const printObject = (obj: unknown, indent = 0) => {
       ([k, v]) =>
         `${' '.repeat(indent + 2)}${chalk.blueBright(k)}: ${
           typeof v === 'string'
-            ? printString(v, indent + 4)
+            ? k === 'query'
+              ? formatGQL(v, indent + 4)
+              : printString(v, indent + 4)
             : printObject(v, indent + 2)
         }`
     )
     .join('\n')}\n${' '.repeat(indent)}}`
 }
 
-const printString = (v: string, indent = 0) =>
-  chalk.green(
-    `'${v
-      .replace(/^\n*|\n*$/gs, '')
-      .split('\n')
-      .map((line, i) => (i ? ' '.repeat(indent) + line : line))
-      .join('\n')}'`
+const printString = (v: string, indent = 0): string =>
+  chalk.green(`'${indentString(v, indent)}'`)
+
+const indentString = (v: string, indent: number, exclude = 1): string =>
+  v
+    .replace(/^\n*|\n*$/gs, '')
+    .split('\n')
+    .map((line, i) => (i >= exclude ? ' '.repeat(indent) + line : line))
+    .join('\n')
+
+const formatGQL = (v: string, indent = 0): string => {
+  const maxLength = Math.max(...v.split('\n').map(l => l.length))
+  v = v
+    .split('\n')
+    .map(l => l + ' '.repeat(maxLength - l.length + 1))
+    .join('\n')
+  return (
+    '\n' +
+    chalk.hex('#29b973')(
+      indentString(v, indent, 0)
+        .replace(
+          /(?<=fragment\s)(\w+)\son\s(\w+)/g,
+          chalk.hex('#38bdc1')('$1') +
+            chalk.hex('#2a7ed3')(' on ') +
+            chalk.hex('#f9e922')('$2')
+        )
+        .replace(
+          /(query|mutation|subscription|fragment)\s(\w+)/,
+          '$1 ' + chalk.hex('#38bdc1')('$2')
+        )
+        .replace(
+          /(query|mutation|subscription|fragment)(?=\s)/g,
+          chalk.hex('#2a7ed3')('$1')
+        )
+        .replace(/(?<=(?:\(|,\s*))(\w+):/g, chalk.hex('#f77466')('$1') + ':')
+        .replace(/(:\s*)(true|false)/g, '$1' + chalk.hex('#d47509')('$2'))
+        .replace(/(:\s*)("[^"]*")/g, '$1' + chalk.hex('#d64292')('$2'))
+        .replace(/(\$\w+)/g, chalk.hex('#d64292')('$1'))
+        .replace(/(:\s*)(\d+)/g, '$1' + chalk.hex('#2882f9')('$2'))
+        .replace(/([{}().,:])/g, chalk.hex('#bbb')('$1'))
+    )
   )
+}
