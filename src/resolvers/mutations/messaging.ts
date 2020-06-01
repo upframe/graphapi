@@ -4,6 +4,7 @@ import { send } from '../../email'
 import resolver from '../resolver'
 import { system } from '../../authorization/user'
 import uuidv4 from 'uuid/v4'
+import logger from '../../logger'
 
 export const messageExt = resolver()(
   async ({ query, args: { input }, ctx: { id } }) => {
@@ -44,6 +45,12 @@ export const messageExt = resolver()(
     await send({
       template: 'MESSAGE',
       ctx: { sender: sender.id, receiver: receiver.id, message: input.message },
+    })
+
+    logger.info('email message sent', {
+      from: sender.id,
+      receiver: receiver.id,
+      input,
     })
   }
 )
