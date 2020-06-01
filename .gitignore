@@ -12,3 +12,4 @@ Dockerfile
 db/seeds/data
 report.*
 /*.txt
+tmp

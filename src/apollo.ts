@@ -13,7 +13,7 @@ import logger from './logger'
 
 export const requests = {}
 
-const schema = makeExecutableSchema({
+export const schema = makeExecutableSchema({
   typeDefs: Object.values(typeDefs),
   resolvers,
   inheritResolversFromInterfaces: true,

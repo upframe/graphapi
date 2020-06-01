@@ -1,8 +1,8 @@
 import { createLogger, format, transports } from 'winston'
 
-let chalk: import('chalk').Chalk
+let ch: import('chalk').Chalk
 if (process.env.IS_OFFLINE) {
-  chalk = require('chalk')
+  ch = require('chalk')
 }
 
 let requestId: string
@@ -69,7 +69,7 @@ const printObject = (obj: unknown, indent = 0) => {
   return `{\n${Object.entries(obj)
     .map(
       ([k, v]) =>
-        `${' '.repeat(indent + 2)}${chalk.blueBright(k)}: ${
+        `${' '.repeat(indent + 2)}${ch.blueBright(k)}: ${
           typeof v === 'string'
             ? k === 'query'
               ? formatGQL(v, indent + 4)
@@ -81,7 +81,7 @@ const printObject = (obj: unknown, indent = 0) => {
 }
 
 const printString = (v: string, indent = 0): string =>
-  chalk.green(`'${indentString(v, indent)}'`)
+  ch.green(`'${indentString(v, indent)}'`)
 
 const indentString = (v: string, indent: number, exclude = 1): string =>
   v
@@ -98,28 +98,27 @@ const formatGQL = (v: string, indent = 0): string => {
     .join('\n')
   return (
     '\n' +
-    chalk.hex('#29b973')(
+    ch.hex('#29b973')(
       indentString(v, indent, 0)
+        .replace(/(?<=\$\w+:\s*)(\w+)/g, ch.hex('#f9e922')('$1'))
         .replace(
-          /(?<=fragment\s)(\w+)\son\s(\w+)/g,
-          chalk.hex('#38bdc1')('$1') +
-            chalk.hex('#2a7ed3')(' on ') +
-            chalk.hex('#f9e922')('$2')
+          /(fragment\s+)(\w+)(\s+on\s+)(\w+)/g,
+          ch.hex('#2a7ed3')('$1') +
+            ch.hex('#38bdc1')('$2') +
+            ch.hex('#2a7ed3')('$3') +
+            ch.hex('#f9e922')('$4')
         )
         .replace(
           /(query|mutation|subscription|fragment)\s(\w+)/,
-          '$1 ' + chalk.hex('#38bdc1')('$2')
+          ch.hex('#2a7ed3')('$1 ') + ch.hex('#38bdc1')('$2')
         )
-        .replace(
-          /(query|mutation|subscription|fragment)(?=\s)/g,
-          chalk.hex('#2a7ed3')('$1')
-        )
-        .replace(/(?<=(?:\(|,\s*))(\w+):/g, chalk.hex('#f77466')('$1') + ':')
-        .replace(/(:\s*)(true|false)/g, '$1' + chalk.hex('#d47509')('$2'))
-        .replace(/(:\s*)("[^"]*")/g, '$1' + chalk.hex('#d64292')('$2'))
-        .replace(/(\$\w+)/g, chalk.hex('#d64292')('$1'))
-        .replace(/(:\s*)(\d+)/g, '$1' + chalk.hex('#2882f9')('$2'))
-        .replace(/([{}().,:])/g, chalk.hex('#bbb')('$1'))
+        .replace(/(?<=(?:\(|,\s*))(\w+):/g, ch.hex('#f77466')('$1') + ':')
+        .replace(/(:\s*)(true|false)/g, '$1' + ch.hex('#d47509')('$2'))
+        .replace(/(:\s*)("[^"]*")/g, '$1' + ch.hex('#d64292')('$2'))
+        .replace(/(\$\w+)/g, ch.hex('#d64292')('$1'))
+        .replace(/(:\s*)(\d+)/g, '$1' + ch.hex('#2882f9')('$2'))
+        .replace(/(?<=\.{3}\s*)(\w+)/g, ch.hex('#38bdc1')('$1'))
+        .replace(/([{}().,:])/g, ch.hex('#bbb')('$1'))
     )
   )
 }

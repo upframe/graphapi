@@ -44,8 +44,6 @@ functions:
               - https://beta.upframe.io
               - https://upframe.io
             allowCredentials: true
-      - websocket:
-          route: $default
 
     environment:
       stage: ${self:provider.stage}
@@ -85,6 +83,8 @@ functions:
           route: $connect
       - websocket:
           route: $disconnect
+      - websocket:
+          route: $default
 
 plugins:
   - serverless-webpack
