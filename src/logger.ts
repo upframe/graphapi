@@ -1,4 +1,4 @@
-import { createLogger, format, transports } from 'winston'
+import { createLogger, format as wsFormat, transports } from 'winston'
 
 let ch: import('chalk').Chalk
 if (process.env.IS_OFFLINE) {
@@ -18,16 +18,16 @@ export default Object.assign(
     transports: [
       new transports.Console({
         format: !process.env.IS_OFFLINE
-          ? format.combine(format.timestamp(), format.json())
-          : format.combine(
-              format(info =>
+          ? wsFormat.combine(wsFormat.timestamp(), wsFormat.json())
+          : wsFormat.combine(
+              wsFormat(info =>
                 block.some(exp => exp.test(info.message)) ? false : info
               )(),
-              format.colorize(),
-              format.timestamp({
+              wsFormat.colorize(),
+              wsFormat.timestamp({
                 format: 'HH:mm:ss',
               }),
-              format.printf(
+              wsFormat.printf(
                 ({ timestamp, level, message, extensions, opName }) => {
                   let msg = `${timestamp} ${level}: ${prettyPrint(message)}`
                   if (opName) msg += ` ${opName}`
@@ -59,29 +59,57 @@ const prettyPrint = (msg: unknown) => {
     console.log(msg.replace(/^\n+(.*)/gs, ''))
     msg = msg.replace(/^\n+/gs, '')
   }
-  if (typeof msg !== 'object' || Array.isArray(msg) || msg === null) return msg
-  return printObject(msg)
+  return typeof msg === 'object' ? format(msg) : msg
 }
 
-const printObject = (obj: unknown, indent = 0) => {
-  if (typeof obj !== 'object' || Array.isArray(obj) || obj === null) return obj
+const format = (v: unknown, indent = 0) => {
+  return typeof v === 'string'
+    ? formatString(v, indent)
+    : typeof v === 'number'
+    ? formatNumber(v, indent)
+    : Array.isArray(v)
+    ? formatArray(v, indent)
+    : typeof v === 'object' && v !== null
+    ? formatObject(v, indent)
+    : ' '.repeat(indent) + v
+}
+
+const formatObject = (obj: unknown, indent = 0) => {
   if (Object.keys(obj).length === 0) return '{}'
   return `{\n${Object.entries(obj)
     .map(
       ([k, v]) =>
         `${' '.repeat(indent + 2)}${ch.blueBright(k)}: ${
-          typeof v === 'string'
-            ? k === 'query'
-              ? formatGQL(v, indent + 4)
-              : printString(v, indent + 4)
-            : printObject(v, indent + 2)
+          k === 'query' && typeof v === 'string'
+            ? formatGQL(v, indent + 4)
+            : format(v, indent + 2)
         }`
     )
     .join('\n')}\n${' '.repeat(indent)}}`
 }
 
-const printString = (v: string, indent = 0): string =>
+const formatArray = (arr: unknown[], indent = 0) => {
+  const items = arr.map(item => format(item, 0))
+  let assembled: string
+  if (items.every(v => v.split('\n').length === 1))
+    assembled = `[${items.join(', ')}]`
+  else {
+    assembled = `[\n${items.join(',\n')}\n]`
+  }
+  return assembled
+    .split('\n')
+    .map(
+      (line, i, { length }) =>
+        ' '.repeat(i === 0 ? 0 : indent + (i === length - 1 ? 0 : 2)) + line
+    )
+    .join('\n')
+}
+
+const formatString = (v: string, indent = 0): string =>
   ch.green(`'${indentString(v, indent)}'`)
+
+const formatNumber = (v: number, indent = 0): string =>
+  ch.yellow(' '.repeat(indent) + v)
 
 const indentString = (v: string, indent: number, exclude = 1): string =>
   v
