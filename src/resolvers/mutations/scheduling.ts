@@ -191,7 +191,8 @@ export const acceptMeetup = resolver<any>().loggedIn(
       query
         .raw(User)
         .withGraphFetched('connect_google')
-        .whereIn('id', [slot.mentor_id, slot.meetups.mentee_id]),
+        .whereIn('id', [slot.mentor_id, slot.meetups.mentee_id])
+        .asUser(system),
       query
         .raw(Meetup)
         .findById(meetupId)

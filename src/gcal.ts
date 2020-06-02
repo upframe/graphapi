@@ -51,8 +51,9 @@ export async function addMeetup(
 
   let gcal_user_event_id: string
 
-  try {
-    if (mentor.connect_google?.calendar_id) {
+  let eventId: string
+  if (mentor.connect_google?.calendar_id) {
+    try {
       const { data } = await (
         await userClient(knex, mentor.connect_google)
       ).calendar.events.patch({
@@ -62,18 +63,27 @@ export async function addMeetup(
       })
       gcal_user_event_id = data.id
       delete event.attendees
+      eventId = data.id
+    } catch (error) {
+      logger.error("couldn't create meetup in mentor's calendar", {
+        error,
+        slot,
+      })
+      event.attendees.push({ email: mentor.email, displayName: mentor.name })
     }
-  } catch (error) {
-    logger.error("couldn't create meetup in mentor's calendar", { error, slot })
-    event.attendees.push({ email: mentor.email, displayName: mentor.name })
   }
 
-  const { data } = await calendar(upframeClient).events.insert({
-    calendarId: process.env.CALENDAR_ID,
-    requestBody: event,
-  })
+  try {
+    const { data } = await calendar(upframeClient).events.insert({
+      calendarId: process.env.CALENDAR_ID,
+      requestBody: event,
+    })
+    eventId = data.id
+  } catch (error) {
+    logger.error("couldn't create meetup in upframe calendar", { error, slot })
+  }
 
-  return { gcal_upframe_event_id: data.id, gcal_user_event_id }
+  return { gcal_upframe_event_id: eventId, gcal_user_event_id }
 }
 
 export async function deleteMeetup(slot: Slots, client: UserClient) {
