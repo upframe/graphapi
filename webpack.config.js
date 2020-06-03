@@ -2,6 +2,7 @@ const slsw = require('serverless-webpack')
 const nodeExternals = require('webpack-node-externals')
 const webpack = require('webpack')
 const fs = require('fs')
+const path = require('path')
 
 module.exports = {
   entry: slsw.lib.entries,
@@ -17,6 +18,9 @@ module.exports = {
   resolve: {
     mainFields: ['main', 'module'],
     extensions: ['.ts', '.js'],
+    alias: {
+      '~': path.resolve(__dirname, 'src'),
+    },
   },
   externals: [nodeExternals(), 'datadog-lambda-js', 'dd-trace'],
   module: {

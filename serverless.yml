@@ -77,7 +77,7 @@ functions:
       DD_ENV: ${file(./sls.conf.js):DD_ENV}
 
   wsConnect:
-    handler: src/handler.wsConnect
+    handler: src/messaging/handler.wsConnect
     events:
       - websocket:
           route: $connect

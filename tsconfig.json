@@ -8,7 +8,10 @@
     "skipLibCheck": true,
     "types": ["node"],
     "resolveJsonModule": true,
-    "allowJs": true
+    "allowJs": true,
+    "paths": {
+      "~/*": ["src/*"]
+    }
   },
   "exclude": ["node_modules", ".webpack", "db", "./*.js"]
 }

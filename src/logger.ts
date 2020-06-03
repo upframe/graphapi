@@ -55,6 +55,8 @@ export default Object.assign(
 const block = [/couldn't read xray trace header from env/]
 
 const prettyPrint = (msg: unknown) => {
+  if (typeof msg === 'string' && msg.startsWith('!'))
+    msg = ch.bold(msg.substr(1))
   if (typeof msg === 'string' && msg.startsWith('\n')) {
     console.log(msg.replace(/^\n+(.*)/gs, ''))
     msg = msg.replace(/^\n+/gs, '')
