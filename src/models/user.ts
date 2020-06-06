@@ -26,6 +26,8 @@ export class User extends Model {
   allow_emails: boolean
   searchable: boolean
   headline: string
+  timezone: string
+  tz_infer: boolean
 
   mentors?: Mentor
   socialmedia?: SocialMedia[]

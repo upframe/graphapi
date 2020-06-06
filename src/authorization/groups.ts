@@ -10,7 +10,7 @@ export const visitor: Group = {
     {
       effect: 'disallow',
       action: 'read',
-      resource: 'users.[email, allow_emails]',
+      resource: 'users.[email, allow_emails, tz_infer]',
     },
     {
       effect: 'allow',
@@ -82,7 +82,7 @@ export const user: Group = {
     {
       effect: 'allow',
       action: 'read',
-      resource: 'users.[email, allow_emails]',
+      resource: 'users.[email, allow_emails, tz_infer]',
       where: 'users.id = current.id',
     },
     {

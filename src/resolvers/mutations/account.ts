@@ -43,7 +43,7 @@ export const signIn = resolver<User>()(
       .findById(email)
       .asUser(system)
 
-    if (!checkPassword(password, creds.password))
+    if (!creds?.password || !checkPassword(password, creds.password))
       throw new UserInputError('invalid credentials')
 
     const user = await query()
