@@ -138,3 +138,13 @@ export const updateNotificationPreferences = resolver<User>()(
     })
   }
 )
+
+export const setTimezone = resolver<User>().loggedIn(
+  async ({ args: { tz: timezone }, ctx: { id }, query }) =>
+    await query().upsertGraphAndFetch({ id, timezone })
+)
+
+export const setInferTz = resolver<User>().loggedIn(
+  async ({ args: { infer }, ctx: { id }, query }) =>
+    await query().upsertGraphAndFetch({ id, tz_infer: infer })
+)

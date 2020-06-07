@@ -93,38 +93,19 @@ export const updateSlots = resolver<User>().loggedIn(
   }
 )
 
-export const requestSlot = resolver()(
+export const requestSlot = resolver().loggedIn(
   async ({ query, knex, args: { input }, ctx: { id } }) => {
-    const { email, name, ...rest } = !id
-      ? input
-      : await query.raw(User).findById(id)
-
-    if (!new RegExp(User.jsonSchema.properties.email.pattern).test(email))
-      throw new UserInputError(`invalid email ${email}`)
-    if (name.length < 3) throw new UserInputError(`invalid name ${name}`)
     const slot = await query.raw(Slots).findById(input.slotId)
     if (!slot) throw new UserInputError('unknown slot')
 
-    const mentor = await query
-      .raw(User)
-      .withGraphFetched('connect_google')
-      .findById(slot.mentor_id)
-      .asUser(system)
-
-    const mentee = id
-      ? { email, name, ...rest }
-      : (await query
-          .raw(User)
-          .where({ email })
-          .first()
-          .asUser(system)) ??
-        (await query.raw(User).insertAndFetch({
-          id: uuidv4(),
-          email,
-          name,
-          role: 'nologin',
-          handle: uuidv4(),
-        }))
+    const [mentor, mentee] = await Promise.all([
+      query
+        .raw(User)
+        .withGraphFetched('connect_google')
+        .findById(slot.mentor_id)
+        .asUser(system),
+      query.raw(User).findById(id),
+    ])
 
     const meetup = {
       slot_id: slot.id,
@@ -153,7 +134,6 @@ export const requestSlot = resolver()(
     })
 
     if (!mentor.connect_google?.calendar_id) return
-    console.log('trace')
     try {
       const client = await userClient(knex, mentor.connect_google)
       client.calendar.events.patch({
@@ -164,9 +144,8 @@ export const requestSlot = resolver()(
           description: `<p>Slot was requested by <a href="mailto:${mentee.email}">${mentee.name}</a></p><p><i>${input.message}</i></p><p><a href="https://upframe.io/meetup/confirm/${meetup.slot_id}">accept</a> | <a href="https://upframe.io/meetup/cancel/${meetup.slot_id}">decline</a></p>`,
         },
       })
-    } catch (e) {
-      console.log(e)
-      console.warn(`couldn't update gcal event ${slot.id}`)
+    } catch (error) {
+      logger.error(`couldn't update gcal event ${slot.id}`, { error })
     }
   }
 )

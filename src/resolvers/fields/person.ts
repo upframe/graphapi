@@ -73,3 +73,11 @@ export const google = resolver<any, User>()(
     }
   }
 )
+
+export const timezone = resolver<any, User>()(({ parent }) =>
+  parent.timezone ? parent : null
+)
+
+export const inferTz = resolver<boolean, User>()(
+  ({ parent }) => parent.tz_infer
+)

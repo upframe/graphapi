@@ -78,7 +78,9 @@
       "role",
       "name_normalized",
       "searchable",
-      "headline"
+      "headline",
+      "timezone",
+      "tz_infer"
     ]
   },
   "user_handles": {

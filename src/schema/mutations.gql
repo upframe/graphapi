@@ -50,15 +50,11 @@ input SlotUpdateInput {
 input MsgExtInput {
   to: ID!
   message: String!
-  name: String
-  email: String
 }
 
 input RequestSlotInput {
   slotId: ID!
   message: String!
-  name: String
-  email: String
 }
 
 type Mutation {
@@ -95,6 +91,8 @@ type Mutation {
   updateNotificationPreferences(input: NotificationSettingsInput!): Person
   uploadProfilePicture(file: Upload!): Person
   removeProfilePicture: Person
+  setTimezone(tz: String!): Person
+  setInferTz(infer: Boolean!): Person
 
   updateSlots(slots: SlotUpdateInput!): Person
   messageExt(input: MsgExtInput!): Int
