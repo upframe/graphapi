@@ -60,7 +60,7 @@ export default class Client {
       .promise()
   }
 
-  public async subscribe(channel: string) {
+  public async subscribe(channel: string, query: string, variables: any) {
     Promise.all([
       dynamodb
         .put({
@@ -68,6 +68,8 @@ export default class Client {
           Item: {
             pk: `CHANNEL|${channel}`,
             sk: `CONNECTION|${this.connectionId}`,
+            query,
+            variables,
           },
         })
         .promise(),
@@ -88,7 +90,7 @@ export default class Client {
     ])
   }
 
-  public async post(message: string) {
+  public async post(data: any) {
     try {
       await gateway
         .postToConnection({
@@ -96,7 +98,7 @@ export default class Client {
           Data: JSON.stringify({
             id: 1,
             type: 'data',
-            payload: { data: { content: message } },
+            payload: data,
           }),
         })
         .promise()

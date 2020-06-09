@@ -32,6 +32,8 @@ export const wsConnect = async (event: APIGatewayEvent) => {
         return { statusCode: 200 }
       }
 
+      if (!rootValue.payload) return { statusCode: 200 }
+
       const {
         query,
         variables: variableValues,

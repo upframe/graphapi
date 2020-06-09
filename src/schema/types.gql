@@ -204,6 +204,8 @@ type Google {
 }
 
 type Message {
-  author: ID
   content: String
+  channel: ID
+  author: ID
+  time: String
 }

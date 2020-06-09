@@ -8,6 +8,7 @@ import * as Calendar from './fields/calendar'
 import * as Event from './fields/event'
 import * as NotificationPreferences from './fields/notificationPreferences'
 import * as MentorNotificationPreferences from './fields/mentorNotificationPreferences'
+import * as Message from './fields/message'
 
 export default {
   Query,
@@ -20,4 +21,5 @@ export default {
   Event,
   NotificationPreferences,
   MentorNotificationPreferences,
+  Message,
 }

@@ -1,7 +1,7 @@
 import resolver from '../resolver'
 import { dynamodb } from '~/utils/aws'
 
-export const sendMessage = resolver<any>()(
+export const sendMessage = resolver<any>().loggedIn(
   async ({ args: { content, channel }, ctx: { id } }) => {
     await dynamodb
       .put({
@@ -9,7 +9,7 @@ export const sendMessage = resolver<any>()(
         Item: {
           channel,
           time: Date.now(),
-          sender: id,
+          author: id,
           content,
         },
       })
