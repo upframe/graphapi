@@ -54,7 +54,7 @@ type Mutation {
 
   invite(emails: [String!]!, role: Role = USER): Person
 
-  sendMessage(content: String): Int
+  sendMessage(content: String!, channel: ID!): Int
 }
 
 input LoginInput {

@@ -1,6 +1,6 @@
 import uuidv4 from 'uuid/v4'
 import { parse, getOperationAST, validate, subscribe } from 'graphql'
-import { APIGatewayEvent } from 'aws-lambda'
+import { APIGatewayEvent, DynamoDBStreamEvent } from 'aws-lambda'
 import { gateway } from '../utils/aws'
 import { schema } from '../apollo'
 import logger from '../logger'
@@ -64,4 +64,10 @@ export const wsConnect = async (event: APIGatewayEvent) => {
     logger.error(error.toString())
     throw error
   }
+}
+
+export const message = async (event: DynamoDBStreamEvent) => {
+  event.Records.forEach(record => {
+    logger.info(record.dynamodb.NewImage)
+  })
 }

@@ -8,7 +8,7 @@ export default class Client {
     const sk = 'CHANNEL_LIST'
     await dynamodb
       .put({
-        TableName: 'messaging',
+        TableName: 'connections',
         Item: {
           pk,
           sk,
@@ -26,7 +26,7 @@ export default class Client {
   public async disconnect() {
     const { Item } = await dynamodb
       .get({
-        TableName: 'messaging',
+        TableName: 'connections',
         Key: {
           pk: `CONNECTION|${this.connectionId}`,
           sk: 'CHANNEL_LIST',
@@ -36,7 +36,7 @@ export default class Client {
     await dynamodb
       .batchWrite({
         RequestItems: {
-          messaging: [
+          connections: [
             {
               DeleteRequest: {
                 Key: {
@@ -63,7 +63,7 @@ export default class Client {
     Promise.all([
       dynamodb
         .put({
-          TableName: 'messaging',
+          TableName: 'connections',
           Item: {
             pk: `CHANNEL|${channel}`,
             sk: `CONNECTION|${this.connectionId}`,
@@ -73,7 +73,7 @@ export default class Client {
 
       dynamodb
         .update({
-          TableName: 'messaging',
+          TableName: 'connections',
           Key: {
             pk: `CONNECTION|${this.connectionId}`,
             sk: 'CHANNEL_LIST',

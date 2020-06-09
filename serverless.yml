@@ -86,11 +86,23 @@ functions:
       - websocket:
           route: $default
 
+  message:
+    handler: src/messaging/handler.message
+    events:
+      - stream:
+          type: dynamodb
+          batchSize: 1
+          startingPosition: LATEST
+          arn: !GetAtt
+            - messages
+            - StreamArn
+
 plugins:
   - serverless-webpack
+  - serverless-dynamodb-local
+  - serverless-offline-dynamodb-streams
   - serverless-offline
   - serverless-domain-manager
-  - serverless-dynamodb-local
 
 custom:
   serverless-offline:
@@ -116,14 +128,40 @@ custom:
     stages:
       - ${self:provider.stage}
     start:
+      host: localhost
+      port: 8000
       migrate: true
+  serverless-offline-dynamodb-streams:
+    endpoint: http://0.0.0.0:8000
+    skipCacheInvalidation: false
+    readInterval: 500
 
 resources:
   Resources:
-    usersTable:
+    messages:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: messaging
+        TableName: messages
+        AttributeDefinitions:
+          - AttributeName: channel
+            AttributeType: S
+          - AttributeName: time
+            AttributeType: N
+        KeySchema:
+          - AttributeName: channel
+            KeyType: HASH
+          - AttributeName: time
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: NEW_IMAGE
+
+    connections:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: connections
         AttributeDefinitions:
           - AttributeName: pk
             AttributeType: S
