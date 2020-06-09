@@ -3,3 +3,4 @@ node_modules
 .serverless
 .dynamodb
 db/seeds/data
+queries

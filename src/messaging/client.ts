@@ -1,4 +1,5 @@
-import { dynamodb } from '~/utils/aws'
+import { dynamodb, gateway } from '~/utils/aws'
+import logger from '~/logger'
 
 export default class Client {
   constructor(public readonly connectionId: string) {}
@@ -87,7 +88,21 @@ export default class Client {
     ])
   }
 
-  static async get(connectionId: string): Promise<Client> {
-    return new Client(connectionId)
+  public async post(message: string) {
+    try {
+      await gateway
+        .postToConnection({
+          ConnectionId: this.connectionId,
+          Data: JSON.stringify({
+            id: 1,
+            type: 'data',
+            payload: { data: { content: message } },
+          }),
+        })
+        .promise()
+    } catch (e) {
+      logger.info(`disconnecting client ${this.connectionId}`)
+      await this.disconnect()
+    }
   }
 }

@@ -21,6 +21,9 @@ export const dynamodb = new AWS.DynamoDB.DocumentClient({
   secretAccessKey: process.env.AWS_KEY_SECRET,
 })
 
+export const unmarshall = (response: any): any =>
+  AWS.DynamoDB.Converter.unmarshall(response)
+
 export const gateway = new AWS.ApiGatewayManagementApi({
   apiVersion: '2018-11-29',
   endpoint: 'http://localhost:3001',

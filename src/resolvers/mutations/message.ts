@@ -9,7 +9,7 @@ export const sendMessage = resolver<any>()(
         Item: {
           channel,
           time: Date.now(),
-          from: id,
+          sender: id,
           content,
         },
       })
