@@ -1,18 +1,7 @@
 import resolver from '../resolver'
-import { dynamodb } from '~/utils/aws'
+import Channel from '~/messaging/channel'
 
-export const sendMessage = resolver<any>().loggedIn(
-  async ({ args: { content, channel }, ctx: { id } }) => {
-    await dynamodb
-      .put({
-        TableName: 'messages',
-        Item: {
-          channel,
-          time: Date.now(),
-          author: id,
-          content,
-        },
-      })
-      .promise()
-  }
+export const sendMessage = resolver<never>().loggedIn(
+  async ({ args: { content, channel }, ctx: { id } }) =>
+    void (await new Channel(channel).publish({ author: id, content }))
 )

@@ -145,12 +145,12 @@ resources:
         AttributeDefinitions:
           - AttributeName: channel
             AttributeType: S
-          - AttributeName: time
-            AttributeType: N
+          - AttributeName: id
+            AttributeType: S
         KeySchema:
           - AttributeName: channel
             KeyType: HASH
-          - AttributeName: time
+          - AttributeName: id
             KeyType: RANGE
         ProvisionedThroughput:
           ReadCapacityUnits: 1

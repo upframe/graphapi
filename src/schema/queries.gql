@@ -26,4 +26,5 @@ type Query {
     location: String
     headline: String
   ): [Validity!]!
+  channel(channelId: ID!): Channel
 }

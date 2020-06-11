@@ -9,6 +9,8 @@ import * as Event from './fields/event'
 import * as NotificationPreferences from './fields/notificationPreferences'
 import * as MentorNotificationPreferences from './fields/mentorNotificationPreferences'
 import * as Message from './fields/message'
+import * as Channel from './fields/channel'
+import { Connection, Edge, Node } from './fields/connections'
 
 export default {
   Query,
@@ -22,4 +24,8 @@ export default {
   NotificationPreferences,
   MentorNotificationPreferences,
   Message,
+  Channel,
+  Connection,
+  Edge,
+  Node,
 }

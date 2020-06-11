@@ -1,5 +1,6 @@
 export { default as schema } from './schema.gql'
 export { default as types } from './types.gql'
+export { default as meta } from './meta.gql'
 export { default as queries } from './queries.gql'
 export { default as mutations } from './mutations.gql'
 export { default as subscriptions } from './subscriptions.gql'

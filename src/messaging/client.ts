@@ -1,4 +1,4 @@
-import { dynamodb, gateway } from '~/utils/aws'
+import { ddb, gateway } from '~/utils/aws'
 import logger from '~/logger'
 
 export default class Client {
@@ -7,13 +7,13 @@ export default class Client {
   public async connect() {
     const pk = `CONNECTION|${this.connectionId}`
     const sk = 'CHANNEL_LIST'
-    await dynamodb
+    await ddb
       .put({
         TableName: 'connections',
         Item: {
           pk,
           sk,
-          channels: dynamodb.createSet(['GLOBAL']),
+          channels: ddb.createSet(['GLOBAL']),
         },
         ConditionExpression: 'pk <> :pk AND sk <> :sk',
         ExpressionAttributeValues: {
@@ -25,7 +25,7 @@ export default class Client {
   }
 
   public async disconnect() {
-    const { Item } = await dynamodb
+    const { Item } = await ddb
       .get({
         TableName: 'connections',
         Key: {
@@ -34,7 +34,7 @@ export default class Client {
         },
       })
       .promise()
-    await dynamodb
+    await ddb
       .batchWrite({
         RequestItems: {
           connections: [
@@ -46,7 +46,7 @@ export default class Client {
                 },
               },
             },
-            ...Item.channels.values.map(channel => ({
+            ...Item.channels.values.map((channel) => ({
               DeleteRequest: {
                 Key: {
                   pk: `CHANNEL|${channel}`,
@@ -62,7 +62,7 @@ export default class Client {
 
   public async subscribe(channel: string, query: string, variables: any) {
     Promise.all([
-      dynamodb
+      ddb
         .put({
           TableName: 'connections',
           Item: {
@@ -74,7 +74,7 @@ export default class Client {
         })
         .promise(),
 
-      dynamodb
+      ddb
         .update({
           TableName: 'connections',
           Key: {
@@ -83,7 +83,7 @@ export default class Client {
           },
           UpdateExpression: 'ADD channels :c',
           ExpressionAttributeValues: {
-            ':c': dynamodb.createSet([channel]),
+            ':c': ddb.createSet([channel]),
           },
         })
         .promise(),

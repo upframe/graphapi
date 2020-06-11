@@ -203,9 +203,29 @@ type Google {
   canDisconnect: Boolean
 }
 
-type Message {
+type Message implements Node {
+  id: ID!
   content: String
-  channel: ID
   author: ID
   time: String
+}
+
+type Channel {
+  id: ID!
+  messages(
+    first: Int
+    last: Int
+    before: ID
+    after: ID
+  ): ChannelMessageConnection!
+}
+
+type ChannelMessageConnection implements Connection {
+  edges: [ChannelMessageEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ChannelMessageEdge implements Edge {
+  node: Message
+  cursor: ID!
 }

@@ -90,9 +90,7 @@ export const tag = resolver<Tags>()(async ({ query, args: { id, name } }) => {
   if (!!id === !!name)
     throw new UserInputError('must provide either id or name')
   if (id) return await query().findById(id)
-  const res = await query()
-    .where('name', 'ilike', name)
-    .first()
+  const res = await query().where('name', 'ilike', name).first()
   return {
     ...res,
     users: res.users.filter(({ searchable }) => searchable),
@@ -113,7 +111,7 @@ export const lists = resolver<List>()(async ({ query }) => await query())
 export const list = resolver<List>()(async ({ query, args: { name } }) => {
   const res = await query({ join: true, include: 'users.mentors' })
     .where({ 'lists.name': name })
-    .andWhere(function() {
+    .andWhere(function () {
       this.where({ listed: true }).orWhereNull('listed')
     })
     .first()
@@ -128,10 +126,7 @@ export const list = resolver<List>()(async ({ query, args: { name } }) => {
 
 export const isTokenValid = resolver<boolean>()(
   async ({ args: { token: tokenId }, ctx: { id }, query }) => {
-    const token = await query
-      .raw(Tokens)
-      .findById(tokenId)
-      .asUser(system)
+    const token = await query.raw(Tokens).findById(tokenId).asUser(system)
     return id && id !== token.subject ? false : !!token
   }
 )
@@ -191,10 +186,7 @@ export const signUpInfo = resolver<any>()(
     const invite = await query.raw(Invite).findById(token)
     if (!invite) throw new UserInputError('invalid invite token')
     if (invite.redeemed) throw new UserInputError('invite token already used')
-    const signup = await query
-      .raw(Signup)
-      .findById(token)
-      .asUser(system)
+    const signup = await query.raw(Signup).findById(token).asUser(system)
 
     let name: string
     let picture
@@ -236,3 +228,7 @@ export const signUpInfo = resolver<any>()(
 export const checkValidity = resolver<any>()(
   async ({ args, knex }) => await validate.batch(args, knex)
 )
+
+export const channel = resolver<any>()(async ({ args: { channelId } }) => ({
+  id: channelId,
+}))

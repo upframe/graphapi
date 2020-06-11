@@ -14,7 +14,7 @@ export const sns = new AWS.SNS({
   region: 'eu-west-1',
 })
 
-export const dynamodb = new AWS.DynamoDB.DocumentClient({
+export const ddb = new AWS.DynamoDB.DocumentClient({
   region: 'localhost',
   endpoint: 'http://localhost:8000',
   accessKeyId: process.env.AWS_KEY_ID,

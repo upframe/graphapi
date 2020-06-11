@@ -1,5 +1,5 @@
 import logger from '~/logger'
-import { dynamodb } from '~/utils/aws'
+import { ddb } from '~/utils/aws'
 import Client from './client'
 import { schema } from '~/apollo'
 import { execute, parse } from 'graphql'
@@ -7,7 +7,7 @@ import { execute, parse } from 'graphql'
 export default async function handleMessage(message: Message) {
   logger.info(message)
 
-  const connections = await dynamodb
+  const connections = await ddb
     .query({
       TableName: 'connections',
       KeyConditionExpression: 'pk = :pk',
@@ -39,7 +39,7 @@ export default async function handleMessage(message: Message) {
 
   await Promise.all(
     connections.map(({ id, query, variables }) =>
-      exec(query, variables).then(res => new Client(id).post(res))
+      exec(query, variables).then((res) => new Client(id).post(res))
     )
   )
 }

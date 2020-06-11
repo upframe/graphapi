@@ -40,3 +40,20 @@ type ModelContent<M extends Model> = {
     ? ModelContent<M[K]>
     : M[K]
 }
+
+// GraphQL types
+
+type Connection<T> = {
+  edges: Edge<T>[]
+  pageInfo: PageInfo
+}
+
+type Edge<T> = {
+  cursor: string | number
+  node: T
+}
+
+type PageInfo = {
+  hasNextPage: boolean
+  hasPreviousPage: boolean
+}

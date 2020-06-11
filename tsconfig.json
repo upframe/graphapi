@@ -13,5 +13,12 @@
       "~/*": ["src/*"]
     }
   },
-  "exclude": ["node_modules", ".webpack", "db", "./*.js"]
+  "exclude": [
+    "node_modules",
+    ".webpack",
+    "db",
+    "prettier.config.js",
+    ".eslintrc.js",
+    "apollo.config.js"
+  ]
 }
