@@ -11,6 +11,7 @@ import * as MentorNotificationPreferences from './fields/mentorNotificationPrefe
 import * as Message from './fields/message'
 import * as Channel from './fields/channel'
 import { Connection, Edge, Node } from './fields/connections'
+import * as Timezone from './fields/timezone'
 
 export default {
   Query,
@@ -28,4 +29,5 @@ export default {
   Connection,
   Edge,
   Node,
+  Timezone,
 }

@@ -6,6 +6,7 @@ if (process.env.IS_OFFLINE) {
 }
 
 let requestId: string
+let userId: string
 
 export default Object.assign(
   createLogger({
@@ -13,6 +14,9 @@ export default Object.assign(
     defaultMeta: {
       get 'context.awsRequestId'() {
         return requestId
+      },
+      get 'context.user'() {
+        return userId
       },
     },
     transports: [
@@ -48,6 +52,9 @@ export default Object.assign(
   {
     setRequestId(id) {
       requestId = id
+    },
+    setUserId(id) {
+      userId = id
     },
   }
 )

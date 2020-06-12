@@ -30,6 +30,7 @@ export const server = new ApolloServer({
     const user = new AuthUser(id, sub)
     user.groups = roles.length ? roles : ['visitor']
     const requestId = context.awsRequestId
+    logger.setUserId(id)
     return {
       id,
       user,

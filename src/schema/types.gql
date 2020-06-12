@@ -16,6 +16,8 @@ interface Person {
   invites: [Invite]
   google: Google
   searchable: Boolean
+  timezone: Timezone
+  inferTz: Boolean
 }
 
 type User implements Person {
@@ -36,6 +38,8 @@ type User implements Person {
   invites: [Invite]
   google: Google
   searchable: Boolean
+  timezone: Timezone
+  inferTz: Boolean
 }
 
 type Mentor implements Person {
@@ -61,6 +65,8 @@ type Mentor implements Person {
   invites: [Invite]
   google: Google
   searchable: Boolean
+  timezone: Timezone
+  inferTz: Boolean
 }
 
 type Calendar {
@@ -201,6 +207,26 @@ type Google {
   connected: Boolean
   email: String
   canDisconnect: Boolean
+}
+
+type Timezone {
+  iana: String!
+  utcOffset: Int!
+  nonDstOff: Int
+  informal: TzInformal
+  isDst: Boolean!
+  hasDst: Boolean!
+}
+
+type TzInformal {
+  standard: TzAbbr!
+  dst: TzAbbr
+  current: TzAbbr!
+}
+
+type TzAbbr {
+  name: String
+  abbr: String!
 }
 
 type Message implements Node {
