@@ -165,16 +165,16 @@ export const search = resolver<any>()(
           !['id', 'name', 'handle', 'profilePictures', '__typename'].includes(k)
       )
     ) {
+      const ids = users.map(({ user }) => user.id)
       users = ((await query({
         section: 'users.user',
         entryName: 'Person',
-      }).whereIn(
-        'id',
-        users.map(({ user }) => user.id)
-      )) as User[]).map(user => ({
-        user,
-        markup: users.find(({ user: { id } }) => id === user.id).markup,
-      }))
+      }).whereIn('id', ids)) as User[])
+        .sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id))
+        .map(user => ({
+          user,
+          markup: users.find(({ user: { id } }) => id === user.id).markup,
+        }))
     }
     return { users, tags }
   }
