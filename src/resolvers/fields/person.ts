@@ -3,7 +3,6 @@ import { SocialMedia, User } from '~/models'
 import { createClient } from '~/google'
 import { google as gapi } from 'googleapis'
 import { ddb } from '~/utils/aws'
-import logger from '~/logger'
 
 export const __resolveType = resolver<string, any>()(({ parent: { role } }) => {
   if (role !== 'user') return 'Mentor'
@@ -86,7 +85,6 @@ export const inferTz = resolver<boolean, User>()(
 
 export const conversations = resolver<any, User>()(
   async ({ parent: { id } }) => {
-    logger.info('!person.conversations resolver')
     const { Items } = await ddb
       .query({
         TableName: 'connections',
@@ -98,9 +96,10 @@ export const conversations = resolver<any, User>()(
       .promise()
 
     return Items.filter(({ sk }) => sk.startsWith('ROOM|')).map(
-      ({ sk, participants }) => ({
+      ({ sk, participants, channels }) => ({
         id: sk.replace(/^ROOM\|/, ''),
         participants: participants.values,
+        channels: channels.values,
       })
     )
   }

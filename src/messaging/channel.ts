@@ -9,30 +9,45 @@ export default class Channel {
 
   public async create(roomId: string): Promise<Channel> {
     logger.info(`create channel ${this.channelId} in ${roomId}`)
-    await ddb
-      .batchWrite({
-        RequestItems: {
-          connections: [
-            {
-              PutRequest: {
-                Item: {
-                  pk: `CHANNEL|${this.channelId}`,
-                  sk: `ROOM|${roomId}`,
-                },
-              },
+
+    const [{ Attributes }] = await Promise.all([
+      ddb
+        .update({
+          TableName: 'connections',
+          ReturnValues: 'ALL_NEW',
+          Key: { pk: `ROOM|${roomId}`, sk: 'meta' },
+          UpdateExpression: 'ADD channels :c',
+          ExpressionAttributeValues: {
+            ':c': ddb.createSet([this.channelId]),
+          },
+        })
+        .promise(),
+      ddb
+        .put({
+          TableName: 'connections',
+          Item: {
+            pk: `CHANNEL|${this.channelId}`,
+            sk: `ROOM|${roomId}`,
+          },
+        })
+        .promise(),
+    ])
+
+    await Promise.all(
+      Attributes.participants.values.map(id =>
+        ddb
+          .update({
+            TableName: 'connections',
+            Key: { pk: `USER|${id}`, sk: `ROOM|${roomId}` },
+            UpdateExpression: 'ADD channels :c',
+            ExpressionAttributeValues: {
+              ':c': ddb.createSet([this.channelId]),
             },
-            {
-              PutRequest: {
-                Item: {
-                  pk: `ROOM|${roomId}`,
-                  sk: `CHANNEL|${this.channelId}`,
-                },
-              },
-            },
-          ],
-        },
-      })
-      .promise()
+          })
+          .promise()
+      )
+    )
+
     return this
   }
 

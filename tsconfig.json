@@ -17,11 +17,12 @@
     "node_modules",
     ".webpack",
     "db",
+    "queries",
+    "test",
     "prettier.config.js",
     ".eslintrc.js",
     "apollo.config.js",
-    "queries",
     "sls.conf.js",
-    "test"
+    "webpack.config.js"
   ]
 }

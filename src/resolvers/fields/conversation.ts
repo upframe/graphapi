@@ -1,4 +1,5 @@
 import resolver from '../resolver'
+import logger from '~/logger'
 
 export const id = resolver<string, any>()(({ parent: { id } }) => id)
 
@@ -10,6 +11,7 @@ export const participants = resolver<any[], any>()(
     )
 )
 
-export const channels = resolver<any[], any>()(async () => {
-  return []
+export const channels = resolver<any[], any>()(async ({ parent }) => {
+  logger.info(parent)
+  return parent.channels.map(id => ({ id }))
 })

@@ -13,12 +13,12 @@ export const sendMessage = resolver<void>().loggedIn(
 
 export const createMsgRoom = resolver<User>().loggedIn(
   async ({ args: { participants, msg }, ctx: { id }, query }) => {
-    const room = await Room.create(id, ...participants)
-    logger.info(room)
+    const channelId = token()
+    const room = await Room.create(channelId, id, ...participants)
     if (!room) throw new UserInputError('room already exists')
 
     if (msg) {
-      const channel = await new Channel(token()).create(room.id)
+      const channel = await new Channel(channelId).create(room.id)
       logger.info(channel)
       await channel.publish({ author: id, content: msg })
     }
