@@ -21,6 +21,7 @@
     ".eslintrc.js",
     "apollo.config.js",
     "queries",
-    "sls.conf.js"
+    "sls.conf.js",
+    "test"
   ]
 }

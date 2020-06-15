@@ -7,6 +7,35 @@ import logger from '~/logger'
 export default class Channel {
   constructor(public readonly channelId: string) {}
 
+  public async create(roomId: string): Promise<Channel> {
+    logger.info(`create channel ${this.channelId} in ${roomId}`)
+    await ddb
+      .batchWrite({
+        RequestItems: {
+          connections: [
+            {
+              PutRequest: {
+                Item: {
+                  pk: `CHANNEL|${this.channelId}`,
+                  sk: `ROOM|${roomId}`,
+                },
+              },
+            },
+            {
+              PutRequest: {
+                Item: {
+                  pk: `ROOM|${roomId}`,
+                  sk: `CHANNEL|${this.channelId}`,
+                },
+              },
+            },
+          ],
+        },
+      })
+      .promise()
+    return this
+  }
+
   public async publish({
     time = Date.now(),
     id = time.toString(36) +

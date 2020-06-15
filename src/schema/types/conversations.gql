@@ -1,6 +1,6 @@
 type Conversation {
   id: ID!
-  participants: [Person!]!
+  participants(includeMe: Boolean = false): [Person!]!
   channels: [Channel!]!
 }
 
