@@ -14,3 +14,4 @@ report.*
 /*.txt
 tmp
 queries
+test/*

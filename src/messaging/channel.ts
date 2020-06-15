@@ -1,6 +1,6 @@
 import { ddb } from '~/utils/aws'
 import type { Optional } from '~/utils/types'
-import { assert } from 'console'
+import assert from 'assert'
 const crypto = require('crypto')
 import logger from '~/logger'
 

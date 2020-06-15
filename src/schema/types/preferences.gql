@@ -1,0 +1,23 @@
+enum Visibility {
+  LISTED
+  UNLISTED
+}
+
+interface NotificationPreferences {
+  receiveEmails: Boolean
+}
+
+type UserNotificationPreferences implements NotificationPreferences {
+  receiveEmails: Boolean
+}
+
+type MentorNotificationPreferences implements NotificationPreferences {
+  receiveEmails: Boolean
+  slotReminder: EmailInterval
+}
+
+enum EmailInterval {
+  MONTHLY
+  WEEKLY
+  OFF
+}

@@ -1,0 +1,32 @@
+type Conversation {
+  id: ID!
+  participants: [Person!]!
+  channels: [Channel!]!
+}
+
+type Channel {
+  id: ID!
+  messages(
+    first: Int
+    last: Int
+    before: ID
+    after: ID
+  ): ChannelMessageConnection!
+}
+
+type ChannelMessageConnection implements Connection {
+  edges: [ChannelMessageEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ChannelMessageEdge implements Edge {
+  node: Message
+  cursor: ID!
+}
+
+type Message implements Node {
+  id: ID!
+  content: String
+  author: ID
+  time: String
+}
