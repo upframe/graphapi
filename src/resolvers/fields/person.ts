@@ -2,7 +2,7 @@ import resolver from '../resolver'
 import { SocialMedia, User } from '~/models'
 import { createClient } from '~/google'
 import { google as gapi } from 'googleapis'
-import { ddb } from '~/utils/aws'
+import Room from '~/messaging/room'
 
 export const __resolveType = resolver<string, any>()(({ parent: { role } }) => {
   if (role !== 'user') return 'Mentor'
@@ -84,23 +84,5 @@ export const inferTz = resolver<boolean, User>()(
 )
 
 export const conversations = resolver<any, User>()(
-  async ({ parent: { id } }) => {
-    const { Items } = await ddb
-      .query({
-        TableName: 'connections',
-        KeyConditionExpression: 'pk = :pk',
-        ExpressionAttributeValues: {
-          ':pk': `USER|${id}`,
-        },
-      })
-      .promise()
-
-    return Items.filter(({ sk }) => sk.startsWith('ROOM|')).map(
-      ({ sk, participants, channels }) => ({
-        id: sk.replace(/^ROOM\|/, ''),
-        participants: participants.values,
-        channels: channels.values,
-      })
-    )
-  }
+  async ({ parent: { id } }) => await Room.getUserRooms(id)
 )

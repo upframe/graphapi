@@ -2,7 +2,11 @@ import { ddb } from '~/utils/aws'
 import crypto from 'crypto'
 
 export default class Room {
-  private constructor(public readonly id: string) {}
+  private constructor(
+    public readonly id: string,
+    public readonly participants?: [],
+    public readonly channels?: []
+  ) {}
 
   public static async create(
     channelId: string,
@@ -42,6 +46,40 @@ export default class Room {
       .promise()
 
     return room
+  }
+
+  public static async get(roomId: string): Promise<Room> {
+    const { Item } = await ddb
+      .get({
+        TableName: 'connections',
+        Key: { pk: `ROOM|${roomId}`, sk: 'meta' },
+      })
+      .promise()
+
+    return Item
+      ? new Room(roomId, Item.participants.values, Item.channels.values)
+      : null
+  }
+
+  public static async getUserRooms(userId: string): Promise<Room[]> {
+    const { Items } = await ddb
+      .query({
+        TableName: 'connections',
+        KeyConditionExpression: 'pk = :pk',
+        ExpressionAttributeValues: {
+          ':pk': `USER|${userId}`,
+        },
+      })
+      .promise()
+
+    return Items.filter(({ sk }) => sk.startsWith('ROOM|')).map(
+      ({ sk, participants, channels }) =>
+        new Room(
+          sk.replace(/^ROOM\|/, ''),
+          participants.values,
+          channels.values
+        )
+    )
   }
 
   private static id(...ids: string[]) {

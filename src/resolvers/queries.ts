@@ -18,6 +18,7 @@ import {
   scopes,
   signUpInfo as googleInfo,
 } from '../google'
+import Room from '~/messaging/room'
 
 export const me = resolver<User>().loggedIn(
   async ({ query, ctx: { id } }) => await query().findById(id)
@@ -229,6 +230,12 @@ export const checkValidity = resolver<any>()(
   async ({ args, knex }) => await validate.batch(args, knex)
 )
 
-export const channel = resolver<any>()(async ({ args: { channelId } }) => ({
-  id: channelId,
-}))
+export const conversation = resolver<any>().loggedIn(
+  async ({ args: { conversationId } }) => await Room.get(conversationId)
+)
+
+export const channel = resolver<any>().loggedIn(
+  async ({ args: { channelId } }) => ({
+    id: channelId,
+  })
+)
