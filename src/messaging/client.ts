@@ -46,7 +46,7 @@ export default class Client {
                 },
               },
             },
-            ...Item.channels.values.map((channel) => ({
+            ...Item.channels.values.map(channel => ({
               DeleteRequest: {
                 Key: {
                   pk: `CHANNEL|${channel}`,
@@ -60,7 +60,14 @@ export default class Client {
       .promise()
   }
 
-  public async subscribe(channel: string, query: string, variables: any) {
+  public async subscribe(
+    channel: string,
+    query: string,
+    variables: any,
+    subscriptionId: string
+  ) {
+    console.log({ subscriptionId })
+
     Promise.all([
       ddb
         .put({
@@ -70,6 +77,7 @@ export default class Client {
             sk: `CONNECTION|${this.connectionId}`,
             query,
             variables,
+            subscriptionId,
           },
         })
         .promise(),
@@ -90,13 +98,13 @@ export default class Client {
     ])
   }
 
-  public async post(data: any) {
+  public async post(data: any, id) {
     try {
       await gateway
         .postToConnection({
           ConnectionId: this.connectionId,
           Data: JSON.stringify({
-            id: 1,
+            id,
             type: 'data',
             payload: data,
           }),

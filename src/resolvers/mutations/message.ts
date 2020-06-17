@@ -11,7 +11,7 @@ export const sendMessage = resolver<void>().loggedIn(
     void (await new Channel(channel).publish({ author: id, content }))
 )
 
-export const createMsgRoom = resolver<User>().loggedIn(
+export const createConversation = resolver<User>().loggedIn(
   async ({ args: { participants, msg }, ctx: { id }, query }) => {
     const channelId = token()
     const room = await Room.create(channelId, id, ...participants)
@@ -23,6 +23,14 @@ export const createMsgRoom = resolver<User>().loggedIn(
       await channel.publish({ author: id, content: msg })
     }
 
+    return await query().findById(id)
+  }
+)
+
+export const createThread = resolver<User>().loggedIn(
+  async ({ args: { conversationId, msg }, ctx: { id }, query }) => {
+    const channel = await new Channel(token()).create(conversationId)
+    if (msg) await channel.publish({ author: id, content: msg })
     return await query().findById(id)
   }
 )

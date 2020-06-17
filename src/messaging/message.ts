@@ -18,10 +18,11 @@ export default async function handleMessage(message: Message) {
     .promise()
     .then(({ Items }) =>
       Items.filter(({ sk }) => sk.startsWith('CONNECTION')).map(
-        ({ sk, query, variables }) => ({
+        ({ sk, query, variables, subscriptionId }) => ({
           id: sk.split('|').pop(),
           query,
           variables,
+          subscriptionId,
         })
       )
     )
@@ -38,8 +39,10 @@ export default async function handleMessage(message: Message) {
   }
 
   await Promise.all(
-    connections.map(({ id, query, variables }) =>
-      exec(query, variables).then((res) => new Client(id).post(res))
+    connections.map(({ id, query, variables, subscriptionId }) =>
+      exec(query, variables).then(res =>
+        new Client(id).post(res, subscriptionId)
+      )
     )
   )
 }

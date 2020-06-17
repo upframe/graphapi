@@ -60,6 +60,7 @@ export const wsConnect = async (event: APIGatewayEvent) => {
         variableValues,
         contextValue: {
           connectionId: event.requestContext.connectionId,
+          subscriptionId: rootValue.id,
         },
       })
     }

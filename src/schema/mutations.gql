@@ -57,5 +57,6 @@ type Mutation {
   invite(emails: [String!]!, role: Role = USER): Person
 
   sendMessage(content: String!, channel: ID!): Int
-  createMsgRoom(participants: [ID!]!, msg: String): Person
+  createConversation(participants: [ID!]!, msg: String): Person
+  createThread(conversationId: ID!, msg: String): Person
 }
