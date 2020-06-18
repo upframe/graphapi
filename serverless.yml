@@ -23,6 +23,7 @@ provider:
     - Effect: Allow
       Action:
         - dynamodb:*
+      Resource: !GetAtt redirects.Arn
 
 functions:
   graphapi:
