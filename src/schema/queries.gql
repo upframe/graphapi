@@ -26,4 +26,5 @@ type Query {
     location: String
     headline: String
   ): [Validity!]!
+  redirects: [Redirect!]!
 }

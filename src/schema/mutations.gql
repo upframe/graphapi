@@ -114,4 +114,7 @@ type Mutation {
   deleteTag(id: Int!): Int
 
   invite(emails: [String!]!, role: Role = USER): Person
+
+  setRedirect(from: String!, to: String!, expires: Int): Int
+  deleteRedirect(path: String!): Int
 }
