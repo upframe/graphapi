@@ -23,12 +23,12 @@ provider:
     - Effect: Allow
       Action:
         - dynamodb:*
-      Resource: !GetAtt redirects.Arn
+      Resource: ${ssm:/dynamodb/redirects/arn}
 
 functions:
   graphapi:
     handler: src/handler.graphapi
-    provisionedConcurrency: 3
+    provisionedConcurrency: ${file(./sls.conf.js):PROVISIONED}
     layers:
       - arn:aws:lambda:eu-west-1:464622532012:layer:Datadog-Node12-x:23
     events:
