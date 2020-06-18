@@ -20,6 +20,9 @@ provider:
         - 'sns:Publish'
       Resource:
         - ${ssm:/email/SNS/arn}
+    - Effect: Allow
+      Action:
+        - dynamodb:*
 
 functions:
   graphapi:

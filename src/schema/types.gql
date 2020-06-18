@@ -228,3 +228,9 @@ type TzAbbr {
   name: String
   abbr: String!
 }
+
+type Redirect {
+  from: String!
+  to: String!
+  expires: Int
+}

@@ -18,6 +18,7 @@ import {
   scopes,
   signUpInfo as googleInfo,
 } from '../google'
+import { ddb } from '../utils/aws'
 
 export const me = resolver<User>().loggedIn(
   async ({ query, ctx: { id } }) => await query().findById(id)
@@ -90,9 +91,7 @@ export const tag = resolver<Tags>()(async ({ query, args: { id, name } }) => {
   if (!!id === !!name)
     throw new UserInputError('must provide either id or name')
   if (id) return await query().findById(id)
-  const res = await query()
-    .where('name', 'ilike', name)
-    .first()
+  const res = await query().where('name', 'ilike', name).first()
   return {
     ...res,
     users: res.users.filter(({ searchable }) => searchable),
@@ -125,10 +124,7 @@ export const list = resolver<List>()(async ({ query, args: { name } }) => {
 
 export const isTokenValid = resolver<boolean>()(
   async ({ args: { token: tokenId }, ctx: { id }, query }) => {
-    const token = await query
-      .raw(Tokens)
-      .findById(tokenId)
-      .asUser(system)
+    const token = await query.raw(Tokens).findById(tokenId).asUser(system)
     return id && id !== token.subject ? false : !!token
   }
 )
@@ -149,7 +145,7 @@ export const search = resolver<any>()(
             .select('id')
             .whereRaw(
               `name ILIKE ANY (ARRAY[${withTagNames
-                .map(v => `'${v}'`)
+                .map((v) => `'${v}'`)
                 .join(',')}])`
             )
         ).map(({ id }) => id),
@@ -163,7 +159,7 @@ export const search = resolver<any>()(
     if (
       users &&
       Object.keys((fields.users as Fields).user).some(
-        k =>
+        (k) =>
           !['id', 'name', 'handle', 'profilePictures', '__typename'].includes(k)
       )
     ) {
@@ -173,7 +169,7 @@ export const search = resolver<any>()(
       }).whereIn(
         'id',
         users.map(({ user }) => user.id)
-      )) as User[]).map(user => ({
+      )) as User[]).map((user) => ({
         user,
         markup: users.find(({ user: { id } }) => id === user.id).markup,
       }))
@@ -188,10 +184,7 @@ export const signUpInfo = resolver<any>()(
     const invite = await query.raw(Invite).findById(token)
     if (!invite) throw new UserInputError('invalid invite token')
     if (invite.redeemed) throw new UserInputError('invite token already used')
-    const signup = await query
-      .raw(Signup)
-      .findById(token)
-      .asUser(system)
+    const signup = await query.raw(Signup).findById(token).asUser(system)
 
     let name: string
     let picture
@@ -209,7 +202,7 @@ export const signUpInfo = resolver<any>()(
         .replace(/[^a-zA-Z]+/g, ' ')
         .toLowerCase()
         .trim()
-        .replace(/(\s|^)[a-z]/g, v => v.toUpperCase())
+        .replace(/(\s|^)[a-z]/g, (v) => v.toUpperCase())
     }
 
     return {
@@ -233,3 +226,8 @@ export const signUpInfo = resolver<any>()(
 export const checkValidity = resolver<any>()(
   async ({ args, knex }) => await validate.batch(args, knex)
 )
+
+export const redirects = resolver<any[]>().isAdmin(async () => {
+  const { Items } = await ddb.scan({ TableName: 'redirects' }).promise()
+  return Items.map(({ path, ...rest }) => ({ from: path, ...rest }))
+})

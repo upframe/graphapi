@@ -30,11 +30,7 @@ export const email = async (value: string, knex: ResolverCtx['knex']) => {
     )
   )
     return 'invalid'
-  if (
-    await knex('users')
-      .where({ email: value.toLowerCase() })
-      .first()
-  )
+  if (await knex('users').where({ email: value.toLowerCase() }).first())
     return 'already in use'
 }
 
@@ -52,11 +48,7 @@ export const handle = whitelistChars(/[\w\-.]/)(
     if (value.length < 3) return 'too short'
     if (value.length > 20) return 'too long'
     if (reserved.includes(value.toLowerCase())) return 'already taken'
-    if (
-      await knex('users')
-        .where('handle', 'ilike', value)
-        .first()
-    )
+    if (await knex('users').where('handle', 'ilike', value).first())
       return 'already taken'
   }
 )
@@ -96,6 +88,7 @@ const reserved = [
   'organisation',
   'organization',
   'privacy',
+  'redirect',
   'refuse',
   'register',
   'reset',
@@ -115,4 +108,4 @@ const reserved = [
   'token',
   'unknown',
   'upframe',
-].flatMap(v => [v, v + 's'])
+].flatMap((v) => [v, v + 's'])
