@@ -6,6 +6,7 @@ type Conversation {
 
 type Channel {
   id: ID!
+  created: String
   messages(
     first: Int
     last: Int

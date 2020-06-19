@@ -13,7 +13,7 @@ export const sendMessage = resolver<void>().loggedIn(
 
 export const createConversation = resolver<User>().loggedIn(
   async ({ args: { participants, msg }, ctx: { id }, query }) => {
-    const channelId = token()
+    const channelId = ((Date.now() / 1000) | 0) + token().slice(0, 4)
     const room = await Room.create(channelId, id, ...participants)
     if (!room) throw new UserInputError('room already exists')
 
@@ -27,10 +27,13 @@ export const createConversation = resolver<User>().loggedIn(
   }
 )
 
-export const createThread = resolver<User>().loggedIn(
-  async ({ args: { conversationId, msg }, ctx: { id }, query }) => {
-    const channel = await new Channel(token()).create(conversationId)
+export const createThread = resolver<any>().loggedIn(
+  async ({ args: { conversationId, msg }, ctx: { id } }) => {
+    const channel = await new Channel(
+      ((Date.now() / 1000) | 0) + token().slice(0, 4)
+    ).create(conversationId)
     if (msg) await channel.publish({ author: id, content: msg })
-    return await query().findById(id)
+    logger.info(channel)
+    return await Room.get(conversationId)
   }
 )
