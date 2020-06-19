@@ -10,4 +10,10 @@ type Google {
   canDisconnect: Boolean
 }
 
+type Redirect {
+  from: String!
+  to: String!
+  expires: Int
+}
+
 scalar Upload

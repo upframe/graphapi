@@ -19,6 +19,7 @@ import {
   signUpInfo as googleInfo,
 } from '../google'
 import Room from '~/messaging/room'
+import { ddb } from '../utils/aws'
 
 export const me = resolver<User>().loggedIn(
   async ({ query, ctx: { id } }) => await query().findById(id)
@@ -239,3 +240,8 @@ export const channel = resolver<any>().loggedIn(
     id: channelId,
   })
 )
+
+export const redirects = resolver<any[]>().isAdmin(async () => {
+  const { Items } = await ddb.scan({ TableName: 'redirects' }).promise()
+  return Items.map(({ path, ...rest }) => ({ from: path, ...rest }))
+})

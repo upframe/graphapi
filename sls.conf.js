@@ -7,6 +7,7 @@ const config = {
     DD_LAYERS: false,
     DD_SERVICE: 'graphapi',
     DOMAIN: 'localhost',
+    PROVISIONED: 0,
   },
 
   online: {
@@ -20,16 +21,18 @@ const config = {
     DD_ENV: 'beta',
     DD_SERVICE: 'graphapi-dev-graphapi',
     DOMAIN: 'dev.graphapi.upframe.io',
+    PROVISIONED: 0,
   },
 
   prod: {
     DD_ENV: 'prod',
     DD_SERVICE: 'graphapi-prod-graphapi',
     DOMAIN: 'graphapi.upframe.io',
+    PROVISIONED: 1,
   },
 }
 
-const get = field => sls => {
+const get = (field) => (sls) => {
   const stage = sls.processedInput.options.stage || sls.service.provider.stage
   const val =
     field in config[stage] ? config[stage][field] : config.online[field]
@@ -39,6 +42,6 @@ const get = field => sls => {
 
 module.exports = Object.fromEntries(
   Array.from(
-    new Set(Object.values(config).flatMap(stage => Object.keys(stage)))
-  ).map(field => [field, get(field)])
+    new Set(Object.values(config).flatMap((stage) => Object.keys(stage)))
+  ).map((field) => [field, get(field)])
 )
