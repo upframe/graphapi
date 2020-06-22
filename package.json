@@ -76,7 +76,6 @@
     "prettier": "^2.0.5",
     "serverless": "^1.72.0",
     "serverless-domain-manager": "^4.1.1",
-    "serverless-dynamodb-local": "^0.2.39",
     "serverless-offline": "^5.7.2",
     "serverless-offline-dynamodb-streams": "^3.0.2",
     "serverless-offline-sns": "^0.68.0",
