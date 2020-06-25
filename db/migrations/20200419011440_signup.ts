@@ -2,9 +2,7 @@ import * as Knex from 'knex'
 
 export async function up(knex: Knex): Promise<any> {
   await knex.schema.createTable('signup', t => {
-    t.string('token')
-      .references('invites.id')
-      .primary()
+    t.string('token').references('invites.id').primary()
     t.timestamp('started').defaultTo('NOW()')
     t.text('email')
     t.text('password')

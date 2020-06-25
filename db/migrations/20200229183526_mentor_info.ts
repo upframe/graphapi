@@ -2,9 +2,7 @@ import * as Knex from 'knex'
 
 export async function up(knex: Knex): Promise<any> {
   await knex.schema.table('mentors', t => {
-    t.boolean('listed')
-      .defaultTo(false)
-      .notNullable()
+    t.boolean('listed').defaultTo(false).notNullable()
     t.string('title')
     t.string('company')
     t.string('google_refresh_token')
@@ -19,9 +17,7 @@ export async function up(knex: Knex): Promise<any> {
   await knex.schema.table('users', t => {
     t.string('location')
     t.string('biography')
-    t.boolean('allow_emails')
-      .defaultTo(true)
-      .notNullable()
+    t.boolean('allow_emails').defaultTo(true).notNullable()
   })
 }
 

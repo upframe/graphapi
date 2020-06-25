@@ -7,10 +7,7 @@ export async function up(knex: Knex): Promise<any> {
       useNative: true,
       enumName: 'token_scope',
     }).notNullable()
-    t.uuid('subject')
-      .references('users.id')
-      .onDelete('cascade')
-      .notNullable()
+    t.uuid('subject').references('users.id').onDelete('cascade').notNullable()
   })
 }
 

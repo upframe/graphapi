@@ -16,9 +16,7 @@ export async function up(knex: Knex): Promise<any> {
 
   await Promise.all(
     update.map(({ id, headline }) =>
-      knex('mentors')
-        .update({ headline })
-        .where({ id })
+      knex('mentors').update({ headline }).where({ id })
     )
   )
 
@@ -41,9 +39,7 @@ export async function down(knex: Knex): Promise<any> {
     })
   await Promise.all(
     update.map(({ id, title }) =>
-      knex('mentors')
-        .update({ title })
-        .where({ id })
+      knex('mentors').update({ title }).where({ id })
     )
   )
 

@@ -2,9 +2,7 @@ import * as Knex from 'knex'
 
 export async function up(knex: Knex): Promise<any> {
   await knex.schema.table('users', t => {
-    t.boolean('searchable')
-      .defaultTo(true)
-      .notNullable()
+    t.boolean('searchable').defaultTo(true).notNullable()
   })
 
   await knex.schema.raw(

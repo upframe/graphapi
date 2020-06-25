@@ -5,17 +5,12 @@ export async function up(knex: Knex): Promise<any> {
     t.text('id').primary()
     t.text('template').notNullable()
     t.text('subject')
-    t.uuid('to_user')
-      .references('users.id')
-      .onDelete('SET NULL')
+    t.uuid('to_user').references('users.id').onDelete('SET NULL')
     t.text('to_email').notNullable()
   })
 
   await knex.schema.createTable('email_events', t => {
-    t.text('id')
-      .references('emails.id')
-      .notNullable()
-      .onDelete('cascade')
+    t.text('id').references('emails.id').notNullable().onDelete('cascade')
     t.enum(
       'event',
       [
@@ -33,9 +28,7 @@ export async function up(knex: Knex): Promise<any> {
         enumName: 'email_event',
       }
     ).notNullable()
-    t.timestamp('time')
-      .defaultTo('NOW()')
-      .notNullable()
+    t.timestamp('time').defaultTo('NOW()').notNullable()
   })
 
   if (process.env.DB_HOST !== 'localhost')
@@ -45,9 +38,7 @@ export async function up(knex: Knex): Promise<any> {
   `)
 
   await knex.schema.table('invites', t => {
-    t.text('email_id')
-      .references('emails.id')
-      .onDelete('SET NULL')
+    t.text('email_id').references('emails.id').onDelete('SET NULL')
   })
 }
 

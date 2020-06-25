@@ -4,7 +4,7 @@ import { Model, QueryBuilder } from '../models'
 import getQueryFields from '../utils/queryFields'
 import logger from '../logger'
 
-export default function<M = void, P extends Model = null>() {
+export default function <M = void, P extends Model = null>() {
   type Assertions<M, P> = {
     [key in keyof typeof assertions]: ResolverBuilder<M, P> & Assertions<M, P>
   }

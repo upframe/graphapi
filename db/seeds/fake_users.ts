@@ -33,10 +33,7 @@ export async function seed(knex: Knex): Promise<any> {
     users.push({
       id: uuid(),
       name,
-      handle: name
-        .toLowerCase()
-        .split(' ')
-        .join('.'),
+      handle: name.toLowerCase().split(' ').join('.'),
       email: unique(faker.internet.email),
       location: faker.address.city(),
       biography: faker.lorem.text(),

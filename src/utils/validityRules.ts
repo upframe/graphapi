@@ -108,4 +108,4 @@ const reserved = [
   'token',
   'unknown',
   'upframe',
-].flatMap((v) => [v, v + 's'])
+].flatMap(v => [v, v + 's'])

@@ -7,10 +7,7 @@ import logger from '../../logger'
 
 export const messageExt = resolver().loggedIn(
   async ({ query, args: { input }, ctx: { id } }) => {
-    const receiver = await query
-      .raw(User)
-      .findById(input.to)
-      .asUser(system)
+    const receiver = await query.raw(User).findById(input.to).asUser(system)
     if (!receiver?.email) throw new UserInputError('unknown receiver')
 
     const sender = await query.raw(User).findById(id)

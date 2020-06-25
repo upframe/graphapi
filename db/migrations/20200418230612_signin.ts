@@ -4,9 +4,7 @@ export async function up(knex: Knex): Promise<any> {
   await knex.schema.createTable('signin_upframe', t => {
     t.text('email').primary()
     t.text('password').notNullable()
-    t.uuid('user_id')
-      .references('users.id')
-      .onDelete('CASCADE')
+    t.uuid('user_id').references('users.id').onDelete('CASCADE')
   })
 
   const users = await knex('users').select('id', 'email', 'password')
@@ -19,9 +17,7 @@ export async function up(knex: Knex): Promise<any> {
   })
 
   await knex.schema.createTable('connect_google', t => {
-    t.uuid('user_id')
-      .references('users.id')
-      .onDelete('CASCADE')
+    t.uuid('user_id').references('users.id').onDelete('CASCADE')
     t.text('google_id').primary()
     t.text('refresh_token').notNullable()
     t.text('access_token')
