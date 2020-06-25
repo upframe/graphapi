@@ -108,10 +108,12 @@ functions:
       - arn:aws:lambda:eu-west-1:464622532012:layer:Datadog-Node12-x:23
     events:
       - stream:
+          enabled: true
           type: dynamodb
           batchSize: 1
           startingPosition: LATEST
           arn: ${ssm:/dynamodb/messages/stream/arn}
+          tableName: messages
 
 plugins:
   - serverless-webpack
@@ -141,6 +143,8 @@ custom:
     port: 4002
     debug: true
   serverless-offline-dynamodb-streams:
+    apiVersion: '2013-12-02'
     endpoint: http://0.0.0.0:8000
+    region: eu-west-1
     skipCacheInvalidation: false
     readInterval: 500
