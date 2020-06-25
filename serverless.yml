@@ -23,7 +23,15 @@ provider:
     - Effect: Allow
       Action:
         - dynamodb:*
-      Resource: ${ssm:/dynamodb/redirects/arn}
+      Resource:
+        - ${ssm:/dynamodb/redirects/arn}
+        - ${ssm:/dynamodb/messages/arn}
+        - ${ssm:/dynamodb/connections/arn}
+    - Effect: Allow
+      Action:
+        - execute-api:Invoke
+      Resource:
+        - arn:aws:execute-api:eu-west-1:312104790015:stzj06gng1/msg/*
 
 functions:
   graphapi:
@@ -39,6 +47,7 @@ functions:
             origins:
               - https://beta.upframe.io
               - https://upframe.io
+              - https://msg.upframe.io
             allowCredentials: true
       - http:
           path: /
@@ -47,6 +56,7 @@ functions:
             origins:
               - https://beta.upframe.io
               - https://upframe.io
+              - https://msg.upframe.io
             allowCredentials: true
 
     environment:
@@ -82,6 +92,8 @@ functions:
 
   wsConnect:
     handler: src/messaging/handler.wsConnect
+    layers:
+      - arn:aws:lambda:eu-west-1:464622532012:layer:Datadog-Node12-x:23
     events:
       - websocket:
           route: $connect
@@ -92,6 +104,8 @@ functions:
 
   message:
     handler: src/messaging/handler.message
+    layers:
+      - arn:aws:lambda:eu-west-1:464622532012:layer:Datadog-Node12-x:23
     events:
       - stream:
           type: dynamodb
@@ -115,6 +129,7 @@ custom:
         - aws-sdk
         - datadog-lambda-js
         - dd-trace
+        - chalk
   customDomain:
     RestApiId:
       Ref: ApiGatewayRestApi

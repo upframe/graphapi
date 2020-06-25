@@ -86,13 +86,13 @@ export const server = new ApolloServer({
         },
       }
     : { introspection: false, playground: false }),
-  ...(!process.env.IS_OFFLINE &&
-    process.env.stage === 'dev' && {
-      engine: {
-        apiKey: process.env.APOLLO_KEY,
-        schemaTag: 'beta',
-      },
-    }),
+  engine:
+    process.env.stage === 'dev'
+      ? {
+          apiKey: process.env.APOLLO_KEY,
+          schemaTag: 'beta',
+        }
+      : false,
   extensions: [
     () => ({
       requestDidStart({ request, operationName, context }) {
@@ -114,10 +114,9 @@ export const server = new ApolloServer({
 
 export const handler = server.createHandler({
   cors: {
-    origin:
-      process.env.stage !== 'prod'
-        ? 'https://beta.upframe.io'
-        : 'https://upframe.io',
+    origin: `https://${
+      { dev: 'beta.', msg: 'msg.' }[process.env.stage] ?? ''
+    }upframe.io`,
     credentials: true,
   },
 })

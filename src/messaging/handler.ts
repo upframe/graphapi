@@ -9,62 +9,74 @@ import handleMessage from './message'
 import { unmarshall } from '~/utils/aws'
 
 export const wsConnect = async (event: APIGatewayEvent) => {
+  const response = (opts = {}) => ({
+    ...opts,
+    statusCode: 200,
+    ...(event.headers?.['Sec-WebSocket-Protocol'] && {
+      headers: {
+        'Sec-WebSocket-Protocol': event.headers['Sec-WebSocket-Protocol'],
+      },
+    }),
+  })
+
   try {
-    logger.info(`!WSCONNECT ${event.requestContext.eventType}`)
-    if (event.requestContext.eventType === 'CONNECT')
+    if (event.requestContext.eventType === 'CONNECT') {
       await new Client(event.requestContext.connectionId).connect()
-    else if (event.requestContext.eventType === 'DISCONNECT')
+      return response({ body: 'Connected.' })
+    } else if (event.requestContext.eventType === 'DISCONNECT') {
       await new Client(event.requestContext.connectionId).disconnect()
-    else {
-      const rootValue = JSON.parse(event.body)
-      logger.info(rootValue)
-      if (rootValue?.type === 'connection_init') {
-        await gateway
-          .postToConnection({
-            ConnectionId: event.requestContext.connectionId,
-            Data: JSON.stringify({
-              id: uuidv4(),
-              type: 'connection_ack',
-              payload: {},
-            }),
-          })
-          .promise()
-        return { statusCode: 200 }
-      }
-
-      if (!rootValue.payload) return { statusCode: 200 }
-
-      const {
-        query,
-        variables: variableValues,
-        operationName,
-      } = rootValue.payload
-      const document = parse(query)
-      const operationAST = getOperationAST(document, rootValue.operationName)
-
-      if (operationAST?.operation !== 'subscription')
-        throw Error('operation must be subscription')
-
-      const validationErrors = validate(schema, document)
-
-      if (validationErrors.length) {
-        logger.error('validation error', { validationErrors })
-        throw new Error('validation errors')
-      }
-
-      await subscribe({
-        document,
-        schema,
-        rootValue,
-        operationName,
-        variableValues,
-        contextValue: {
-          connectionId: event.requestContext.connectionId,
-          subscriptionId: rootValue.id,
-        },
-      })
+      return response()
     }
-    return { statusCode: 200 }
+
+    const rootValue = JSON.parse(event.body)
+
+    if (rootValue?.type === 'connection_init') {
+      await gateway
+        .postToConnection({
+          ConnectionId: event.requestContext.connectionId,
+          Data: JSON.stringify({
+            id: uuidv4(),
+            type: 'connection_ack',
+            payload: {},
+          }),
+        })
+        .promise()
+      return response()
+    }
+
+    if (!rootValue.payload) return response()
+
+    const {
+      query,
+      variables: variableValues,
+      operationName,
+    } = rootValue.payload
+    const document = parse(query)
+    const operationAST = getOperationAST(document, rootValue.operationName)
+
+    if (operationAST?.operation !== 'subscription')
+      throw Error('operation must be subscription')
+
+    const validationErrors = validate(schema, document)
+
+    if (validationErrors.length) {
+      logger.error('validation error', { validationErrors })
+      throw new Error('validation errors')
+    }
+
+    await subscribe({
+      document,
+      schema,
+      rootValue,
+      operationName,
+      variableValues,
+      contextValue: {
+        connectionId: event.requestContext.connectionId,
+        subscriptionId: rootValue.id,
+      },
+    })
+
+    return response()
   } catch (error) {
     logger.error(error.toString())
     throw error

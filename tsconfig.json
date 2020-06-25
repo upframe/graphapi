@@ -13,16 +13,5 @@
       "~/*": ["src/*"]
     }
   },
-  "exclude": [
-    "node_modules",
-    ".webpack",
-    "db",
-    "queries",
-    "test",
-    "prettier.config.js",
-    ".eslintrc.js",
-    "apollo.config.js",
-    "sls.conf.js",
-    "webpack.config.js"
-  ]
+  "exclude": ["node_modules", ".webpack", ".serverless", "queries", "test"]
 }
