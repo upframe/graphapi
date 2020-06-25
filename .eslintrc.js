@@ -14,6 +14,7 @@ module.exports = {
     tsconfigRootDir: __dirname,
     ecmaVersion: 2018,
     sourceType: 'module',
+    createDefaultProgram: true,
   },
   globals: {
     module: true,
@@ -25,5 +26,6 @@ module.exports = {
     semi: ['error', 'never'],
     '@typescript-eslint/no-unused-vars': 'error',
     'no-unreachable': 'warn',
+    'require-await': 'warn',
   },
 }

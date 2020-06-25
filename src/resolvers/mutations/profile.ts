@@ -124,7 +124,7 @@ export const setProfileSearchability = resolver<User>().loggedIn(
 
 export const updateNotificationPreferences = resolver<User>()(
   async ({ args: { input }, ctx: { id }, query }) => {
-    return query().upsertGraphAndFetch({
+    return await query().upsertGraphAndFetch({
       id,
       ...(typeof input.receiveEmails === 'boolean' && {
         allow_emails: input.receiveEmails,

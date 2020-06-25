@@ -5,6 +5,7 @@ export default class Client {
   constructor(public readonly connectionId: string) {}
 
   public async connect() {
+    logger.info(`connect client ${this.connectionId}`)
     const pk = `CONNECTION|${this.connectionId}`
     const sk = 'CHANNEL_LIST'
     await ddb
@@ -25,6 +26,8 @@ export default class Client {
   }
 
   public async disconnect() {
+    logger.info(`disconnect client ${this.connectionId}`)
+
     const { Item } = await ddb
       .get({
         TableName: 'connections',
@@ -34,6 +37,9 @@ export default class Client {
         },
       })
       .promise()
+
+    if (!Item) return
+
     await ddb
       .batchWrite({
         RequestItems: {
@@ -66,9 +72,9 @@ export default class Client {
     variables: any,
     subscriptionId: string
   ) {
-    console.log({ subscriptionId })
+    logger.info(`subscribe client ${this.connectionId} to ${channel}`)
 
-    Promise.all([
+    await Promise.all([
       ddb
         .put({
           TableName: 'connections',
@@ -99,6 +105,7 @@ export default class Client {
   }
 
   public async post(data: any, id) {
+    logger.info(`post to ${this.connectionId}`, data)
     try {
       await gateway
         .postToConnection({
@@ -111,7 +118,7 @@ export default class Client {
         })
         .promise()
     } catch (e) {
-      logger.info(`disconnecting client ${this.connectionId}`)
+      logger.info(`inactive client ${this.connectionId}`, e)
       await this.disconnect()
     }
   }

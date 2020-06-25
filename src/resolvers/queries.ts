@@ -235,11 +235,9 @@ export const conversation = resolver<any>().loggedIn(
   async ({ args: { conversationId } }) => await Room.get(conversationId)
 )
 
-export const channel = resolver<any>().loggedIn(
-  async ({ args: { channelId } }) => ({
-    id: channelId,
-  })
-)
+export const channel = resolver<any>().loggedIn(({ args: { channelId } }) => ({
+  id: channelId,
+}))
 
 export const redirects = resolver<any[]>().isAdmin(async () => {
   const { Items } = await ddb.scan({ TableName: 'redirects' }).promise()
