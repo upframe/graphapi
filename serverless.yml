@@ -132,6 +132,14 @@ custom:
         - datadog-lambda-js
         - dd-trace
         - chalk
+        - mssql
+        - mysql
+        - mysql2
+        - sqlite3
+        - '@types'
+    packagerOptions:
+      scripts:
+        - rm -rf node_modules/@types && curl -sf https://gobinaries.com/tj/node-prune | sh && node-prune
   customDomain:
     RestApiId:
       Ref: ApiGatewayRestApi

@@ -4,7 +4,6 @@
     "@babel/plugin-transform-typescript",
     "@babel/plugin-proposal-class-properties",
     "@babel/proposal-object-rest-spread",
-    "@babel/plugin-transform-runtime",
-    "source-map-support"
+    "@babel/plugin-transform-runtime"
   ]
 }

@@ -20,6 +20,9 @@
     "queries",
     "test",
     "apollo.config.js",
-    "db"
+    "db",
+    "prettier.config.js",
+    "sls.conf.js",
+    "webpack.config.js"
   ]
 }
