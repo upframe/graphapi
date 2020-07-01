@@ -3,6 +3,7 @@ import { SocialMedia, User } from '~/models'
 import { createClient } from '~/google'
 import { google as gapi } from 'googleapis'
 import Room from '~/messaging/room'
+import { msgToken as createMsgToken } from '~/auth'
 
 export const __resolveType = resolver<string, any>()(({ parent: { role } }) => {
   if (role !== 'user') return 'Mentor'
@@ -83,6 +84,13 @@ export const inferTz = resolver<boolean, User>()(
   ({ parent }) => parent.tz_infer
 )
 
-export const conversations = resolver<any, User>()(
-  async ({ parent: { id } }) => await Room.getUserRooms(id)
+export const conversations = resolver<
+  any,
+  User
+>()(async ({ parent: { id }, ctx }) =>
+  id === ctx.id ? await Room.getUserRooms(id) : null
+)
+
+export const msgToken = resolver<string, User>()(({ parent, ctx: { id } }) =>
+  id === parent.id ? createMsgToken(parent as User) : null
 )

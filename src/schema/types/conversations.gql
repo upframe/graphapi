@@ -30,4 +30,5 @@ type Message implements Node {
   content: String
   author: ID
   time: String
+  channel: ID
 }

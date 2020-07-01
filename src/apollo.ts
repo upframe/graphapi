@@ -6,7 +6,7 @@ import {
 } from 'apollo-server-lambda'
 import resolvers from './resolvers'
 import { parseCookies } from './utils/cookie'
-import { authenticate } from './auth'
+import { decode } from './auth'
 import * as typeDefs from './schema'
 import { ValidationError } from 'objection'
 import logger from './logger'
@@ -23,7 +23,7 @@ export const server = new ApolloServer({
   schema,
   context: ({ event, context }): ResolverCtx => {
     const { id, role, sub } =
-      authenticate(
+      decode(
         parseCookies(event.headers?.Cookie ?? event.headers?.cookie).auth
       ) ?? {}
     const roles = role?.split('.').map(v => v.trim()) ?? []

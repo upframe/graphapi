@@ -1,11 +1,11 @@
 interface Person {
   id: ID!
-  handle: String
+  handle: String!
   name: String!
-  email: String
+  email: String!
   headline: String
   location: String
-  profilePictures: [ProfilePicture]
+  profilePictures: [ProfilePicture!]!
   social(includeEmpty: Boolean = false): [SocialHandle!]
   notificationPrefs: NotificationPreferences
   biography: String
@@ -19,16 +19,17 @@ interface Person {
   timezone: Timezone
   inferTz: Boolean
   conversations: [Conversation!]
+  msgToken: ID
 }
 
 type User implements Person {
   id: ID!
-  handle: String
+  handle: String!
   name: String!
-  email: String
+  email: String!
   headline: String
   location: String
-  profilePictures: [ProfilePicture]
+  profilePictures: [ProfilePicture!]!
   social(includeEmpty: Boolean = false): [SocialHandle!]
   notificationPrefs: UserNotificationPreferences
   biography: String
@@ -42,13 +43,14 @@ type User implements Person {
   timezone: Timezone
   inferTz: Boolean
   conversations: [Conversation!]
+  msgToken: ID
 }
 
 type Mentor implements Person {
   id: ID!
   handle: String!
   name: String!
-  email: String
+  email: String!
   headline: String
   company: String
   location: String
@@ -70,6 +72,7 @@ type Mentor implements Person {
   timezone: Timezone
   inferTz: Boolean
   conversations: [Conversation!]
+  msgToken: ID
 }
 
 enum Role {
