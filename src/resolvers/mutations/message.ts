@@ -2,7 +2,6 @@ import resolver from '../resolver'
 import Channel from '~/messaging/channel'
 import Room from '~/messaging/room'
 import { UserInputError } from '~/error'
-import { User } from '~/models'
 import token from '~/utils/token'
 import logger from '~/logger'
 
@@ -11,19 +10,19 @@ export const sendMessage = resolver<void>().loggedIn(
     void (await new Channel(channel).publish({ author: id, content }))
 )
 
-export const createConversation = resolver<User>().loggedIn(
-  async ({ args: { participants, msg }, ctx: { id }, query }) => {
+export const createConversation = resolver<any>().loggedIn(
+  async ({ args: { participants, msg }, ctx: { id } }) => {
+    participants = Array.from(new Set([id, ...participants]))
     const channelId = ((Date.now() / 1000) | 0) + token().slice(0, 4)
-    const room = await Room.create(channelId, id, ...participants)
+    const room = await Room.create(channelId, ...participants)
     if (!room) throw new UserInputError('room already exists')
 
     if (msg) {
       const channel = await new Channel(channelId).create(room.id)
-      logger.info(channel)
       await channel.publish({ author: id, content: msg })
     }
 
-    return await query().findById(id)
+    return room
   }
 )
 

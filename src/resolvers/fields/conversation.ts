@@ -14,9 +14,9 @@ export const participants = resolver<any[], any>()(
 export const channels = resolver<any[], any>()(({ parent }) => {
   logger.info(parent)
   return parent.channels
-    .sort(
+    ?.sort(
       (a: string, b: string) =>
         parseInt(b.slice(0, -4)) - parseInt(a.slice(0, -4))
     )
-    .map(id => ({ id }))
+    ?.map(id => ({ id }))
 })

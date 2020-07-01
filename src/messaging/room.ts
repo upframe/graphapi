@@ -4,17 +4,17 @@ import crypto from 'crypto'
 export default class Room {
   private constructor(
     public readonly id: string,
-    public readonly participants?: [],
-    public readonly channels?: []
+    public readonly participants?: string[],
+    public readonly channels?: string[]
   ) {}
 
   public static async create(
     channelId: string,
     ...userIds: string[]
   ): Promise<Room> {
-    const room = new Room(Room.id(...userIds))
-    const participants = ddb.createSet(userIds)
     const channels = ddb.createSet([channelId])
+    const room = new Room(Room.id(...userIds), userIds as string[], [channelId])
+    const participants = ddb.createSet(userIds)
     try {
       const sk = 'meta'
       await ddb
