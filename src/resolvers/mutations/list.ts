@@ -8,9 +8,14 @@ import { List, UserLists } from '../../models'
 import resolver from '../resolver'
 
 export const createList = resolver<List>().isAdmin(
-  async ({ args: { name }, query }) => {
+  async ({ args: { name, description, photoUrl, publicView }, query }) => {
     try {
-      const { id } = await query.raw().insert({ name })
+      const { id } = await query.raw().insert({
+        name,
+        description,
+        picture_url: photoUrl,
+        public_view: publicView,
+      })
       return await query().findById(id)
     } catch (e) {
       if (e instanceof UniqueViolationError)
@@ -60,5 +65,21 @@ export const removeFromList = resolver<UserLists>().isAdmin(
     )
       throw new UserInputError(`user ${userId} is not part of list ${listId}`)
     return await query().findById(listId)
+  }
+)
+
+export const changeListInfo = resolver<UserLists>().isAdmin(
+  async ({ args: { input }, query }) => {
+    const update: any = {}
+    if (input.description) update.description = input.description
+    else if (input.remove?.includes('description')) update.description = null
+
+    if (typeof input.publicView === 'boolean')
+      update.public_view = input.publicView
+
+    if (input.photoUrl) update.photo_url = input.photoUrl
+    else if (input.remove?.includes('photoUrl')) update.photo_url = null
+
+    return await query().patchAndFetchById(input.listId, update)
   }
 )

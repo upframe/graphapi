@@ -108,7 +108,13 @@ export const tags = resolver<Tags>()(async ({ query, args: { orderBy } }) => {
   return tags
 })
 
-export const lists = resolver<List>()(async ({ query }) => await query())
+export const lists = resolver<List>()(
+  async ({ query, args: { includeUnlisted } }) => {
+    let q = query()
+    if (!includeUnlisted) q = q.where({ public_view: true })
+    return await q
+  }
+)
 
 export const list = resolver<List>()(async ({ query, args: { name } }) => {
   const res = await query({ join: true, include: 'users.mentors' })

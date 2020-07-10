@@ -7,7 +7,8 @@ export class List extends Model {
   id!: number
   name!: string
   description: string
-
+  picture_url: string
+  public_view!: boolean
   users?: import('./user').User[]
 }
 
