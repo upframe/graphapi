@@ -156,6 +156,9 @@ enum TagOrder {
 type List {
   id: Int
   name: String!
+  description: String
+  pictureUrl: String
+  publicView: Boolean!
   users: [Person!]
 }
 

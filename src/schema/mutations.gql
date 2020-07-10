@@ -57,6 +57,14 @@ input RequestSlotInput {
   message: String!
 }
 
+input ChangeListInput {
+  listId: Int!
+  description: String
+  publicView: Boolean
+  photoUrl: String
+  remove: [String!]
+}
+
 type Mutation {
   signIn(input: LoginInput!): Person
   signInGoogle(code: ID!, redirect: String!): Person
@@ -104,10 +112,16 @@ type Mutation {
   connectCalendar(code: ID!, redirect: String!): Person
   disconnectCalendar: Person
 
-  createList(name: String!): List
+  createList(
+    name: String!
+    description: String
+    publicView: Boolean!
+    photoUrl: String
+  ): List
   deleteList(listId: Int!): Int
   addToList(listId: Int!, userId: ID!): List
   removeFromList(listId: Int!, userId: ID!): List
+  changeListInfo(input: ChangeListInput): List
 
   setTagName(id: Int!, name: String!): Tag
   mergeTags(from: Int!, into: Int!): Tag
