@@ -5,9 +5,9 @@ import { UserInputError } from '~/error'
 import token from '~/utils/token'
 import logger from '~/logger'
 
-export const sendMessage = resolver<void>().loggedIn(
+export const sendMessage = resolver<any>().loggedIn(
   async ({ args: { content, channel }, ctx: { id } }) =>
-    void (await new Channel(channel).publish({ author: id, content }))
+    await new Channel(channel).publish({ author: id, content })
 )
 
 export const createConversation = resolver<any>().loggedIn(
@@ -33,6 +33,6 @@ export const createThread = resolver<any>().loggedIn(
     ).create(conversationId)
     if (msg) await channel.publish({ author: id, content: msg })
     logger.info(channel)
-    return await Room.get(conversationId)
+    return { id: channel.channelId }
   }
 )

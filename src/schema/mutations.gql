@@ -56,9 +56,9 @@ type Mutation {
 
   invite(emails: [String!]!, role: Role = USER): Person
 
-  sendMessage(content: String!, channel: ID!): Int
+  sendMessage(content: String!, channel: ID!): Message!
   createConversation(participants: [ID!]!, msg: String): Conversation!
-  createThread(conversationId: ID!, msg: String): Conversation
+  createThread(conversationId: ID!, msg: String): Channel!
 
   setRedirect(from: String!, to: String!, expires: Int): Int
   deleteRedirect(path: String!): Int

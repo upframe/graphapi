@@ -27,8 +27,8 @@ type ChannelMessageEdge implements Edge {
 
 type Message implements Node {
   id: ID!
-  content: String
-  author: ID
-  time: String
-  channel: ID
+  content: String!
+  author: ID!
+  time: String!
+  channel: ID!
 }

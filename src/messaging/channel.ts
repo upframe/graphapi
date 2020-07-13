@@ -61,13 +61,19 @@ export default class Channel {
         .map(v => parseInt(v, 16).toString(36))
         .join(''),
     ...rest
-  }: Optional<Omit<Message, 'channel'>, 'time' | 'id'>) {
+  }: Optional<Omit<Message, 'channel'>, 'time' | 'id'>): Promise<Message> {
     await ddb
       .put({
         TableName: 'messages',
         Item: { channel: this.channelId, id, time, ...rest },
       })
       .promise()
+    return {
+      id,
+      time,
+      channel: this.channelId,
+      ...rest,
+    }
   }
 
   public async read(
