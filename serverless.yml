@@ -102,8 +102,8 @@ functions:
       - websocket:
           route: $default
 
-  message:
-    handler: src/messaging/handler.message
+  dbEvent:
+    handler: src/messaging/handler.dbEvent
     layers:
       - arn:aws:lambda:eu-west-1:464622532012:layer:Datadog-Node12-x:23
     events:
@@ -112,8 +112,8 @@ functions:
           type: dynamodb
           batchSize: 1
           startingPosition: LATEST
-          arn: ${ssm:/dynamodb/messages/stream/arn}
-          tableName: messages
+          arn: ${ssm:/dynamodb/conversations/stream/arn}
+          tableName: conversations
 
 plugins:
   - serverless-webpack

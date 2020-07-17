@@ -1,52 +1,17 @@
 import { ddb } from '~/utils/aws'
 import type { Optional } from '~/utils/types'
 import assert from 'assert'
-const crypto = require('crypto')
+import crypto from 'crypto'
 import logger from '~/logger'
+import * as db from './db'
 
 export default class Channel {
   constructor(public readonly channelId: string) {}
 
-  public async create(roomId: string): Promise<Channel> {
-    logger.info(`create channel ${this.channelId} in ${roomId}`)
+  public async create(conversationId: string): Promise<Channel> {
+    logger.info(`create channel ${this.channelId} in ${conversationId}`)
 
-    const [{ Attributes }] = await Promise.all([
-      ddb
-        .update({
-          TableName: 'connections',
-          ReturnValues: 'ALL_NEW',
-          Key: { pk: `ROOM|${roomId}`, sk: 'meta' },
-          UpdateExpression: 'ADD channels :c',
-          ExpressionAttributeValues: {
-            ':c': ddb.createSet([this.channelId]),
-          },
-        })
-        .promise(),
-      ddb
-        .put({
-          TableName: 'connections',
-          Item: {
-            pk: `CHANNEL|${this.channelId}`,
-            sk: `ROOM|${roomId}`,
-          },
-        })
-        .promise(),
-    ])
-
-    await Promise.all(
-      Attributes.participants.values.map(id =>
-        ddb
-          .update({
-            TableName: 'connections',
-            Key: { pk: `USER|${id}`, sk: `ROOM|${roomId}` },
-            UpdateExpression: 'ADD channels :c',
-            ExpressionAttributeValues: {
-              ':c': ddb.createSet([this.channelId]),
-            },
-          })
-          .promise()
-      )
-    )
+    await db.createChannel(conversationId, this.channelId)
 
     return this
   }
@@ -60,20 +25,20 @@ export default class Channel {
         .match(/.{2}/g)
         .map(v => parseInt(v, 16).toString(36))
         .join(''),
-    ...rest
+    author,
+    content,
   }: Optional<Omit<Message, 'channel'>, 'time' | 'id'>): Promise<Message> {
-    await ddb
-      .put({
-        TableName: 'messages',
-        Item: { channel: this.channelId, id, time, ...rest },
-      })
-      .promise()
-    return {
+    const msg = {
       id,
       time,
       channel: this.channelId,
-      ...rest,
+      author,
+      content,
     }
+
+    await db.publishMessage(msg)
+
+    return msg
   }
 
   public async read(
@@ -102,17 +67,18 @@ export default class Channel {
 
     const res = await ddb
       .query({
-        TableName: 'messages',
-        KeyConditionExpression: 'channel = :ch',
+        TableName: 'conversations',
+        KeyConditionExpression: 'pk = :pk AND begins_with(sk, :sk)',
         ExpressionAttributeValues: {
-          ':ch': this.channelId,
+          ':pk': db.prefix.channel(this.channelId),
+          ':sk': db.prefix.message(),
         },
         ScanIndexForward: dir === 'forward',
         Limit: limit + 1,
         ...(cursor && {
           ExclusiveStartKey: {
-            channel: this.channelId,
-            id: cursor,
+            pk: db.prefix.channel(this.channelId),
+            sk: db.prefix.message(cursor),
           },
         }),
       })
@@ -120,7 +86,11 @@ export default class Channel {
 
     logger.info(res)
 
-    const items = res.Items.slice(0, limit)
+    const items = res.Items.slice(0, limit).map(({ pk, sk, ...rest }) => ({
+      channel: pk.replace(db.prefix.channel(), ''),
+      id: sk.replace(db.prefix.message(), ''),
+      ...rest,
+    }))
 
     return {
       messages: (dir === 'forward' ? items : items.reverse()) as Message[],

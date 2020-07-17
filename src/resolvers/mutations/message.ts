@@ -1,6 +1,6 @@
 import resolver from '../resolver'
 import Channel from '~/messaging/channel'
-import Room from '~/messaging/room'
+import Conversation from '~/messaging/conversation'
 import { UserInputError } from '~/error'
 import token from '~/utils/token'
 import logger from '~/logger'
@@ -14,15 +14,15 @@ export const createConversation = resolver<any>().loggedIn(
   async ({ args: { participants, msg }, ctx: { id } }) => {
     participants = Array.from(new Set([id, ...participants]))
     const channelId = ((Date.now() / 1000) | 0) + token().slice(0, 4)
-    const room = await Room.create(channelId, ...participants)
-    if (!room) throw new UserInputError('room already exists')
+    const conversation = await Conversation.create(channelId, ...participants)
+    if (!conversation) throw new UserInputError('conversation already exists')
 
     if (msg) {
-      const channel = await new Channel(channelId).create(room.id)
+      const channel = await new Channel(channelId).create(conversation.id)
       await channel.publish({ author: id, content: msg })
     }
 
-    return room
+    return conversation
   }
 )
 

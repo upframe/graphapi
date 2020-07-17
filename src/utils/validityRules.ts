@@ -75,6 +75,7 @@ const reserved = [
   'code',
   'confirm',
   'contact',
+  'conversation',
   'deny',
   'group',
   'group',

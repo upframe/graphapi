@@ -2,7 +2,7 @@ import resolver from '../resolver'
 import { SocialMedia, User } from '~/models'
 import { createClient } from '~/google'
 import { google as gapi } from 'googleapis'
-import Room from '~/messaging/room'
+import Conversation from '~/messaging/conversation'
 import { msgToken as createMsgToken } from '~/auth'
 
 export const __resolveType = resolver<string, any>()(({ parent: { role } }) => {
@@ -88,7 +88,7 @@ export const conversations = resolver<
   any,
   User
 >()(async ({ parent: { id }, ctx }) =>
-  id === ctx.id ? await Room.getUserRooms(id) : null
+  id === ctx.id ? await Conversation.getUserConversations(id) : null
 )
 
 export const msgToken = resolver<string, User>()(({ parent, ctx: { id } }) =>

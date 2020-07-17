@@ -1,0 +1,195 @@
+import { ddb } from '~/utils/aws'
+import {
+  get,
+  put,
+  batchWrite,
+  batchDelete,
+  query,
+  tables,
+  remove,
+  update,
+} from './dbOps'
+
+type Conversation = {
+  id: tables['conversations']['pk']
+  channels: string[]
+  participants: string[]
+}
+
+export const prefix = {
+  conversation: (id = '') => `CONV|${id}`,
+  channel: (id = '') => `CHANNEL|${id}`,
+  user: (id = '') => `USER|${id}`,
+  client: (id = '') => `CLIENT|${id}`,
+  message: (id = '') => `MSG|${id}`,
+}
+
+export const getConversation = async (id: string) =>
+  await get('conversations', { pk: id, sk: 'meta' })
+
+export const getUserConversations = async (id: string) =>
+  await query(
+    'connections',
+    ['pk', '=', prefix.user(id)],
+    ['sk', 'begins', prefix.conversation()]
+  )
+
+export const createConversation = async ({
+  id,
+  channels,
+  participants,
+}: Conversation) => {
+  try {
+    await Promise.all([
+      put(
+        'conversations',
+        {
+          key: { pk: prefix.conversation(id), sk: 'meta' },
+          channels: ddb.createSet(channels),
+          participants: ddb.createSet(participants),
+        },
+        'NOT_EXISTS'
+      ),
+      participants.flatMap(user => [
+        update('connections', { pk: prefix.user(user), sk: 'meta' }, [
+          'ADD',
+          'conversations',
+          id,
+        ]),
+        put('connections', {
+          key: { pk: prefix.user(user), sk: prefix.conversation(id) },
+          channels: ddb.createSet(channels),
+          participants: ddb.createSet(
+            participants.filter(part => part !== user)
+          ),
+        }),
+      ]),
+    ])
+  } catch (e) {
+    if (e.code === 'ConditionalCheckFailedException') return null
+    return null
+  }
+}
+
+export const createClient = async (id: string) => {
+  await put(
+    'connections',
+    { key: { pk: prefix.client(id), sk: 'meta' } },
+    'NOT_EXISTS'
+  )
+}
+
+export const removeClient = async (id: string) =>
+  await remove('connections', { pk: prefix.client(id), sk: 'meta' }, true)
+
+export const subscribeClient = async (
+  type: 'messages' | 'channels',
+  client: string,
+  items: string[],
+  subscriptionId: string,
+  query: string,
+  variables: any
+) => {
+  await Promise.all([
+    batchWrite(
+      'connections',
+      items.map(item => ({
+        key: {
+          pk: prefix[type === 'messages' ? 'channel' : 'conversation'](item),
+          sk: prefix.client(client),
+        },
+        subscriptionId,
+        query,
+        variables,
+        ttl: Date.now() + 1000 * 60 ** 2 * 12,
+      }))
+    ),
+    update('connections', { pk: prefix.client(client), sk: 'meta' }, [
+      'ADD',
+      type === 'messages' ? 'channels' : 'conversations',
+      items,
+    ]),
+  ])
+}
+
+export const unsubscribeClient = async (
+  type: 'messages' | 'channels',
+  client: string,
+  items: string[]
+) => {
+  await Promise.all([
+    await batchDelete(
+      'connections',
+      items.map(item => ({
+        pk: prefix[type === 'messages' ? 'channel' : 'conversation'](item),
+        sk: prefix.client(client),
+      }))
+    ),
+    update('connections', { pk: prefix.client(client), sk: 'meta' }, [
+      'REMOVE',
+      type === 'messages' ? 'channels' : 'conversations',
+      items,
+    ]),
+  ])
+}
+
+export const createChannel = async (
+  conversationId: string,
+  channelId: string
+) => {
+  await Promise.all([
+    put('conversations', {
+      key: {
+        pk: prefix.channel(channelId),
+        sk: prefix.conversation(conversationId),
+      },
+    }),
+    update(
+      'conversations',
+      {
+        pk: prefix.conversation(conversationId),
+        sk: 'meta',
+      },
+      ['ADD', 'channels', channelId],
+      true
+    ).then(({ participants }) => {
+      Promise.all(
+        participants?.map((id: string) =>
+          update('connections', { pk: prefix.user(id), sk: 'meta' }, [
+            'ADD',
+            'channels',
+            channelId,
+          ])
+        ) ?? []
+      )
+    }),
+    query(
+      'connections',
+      ['pk', '=', conversationId],
+      ['sk', 'begins', prefix.client()]
+    ).then(clients =>
+      Promise.all(
+        clients?.map(({ sk }) =>
+          put('connections', { key: { pk: prefix.channel(channelId), sk } })
+        ) ?? []
+      )
+    ),
+  ])
+}
+
+export const publishMessage = async ({
+  id,
+  channel,
+  ...rest
+}: {
+  id: string
+  time: number
+  channel: string
+  author: string
+  content: string
+}) => {
+  await put('conversations', {
+    key: { pk: prefix.channel(channel), sk: prefix.message(id) },
+    ...rest,
+  })
+}
