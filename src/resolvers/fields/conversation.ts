@@ -1,5 +1,4 @@
 import resolver from '../resolver'
-import logger from '~/logger'
 
 export const id = resolver<string, any>()(({ parent: { id } }) => id)
 
@@ -11,12 +10,11 @@ export const participants = resolver<any[], any>()(
     )
 )
 
-export const channels = resolver<any[], any>()(({ parent }) => {
-  logger.info(parent)
-  return parent.channels
+export const channels = resolver<any[], any>()(({ parent }) =>
+  parent.channels
     ?.sort(
       (a: string, b: string) =>
         parseInt(b.slice(0, -4)) - parseInt(a.slice(0, -4))
     )
     ?.map(id => ({ id }))
-})
+)

@@ -1,5 +1,6 @@
 import crypto from 'crypto'
 import * as db from './db'
+import logger from '~/logger'
 
 export default class Conversation {
   private constructor(
@@ -33,8 +34,13 @@ export default class Conversation {
   public static async getUserConversations(
     userId: string
   ): Promise<Conversation[]> {
-    const { conversations } = await db.getUser(userId)
-    const res = await db.getConversations(conversations)
+    const user = await db.getUser(userId)
+    if (!user) {
+      logger.info(`create chat user for ${userId}`)
+      await db.createUser(userId)
+    }
+    if (!user?.conversations?.length) return []
+    const res = await db.getConversations(user.conversations)
     return res.map(
       ({ pk, participants, channels }) =>
         new Conversation(

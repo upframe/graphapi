@@ -36,6 +36,8 @@ export default class Client {
             ),
           ]
         : []),
+      ...(item.subConv ? [db.unsubscribeConversations(this.connectionId)] : []),
+      ...(item.user ? [db.removeUserClient(item.user, this.connectionId)] : []),
     ])
   }
 
@@ -45,8 +47,6 @@ export default class Client {
     variables: any,
     subscriptionId: string
   ) {
-    logger.info(`subscribe client ${this.connectionId} to ${channels}`)
-
     await db.subscribeClient(
       'messages',
       this.connectionId,
@@ -63,14 +63,23 @@ export default class Client {
     variables: any,
     subscriptionId: string
   ) {
-    logger.info(
-      `subscribe client ${this.connectionId} to channels in ${conversations}`
-    )
-
     await db.subscribeClient(
       'channels',
       this.connectionId,
       conversations,
+      subscriptionId,
+      query,
+      variables
+    )
+  }
+
+  public async subscribeConversations(
+    query: string,
+    variables: any,
+    subscriptionId: string
+  ) {
+    await db.subscribeConversations(
+      this.connectionId,
       subscriptionId,
       query,
       variables
@@ -94,5 +103,10 @@ export default class Client {
       logger.info(`inactive client ${this.connectionId}`, e)
       await this.disconnect()
     }
+  }
+
+  public async identify(user: string) {
+    logger.info(`identify ${this.connectionId} as ${user}`)
+    await db.identifyClient(this.connectionId, user)
   }
 }

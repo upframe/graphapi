@@ -1,4 +1,5 @@
 import * as db from './db'
+import { batchRead } from './dbOps'
 import { execute, parse } from 'graphql'
 import { schema } from '~/apollo'
 import Client from './client'
@@ -10,12 +11,6 @@ export default async function (
   const prefix = Object.fromEntries(
     ['pk', 'sk'].map(k => [k, newImage[k]?.split('|')[0]?.replace(/\|$/, '')])
   )
-  if (!prefix) return
-
-  if (prefix.sk === 'MSG') {
-    if (event !== 'INSERT') return
-    await newMessage(newImage)
-  }
 
   if (prefix.sk === 'MSG') {
     if (event === 'INSERT') await newMessage(newImage)
@@ -23,6 +18,10 @@ export default async function (
   }
   if (prefix.pk === 'CHANNEL') {
     if (event === 'INSERT') await newChannel(newImage)
+    return
+  }
+  if (prefix.pk === 'CONV' && newImage.sk === 'meta') {
+    if (event === 'INSERT') await newConversation(newImage)
     return
   }
 }
@@ -78,6 +77,40 @@ async function newChannel({ pk, sk }: { pk: string; sk: string }) {
         query,
         variables
       ).then(res => new Client(id).post(res, subscriptionId))
+    ),
+  ])
+}
+
+async function newConversation({
+  pk,
+  participants,
+}: {
+  pk: string
+  participants: string[]
+}) {
+  const id = pk.replace(db.prefix.conversation(), '')
+
+  const users = await batchRead(
+    'connections',
+    participants.map(id => ({ pk: db.prefix.user(id), sk: 'meta' }))
+  )
+
+  const clients = users.flatMap(({ clients }) => clients ?? [])
+
+  if (!clients.length) return
+
+  const subs = await batchRead(
+    'connections',
+    clients.map(id => ({ pk: db.prefix.client(id), sk: 'SUB_CONV' }))
+  )
+
+  if (!subs.length) return
+
+  await Promise.all([
+    subs.map(({ pk, query, variables, subscriptionId }) =>
+      exec({ conversation: { id, participants } }, query, variables).then(res =>
+        new Client(pk.replace(db.prefix.client(), '')).post(res, subscriptionId)
+      )
     ),
   ])
 }

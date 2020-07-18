@@ -151,17 +151,26 @@ export const remove = async <T extends keyof tables>(
 }
 
 type UpdateExpr = [UpdateVerb, string, any]
-type UpdateVerb = 'ADD' | 'REMOVE'
+type UpdateVerb = 'ADD' | 'DELETE' | 'SET'
 
 export const update = async <T extends keyof tables>(
   table: T,
   key: tables[T],
   [verb, field, value]: UpdateExpr,
-  returnValue = false
+  returnValue = false,
+  cond?: 'EXISTS'
 ) => {
-  const UpdateExpression = `${verb} ${field} :${field}`
+  const UpdateExpression = `${verb} #${field} ${
+    verb === 'SET' ? '= ' : ''
+  }:${field}`
   const ExpressionAttributeValues = {
-    [`:${field}`]: ddb.createSet(Array.isArray(value) ? value : [value]),
+    [`:${field}`]:
+      verb === 'SET'
+        ? value
+        : ddb.createSet(Array.isArray(value) ? value : [value]),
+  }
+  const ExpressionAttributeNames = {
+    [`#${field}`]: field,
   }
 
   const { Attributes } = await ddb
@@ -171,6 +180,12 @@ export const update = async <T extends keyof tables>(
       UpdateExpression,
       ExpressionAttributeValues,
       ReturnValues: returnValue ? 'ALL_NEW' : 'NONE',
+      ...(cond === 'EXISTS' && {
+        ConditionExpression: Object.keys(key)
+          .map(k => `attribute_exists(${k})`)
+          .join(' AND '),
+      }),
+      ExpressionAttributeNames,
     })
     .promise()
 

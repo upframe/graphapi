@@ -7,6 +7,7 @@ import logger from '../logger'
 import Client from './client'
 import handleDbRecord from './dbEvent'
 import { unmarshall } from '~/utils/aws'
+import { format } from './dbOps'
 
 export const wsConnect = async (event: APIGatewayEvent) => {
   const response = (opts = {}) => ({
@@ -84,9 +85,14 @@ export const wsConnect = async (event: APIGatewayEvent) => {
 }
 
 export const dbEvent = async (event: DynamoDBStreamEvent) => {
-  await Promise.allSettled(
-    event.Records.map(({ dynamodb, eventName }) =>
-      handleDbRecord(eventName, unmarshall(dynamodb.NewImage))
+  try {
+    await Promise.allSettled(
+      event.Records.map(({ dynamodb, eventName }) =>
+        handleDbRecord(eventName, format(unmarshall(dynamodb.NewImage)))
+      )
     )
-  )
+  } catch (error) {
+    logger.error(error)
+    throw error
+  }
 }

@@ -37,6 +37,19 @@ export const getConversations = async (ids: string[]) =>
 export const getUser = async (id: string) =>
   await get('connections', { pk: prefix.user(id), sk: 'meta' })
 
+export const createUser = async (id: string) => {
+  try {
+    await put(
+      'connections',
+      { key: { pk: prefix.user(id), sk: 'meta' } },
+      'NOT_EXISTS'
+    )
+  } catch (e) {
+    if (e.code === 'ConditionalCheckFailedException') return null
+    throw e
+  }
+}
+
 export const createConversation = async ({
   id,
   channels,
@@ -63,20 +76,51 @@ export const createConversation = async ({
     ])
   } catch (e) {
     if (e.code === 'ConditionalCheckFailedException') return null
-    return null
+    throw e
   }
 }
 
 export const createClient = async (id: string) => {
-  await put(
-    'connections',
-    { key: { pk: prefix.client(id), sk: 'meta' } },
-    'NOT_EXISTS'
-  )
+  await Promise.all([
+    put(
+      'connections',
+      { key: { pk: prefix.client(id), sk: 'meta' } },
+      'NOT_EXISTS'
+    ),
+  ])
 }
 
 export const removeClient = async (id: string) =>
   await remove('connections', { pk: prefix.client(id), sk: 'meta' }, true)
+
+export const identifyClient = async (client: string, user: string) => {
+  try {
+    await update(
+      'connections',
+      { pk: prefix.client(client), sk: 'meta' },
+      ['SET', 'user', user],
+      undefined,
+      'EXISTS'
+    )
+    await update('connections', { pk: prefix.user(user), sk: 'meta' }, [
+      'ADD',
+      'clients',
+      client,
+    ])
+  } catch (e) {
+    console.error(e)
+    if (e.code === 'ConditionalCheckFailedException') return null
+    throw e
+  }
+}
+
+export const removeUserClient = async (user: string, client: string) => {
+  await update('connections', { pk: prefix.user(user), sk: 'meta' }, [
+    'DELETE',
+    'clients',
+    client,
+  ])
+}
 
 export const subscribeClient = async (
   type: 'messages' | 'channels',
@@ -126,11 +170,50 @@ export const unsubscribeClient = async (
       ? []
       : [
           update('connections', { pk: prefix.client(client), sk: 'meta' }, [
-            'REMOVE',
+            'DELETE',
             type === 'messages' ? 'channels' : 'conversations',
             items,
           ]),
         ]) as Promise<any>[]),
+  ])
+}
+
+export const subscribeConversations = async (
+  client: string,
+  subscriptionId: string,
+  query: string,
+  variables: any
+) => {
+  await Promise.all([
+    update('connections', { pk: prefix.client(client), sk: 'meta' }, [
+      'SET',
+      'subConv',
+      true,
+    ]),
+    put('connections', {
+      key: { pk: prefix.client(client), sk: 'SUB_CONV' },
+      subscriptionId,
+      query,
+      variables,
+    }),
+  ])
+}
+
+export const unsubscribeConversations = async (
+  client: string,
+  skipMeta = false
+) => {
+  await Promise.all([
+    remove('connections', { pk: prefix.client(client), sk: 'SUB_CONV' }),
+    ...(skipMeta
+      ? []
+      : [
+          update('connections', { pk: prefix.client(client), sk: 'meta' }, [
+            'SET',
+            'subConv',
+            false,
+          ]),
+        ]),
   ])
 }
 

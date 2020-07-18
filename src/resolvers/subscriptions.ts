@@ -51,3 +51,24 @@ export const channel = {
     return pubsub.asyncIterator('CHANNEL_ADDED')
   },
 }
+
+export const conversation = {
+  subscribe: async (
+    _,
+    { token },
+    { connectionId, subscriptionId },
+    { rootValue }
+  ) => {
+    const { user } = decode(token)
+    if (!user?.startsWith('msg:'))
+      throw new AuthenticationError('invalid message token')
+
+    const client = new Client(connectionId)
+    await client.identify(user.replace(/^msg:/, ''))
+
+    const { query, variables } = rootValue.payload
+    await client.subscribeConversations(query, variables, subscriptionId)
+
+    return pubsub.asyncIterator('CONVERSATION_ADDED')
+  },
+}
