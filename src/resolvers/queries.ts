@@ -18,7 +18,7 @@ import {
   scopes,
   signUpInfo as googleInfo,
 } from '../google'
-import Room from '~/messaging/room'
+import Conversation from '~/messaging/conversation'
 import { ddb } from '../utils/aws'
 
 export const me = resolver<User>().loggedIn(
@@ -232,7 +232,7 @@ export const checkValidity = resolver<any>()(
 )
 
 export const conversation = resolver<any>().loggedIn(
-  async ({ args: { conversationId } }) => await Room.get(conversationId)
+  async ({ args: { conversationId } }) => await Conversation.get(conversationId)
 )
 
 export const channel = resolver<any>().loggedIn(({ args: { channelId } }) => ({

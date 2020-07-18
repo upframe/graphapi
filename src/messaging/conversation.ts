@@ -24,22 +24,22 @@ export default class Conversation {
   }
 
   public static async get(conversationId: string): Promise<Conversation> {
-    const con = await db.getConversation(conversationId)
-    return con
-      ? new Conversation(conversationId, con.participants, con.values)
+    const { participants, channels } = await db.getConversation(conversationId)
+    return participants
+      ? new Conversation(conversationId, participants, channels)
       : null
   }
 
   public static async getUserConversations(
     userId: string
   ): Promise<Conversation[]> {
-    const res = await db.getUserConversations(userId)
-
+    const { conversations } = await db.getUser(userId)
+    const res = await db.getConversations(conversations)
     return res.map(
-      ({ sk, participants, channels }) =>
+      ({ pk, participants, channels }) =>
         new Conversation(
-          sk.replace(db.prefix.conversation(), ''),
-          [...participants, userId],
+          pk.replace(db.prefix.conversation(), ''),
+          participants,
           channels
         )
     )

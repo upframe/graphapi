@@ -1,3 +1,4 @@
 type Subscription {
-  message(token: ID!, channel: ID): Message
+  message(token: ID!): Message
+  channel(token: ID!): Channel
 }

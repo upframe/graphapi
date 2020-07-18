@@ -49,6 +49,17 @@ export const put = async <T extends keyof tables>(
     .promise()
 }
 
+export const batchRead = async <T extends keyof tables>(
+  table: T,
+  keys: tables[T][]
+) => {
+  const { Responses } = await ddb
+    .batchGet({ RequestItems: { [table]: { Keys: keys } } })
+    .promise()
+
+  return Responses?.[table]?.map(format)
+}
+
 export const batchRequest = async <T extends keyof tables>(
   table: T,
   { add = [], remove = [] }: { add?: Item<T>[]; remove?: tables[T][] }
@@ -59,8 +70,10 @@ export const batchRequest = async <T extends keyof tables>(
       .map(Item => ({ PutRequest: { Item } })),
     ...remove.map(Key => ({ DeleteRequest: { Key } })),
   ]
+  const batches = batch(items, 25)
+
   await Promise.all(
-    batch(items, 25).map(batch =>
+    batches.map(batch =>
       ddb
         .batchWrite({
           RequestItems: {
@@ -108,7 +121,7 @@ export const query = async <T extends keyof tables>(
     .join(' AND ')
 
   const ExpressionAttributeValues = Object.fromEntries(
-    conditions.map(([f, _, v]) => [`:${f}`, v])
+    conditions.map(([f, , v]) => [`:${f}`, v])
   )
 
   const { Items } = await ddb
@@ -160,8 +173,6 @@ export const update = async <T extends keyof tables>(
       ReturnValues: returnValue ? 'ALL_NEW' : 'NONE',
     })
     .promise()
-
-  console.log('update result', Attributes, format(Attributes))
 
   return Attributes && format(Attributes)
 }

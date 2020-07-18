@@ -84,8 +84,6 @@ export default class Channel {
       })
       .promise()
 
-    logger.info(res)
-
     const items = res.Items.slice(0, limit).map(({ pk, sk, ...rest }) => ({
       channel: pk.replace(db.prefix.channel(), ''),
       id: sk.replace(db.prefix.message(), ''),

@@ -10,16 +10,33 @@ export default class Client {
   }
 
   public async disconnect() {
+    logger.info(`disconnect client ${this.connectionId}`)
     const item = await db.removeClient(this.connectionId)
 
-    if (!item?.channels?.length) return
+    if (!item) return
 
-    await db.unsubscribeClient('messages', this.connectionId, item.channels)
-    await db.unsubscribeClient(
-      'channels',
-      this.connectionId,
-      item.conversations
-    )
+    await Promise.all([
+      ...(item.channels?.length
+        ? [
+            db.unsubscribeClient(
+              'messages',
+              this.connectionId,
+              item.channels,
+              true
+            ),
+          ]
+        : []),
+      ...(item.conversations?.length
+        ? [
+            db.unsubscribeClient(
+              'channels',
+              this.connectionId,
+              item.conversations,
+              true
+            ),
+          ]
+        : []),
+    ])
   }
 
   public async subscribe(
@@ -41,19 +58,19 @@ export default class Client {
   }
 
   public async subscribeChannels(
-    conversation: string,
+    conversations: string[],
     query: string,
     variables: any,
     subscriptionId: string
   ) {
     logger.info(
-      `subscribe client ${this.connectionId} to channels in ${conversation}`
+      `subscribe client ${this.connectionId} to channels in ${conversations}`
     )
 
     await db.subscribeClient(
       'channels',
       this.connectionId,
-      [conversation],
+      conversations,
       subscriptionId,
       query,
       variables
@@ -61,7 +78,7 @@ export default class Client {
   }
 
   public async post(data: any, id: string) {
-    logger.info(`post to ${this.connectionId}`, data)
+    logger.info(`post to ${this.connectionId}`)
     try {
       await gateway
         .postToConnection({

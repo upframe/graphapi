@@ -1,9 +1,8 @@
 import pubsub from '../utils/pubsub'
 import Client from '~/messaging/client'
-import Conversation from '~/messaging/conversation'
 import { decode } from '~/auth'
-import { AuthenticationError, ForbiddenError } from '~/error'
-import { ddb } from '~/utils/aws'
+import { AuthenticationError } from '~/error'
+import * as db from '~/messaging/db'
 
 export const message = {
   subscribe: async (
@@ -16,17 +15,7 @@ export const message = {
     if (!user?.startsWith('msg:'))
       throw new AuthenticationError('invalid message token')
 
-    const { Items } = await ddb
-      .query({
-        TableName: 'connections',
-        KeyConditionExpression: 'pk = :pk',
-        ExpressionAttributeValues: {
-          ':pk': `USER|${user.replace(/^msg:/, '')}`,
-        },
-      })
-      .promise()
-
-    const channels = Items.flatMap(({ channels }) => channels.values)
+    const { channels } = await db.getUser(user.replace(/^msg:/, ''))
 
     const { query, variables } = rootValue.payload
 
@@ -39,7 +28,7 @@ export const message = {
 export const channel = {
   subscribe: async (
     _,
-    { token, conversation },
+    { token },
     { connectionId, subscriptionId },
     { rootValue }
   ) => {
@@ -47,15 +36,14 @@ export const channel = {
     if (!user?.startsWith('msg:'))
       throw new AuthenticationError('invalid message token')
 
-    const room = await Conversation.get(conversation)
-    if (!room?.participants?.includes(user.replace(/^msg:/, '')))
-      throw new ForbiddenError(`can't subscribe to conversation`)
+    const { conversations } = await db.getUser(user.replace(/^msg:/, ''))
 
     const { query, variables } = rootValue.payload
 
     const client = new Client(connectionId)
+
     await client.subscribeChannels(
-      conversation,
+      conversations,
       query,
       variables,
       subscriptionId

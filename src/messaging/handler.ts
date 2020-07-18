@@ -5,7 +5,7 @@ import { gateway } from '../utils/aws'
 import { schema } from '../apollo'
 import logger from '../logger'
 import Client from './client'
-import handleMessage from './message'
+import handleDbRecord from './dbEvent'
 import { unmarshall } from '~/utils/aws'
 
 export const wsConnect = async (event: APIGatewayEvent) => {
@@ -83,10 +83,10 @@ export const wsConnect = async (event: APIGatewayEvent) => {
   }
 }
 
-export const message = async (event: DynamoDBStreamEvent) => {
+export const dbEvent = async (event: DynamoDBStreamEvent) => {
   await Promise.allSettled(
-    event.Records.map(record =>
-      handleMessage(unmarshall(record.dynamodb.NewImage))
+    event.Records.map(({ dynamodb, eventName }) =>
+      handleDbRecord(eventName, unmarshall(dynamodb.NewImage))
     )
   )
 }

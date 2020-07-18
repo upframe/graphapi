@@ -2,6 +2,7 @@ import { ddb } from '~/utils/aws'
 import {
   get,
   put,
+  batchRead,
   batchWrite,
   batchDelete,
   query,
@@ -25,14 +26,16 @@ export const prefix = {
 }
 
 export const getConversation = async (id: string) =>
-  await get('conversations', { pk: id, sk: 'meta' })
+  await get('conversations', { pk: prefix.conversation(id), sk: 'meta' })
 
-export const getUserConversations = async (id: string) =>
-  await query(
-    'connections',
-    ['pk', '=', prefix.user(id)],
-    ['sk', 'begins', prefix.conversation()]
+export const getConversations = async (ids: string[]) =>
+  await batchRead(
+    'conversations',
+    ids.map(id => ({ pk: prefix.conversation(id), sk: 'meta' }))
   )
+
+export const getUser = async (id: string) =>
+  await get('connections', { pk: prefix.user(id), sk: 'meta' })
 
 export const createConversation = async ({
   id,
@@ -56,13 +59,6 @@ export const createConversation = async ({
           'conversations',
           id,
         ]),
-        put('connections', {
-          key: { pk: prefix.user(user), sk: prefix.conversation(id) },
-          channels: ddb.createSet(channels),
-          participants: ddb.createSet(
-            participants.filter(part => part !== user)
-          ),
-        }),
       ]),
     ])
   } catch (e) {
@@ -115,21 +111,26 @@ export const subscribeClient = async (
 export const unsubscribeClient = async (
   type: 'messages' | 'channels',
   client: string,
-  items: string[]
+  items: string[],
+  skipMeta = false
 ) => {
   await Promise.all([
-    await batchDelete(
+    batchDelete(
       'connections',
       items.map(item => ({
         pk: prefix[type === 'messages' ? 'channel' : 'conversation'](item),
         sk: prefix.client(client),
       }))
     ),
-    update('connections', { pk: prefix.client(client), sk: 'meta' }, [
-      'REMOVE',
-      type === 'messages' ? 'channels' : 'conversations',
-      items,
-    ]),
+    ...((skipMeta
+      ? []
+      : [
+          update('connections', { pk: prefix.client(client), sk: 'meta' }, [
+            'REMOVE',
+            type === 'messages' ? 'channels' : 'conversations',
+            items,
+          ]),
+        ]) as Promise<any>[]),
   ])
 }
 
@@ -193,3 +194,10 @@ export const publishMessage = async ({
     ...rest,
   })
 }
+
+export const getClients = async (ctx: 'channel' | 'conversation', id: string) =>
+  await query(
+    'connections',
+    ['pk', '=', prefix[ctx](id)],
+    ['sk', 'begins', prefix.client()]
+  )
