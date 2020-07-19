@@ -65,7 +65,7 @@ export const wsConnect = async (event: APIGatewayEvent) => {
       throw new Error('validation errors')
     }
 
-    await subscribe({
+    const res = await subscribe({
       document,
       schema,
       rootValue,
@@ -76,10 +76,11 @@ export const wsConnect = async (event: APIGatewayEvent) => {
         subscriptionId: rootValue.id,
       },
     })
+    if ((res as any)?.errors?.length) throw (res as any).errors[0]
 
     return response()
   } catch (error) {
-    logger.error(error.toString())
+    logger.error(error)
     throw error
   }
 }
