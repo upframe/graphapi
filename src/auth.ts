@@ -1,12 +1,14 @@
 import jwt from 'jsonwebtoken'
 import * as bcrypt from 'bcrypt'
 import { User } from './models'
+import logger from '~/logger'
 
 export function decode(token: string) {
   if (!token) return
   try {
     return jwt.verify(token, process.env.PUBLIC_KEY) as any
   } catch (e) {
+    logger.error(e)
     if (e instanceof jwt.JsonWebTokenError) return
     throw e
   }

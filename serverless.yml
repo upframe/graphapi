@@ -32,6 +32,36 @@ provider:
         - execute-api:Invoke
       Resource:
         - arn:aws:execute-api:eu-west-1:312104790015:stzj06gng1/msg/*
+  environment:
+    stage: ${self:provider.stage}
+    PUBLIC_KEY: ${ssm:/API/PublicKey}
+    PRIVATE_KEY: ${ssm:/API/PrivateKey~true}
+    APOLLO_KEY: ${ssm:/API/ApolloKey~true}
+    MAILGUN_KEY: ${ssm:/API/MailgunKey~true}
+    OAUTH_CLIENT_ID: ${ssm:/API/OAuth/ClientId}
+    OAUTH_CLIENT_SECRET: ${ssm:/API/OAuth/ClientSecret~true}
+    CALENDAR_ID: ${ssm:/API/CalendarId}
+    CALENDAR_REFRESH_TOKEN: ${ssm:/API/CalendarRefreshToken~true}
+    AWS_KEY_ID: ${ssm:/API/AwsKeyId}
+    AWS_KEY_SECRET: ${ssm:/API/AwsKeySecret~true}
+    BUCKET_NAME: ${ssm:/API/ProfilePictures/BucketName}
+    BUCKET_URL: ${ssm:/API/ProfilePictures/BucketUrl}
+    DEV_PASSWORD: ${ssm:/API/DevPassword~true}
+    EMAIL_SNS: ${ssm:/email/SNS/arn}
+
+    DB_HOST: ${ssm:/DB/Host}
+    DB_PROXY_HOST: ${ssm:/DB/Proxy/Host}
+    DB_PORT: ${ssm:/DB/Port}
+    DB_NAME: ${ssm:/DB/Name}
+    DB_USER: ${ssm:/API/DB/User}
+    DB_PASSWORD: ${ssm:/API/DB/Password~true}
+
+    DD_API_KEY: ${ssm:/API/Datadog/ApiKey}
+    DD_SERVICE: ${file(./sls.conf.js):DD_SERVICE}
+    DD_FLUSH_TO_LOG: ${file(./sls.conf.js):DD_FLUSH}
+    DD_ENHANCED_METRICS: ${file(./sls.conf.js):DD_ENHANCED}
+    DD_LOGS_INJECTION: ${file(./sls.conf.js):DD_LOG_INJECT}
+    DD_ENV: ${file(./sls.conf.js):DD_ENV}
 
 functions:
   graphapi:
@@ -58,37 +88,6 @@ functions:
               - https://upframe.io
               - https://msg.upframe.io
             allowCredentials: true
-
-    environment:
-      stage: ${self:provider.stage}
-      PUBLIC_KEY: ${ssm:/API/PublicKey}
-      PRIVATE_KEY: ${ssm:/API/PrivateKey~true}
-      APOLLO_KEY: ${ssm:/API/ApolloKey~true}
-      MAILGUN_KEY: ${ssm:/API/MailgunKey~true}
-      OAUTH_CLIENT_ID: ${ssm:/API/OAuth/ClientId}
-      OAUTH_CLIENT_SECRET: ${ssm:/API/OAuth/ClientSecret~true}
-      CALENDAR_ID: ${ssm:/API/CalendarId}
-      CALENDAR_REFRESH_TOKEN: ${ssm:/API/CalendarRefreshToken~true}
-      AWS_KEY_ID: ${ssm:/API/AwsKeyId}
-      AWS_KEY_SECRET: ${ssm:/API/AwsKeySecret~true}
-      BUCKET_NAME: ${ssm:/API/ProfilePictures/BucketName}
-      BUCKET_URL: ${ssm:/API/ProfilePictures/BucketUrl}
-      DEV_PASSWORD: ${ssm:/API/DevPassword~true}
-      EMAIL_SNS: ${ssm:/email/SNS/arn}
-
-      DB_HOST: ${ssm:/DB/Host}
-      DB_PROXY_HOST: ${ssm:/DB/Proxy/Host}
-      DB_PORT: ${ssm:/DB/Port}
-      DB_NAME: ${ssm:/DB/Name}
-      DB_USER: ${ssm:/API/DB/User}
-      DB_PASSWORD: ${ssm:/API/DB/Password~true}
-
-      DD_API_KEY: ${ssm:/API/Datadog/ApiKey}
-      DD_SERVICE: ${file(./sls.conf.js):DD_SERVICE}
-      DD_FLUSH_TO_LOG: ${file(./sls.conf.js):DD_FLUSH}
-      DD_ENHANCED_METRICS: ${file(./sls.conf.js):DD_ENHANCED}
-      DD_LOGS_INJECTION: ${file(./sls.conf.js):DD_LOG_INJECT}
-      DD_ENV: ${file(./sls.conf.js):DD_ENV}
 
   wsConnect:
     handler: src/messaging/handler.wsConnect
