@@ -25,7 +25,7 @@ provider:
         - dynamodb:*
       Resource:
         - ${ssm:/dynamodb/redirects/arn}
-        - ${ssm:/dynamodb/messages/arn}
+        - ${ssm:/dynamodb/conversations/arn}
         - ${ssm:/dynamodb/connections/arn}
     - Effect: Allow
       Action:
@@ -111,6 +111,7 @@ functions:
           enabled: true
           type: dynamodb
           batchSize: 1
+          maximumRetryAttempts: 3
           startingPosition: LATEST
           arn: ${ssm:/dynamodb/conversations/stream/arn}
           tableName: conversations

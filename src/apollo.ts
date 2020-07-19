@@ -73,6 +73,8 @@ export const server = new ApolloServer({
         ? err.message.split('-').pop()
         : null
 
+    if (err.message.includes('arn:aws')) err.message = 'internal error'
+
     return err
   },
   ...(process.env.stage !== 'prod'
