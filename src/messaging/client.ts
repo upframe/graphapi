@@ -45,7 +45,8 @@ export default class Client {
     channels: string[],
     query: string,
     variables: any,
-    subscriptionId: string
+    subscriptionId: string,
+    user: string
   ) {
     await db.subscribeClient(
       'messages',
@@ -53,7 +54,8 @@ export default class Client {
       channels,
       subscriptionId,
       query,
-      variables
+      variables,
+      user
     )
   }
 
@@ -61,7 +63,8 @@ export default class Client {
     conversations: string[],
     query: string,
     variables: any,
-    subscriptionId: string
+    subscriptionId: string,
+    user: string
   ) {
     await db.subscribeClient(
       'channels',
@@ -69,25 +72,27 @@ export default class Client {
       conversations,
       subscriptionId,
       query,
-      variables
+      variables,
+      user
     )
   }
 
   public async subscribeConversations(
     query: string,
     variables: any,
-    subscriptionId: string
+    subscriptionId: string,
+    user: string
   ) {
     await db.subscribeConversations(
       this.connectionId,
       subscriptionId,
       query,
-      variables
+      variables,
+      user
     )
   }
 
   public async post(data: any, id: string) {
-    logger.info(`post to ${this.connectionId}`)
     try {
       await gateway
         .postToConnection({

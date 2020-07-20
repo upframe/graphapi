@@ -11,16 +11,18 @@ export const message = {
     { connectionId, subscriptionId },
     { rootValue }
   ) => {
-    const { user } = decode(token)
+    let { user } = decode(token)
     if (!user?.startsWith('msg:'))
       throw new AuthenticationError('invalid message token')
 
-    const { channels } = await db.getUser(user.replace(/^msg:/, ''))
+    user = user.replace(/^msg:/, '')
+
+    const { channels } = await db.getUser(user)
 
     const { query, variables } = rootValue.payload
 
     const client = new Client(connectionId)
-    await client.subscribe(channels, query, variables, subscriptionId)
+    await client.subscribe(channels, query, variables, subscriptionId, user)
     return pubsub.asyncIterator(`MSG_ADDED`)
   },
 }
@@ -32,11 +34,13 @@ export const channel = {
     { connectionId, subscriptionId },
     { rootValue }
   ) => {
-    const { user } = decode(token)
+    let { user } = decode(token)
     if (!user?.startsWith('msg:'))
       throw new AuthenticationError('invalid message token')
 
-    const { conversations } = await db.getUser(user.replace(/^msg:/, ''))
+    user = user.replace(/^msg:/, '')
+
+    const { conversations } = await db.getUser(user)
 
     const { query, variables } = rootValue.payload
 
@@ -46,7 +50,8 @@ export const channel = {
       conversations,
       query,
       variables,
-      subscriptionId
+      subscriptionId,
+      user
     )
     return pubsub.asyncIterator('CHANNEL_ADDED')
   },
@@ -59,15 +64,17 @@ export const conversation = {
     { connectionId, subscriptionId },
     { rootValue }
   ) => {
-    const { user } = decode(token)
+    let { user } = decode(token)
     if (!user?.startsWith('msg:'))
       throw new AuthenticationError('invalid message token')
 
+    user = user.replace(/^msg:/, '')
+
     const client = new Client(connectionId)
-    await client.identify(user.replace(/^msg:/, ''))
+    await client.identify(user)
 
     const { query, variables } = rootValue.payload
-    await client.subscribeConversations(query, variables, subscriptionId)
+    await client.subscribeConversations(query, variables, subscriptionId, user)
 
     return pubsub.asyncIterator('CONVERSATION_ADDED')
   },

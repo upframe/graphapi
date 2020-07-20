@@ -128,7 +128,8 @@ export const subscribeClient = async (
   items: string[],
   subscriptionId: string,
   query: string,
-  variables: any
+  variables: any,
+  user: string
 ) => {
   await Promise.all([
     batchWrite(
@@ -142,6 +143,7 @@ export const subscribeClient = async (
         query,
         variables,
         ttl: Date.now() + 1000 * 60 ** 2 * 12,
+        user,
       }))
     ),
     update('connections', { pk: prefix.client(client), sk: 'meta' }, [
@@ -182,7 +184,8 @@ export const subscribeConversations = async (
   client: string,
   subscriptionId: string,
   query: string,
-  variables: any
+  variables: any,
+  user: string
 ) => {
   await Promise.all([
     update('connections', { pk: prefix.client(client), sk: 'meta' }, [
@@ -195,6 +198,7 @@ export const subscribeConversations = async (
       subscriptionId,
       query,
       variables,
+      user,
     }),
   ])
 }
