@@ -48,6 +48,7 @@ export default class Client {
     subscriptionId: string,
     user: string
   ) {
+    if (!channels?.length) return
     await db.subscribeClient(
       'messages',
       this.connectionId,
@@ -66,6 +67,7 @@ export default class Client {
     subscriptionId: string,
     user: string
   ) {
+    if (!conversations?.length) return
     await db.subscribeClient(
       'channels',
       this.connectionId,
