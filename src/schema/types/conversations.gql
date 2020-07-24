@@ -33,3 +33,8 @@ type Message implements Node {
   time: String!
   channel: ID!
 }
+
+type Unread {
+  channelId: ID!
+  unread: [ID!]!
+}

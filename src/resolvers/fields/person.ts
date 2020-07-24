@@ -4,6 +4,7 @@ import { createClient } from '~/google'
 import { google as gapi } from 'googleapis'
 import Conversation from '~/messaging/conversation'
 import { msgToken as createMsgToken } from '~/auth'
+import * as db from '~/messaging/db'
 
 export const __resolveType = resolver<string, any>()(({ parent: { role } }) => {
   if (role !== 'user') return 'Mentor'
@@ -94,3 +95,11 @@ export const conversations = resolver<
 export const msgToken = resolver<string, User>()(({ parent, ctx: { id } }) =>
   id === parent.id ? createMsgToken(parent as User) : null
 )
+
+export const unread = resolver<any, User>()(async ({ parent, ctx: { id } }) => {
+  if (parent.id !== id) return null
+  const user = await db.getUser(parent.id)
+  return Object.entries(user)
+    .filter(([k]) => k.startsWith('unread_'))
+    .map(([k, v]) => ({ channelId: k.replace(/^unread_/, ''), unread: v }))
+})

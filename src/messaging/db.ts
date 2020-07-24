@@ -223,14 +223,17 @@ export const unsubscribeConversations = async (
 
 export const createChannel = async (
   conversationId: string,
-  channelId: string
+  channelId: string,
+  participants: string[]
 ) => {
   await Promise.all([
     put('conversations', {
       key: {
         pk: prefix.channel(channelId),
-        sk: prefix.conversation(conversationId),
+        sk: 'meta',
       },
+      conversation: conversationId,
+      participants: ddb.createSet(participants),
     }),
     update(
       'conversations',
@@ -276,11 +279,32 @@ export const publishMessage = async ({
   author: string
   content: string
 }) => {
-  await put('conversations', {
-    key: { pk: prefix.channel(channel), sk: prefix.message(id) },
-    ...rest,
-  })
+  await Promise.all([
+    put('conversations', {
+      key: { pk: prefix.channel(channel), sk: prefix.message(id) },
+      ...rest,
+    }),
+    getChannel(channel).then(({ participants }) =>
+      Promise.all(
+        participants
+          .filter(id => id !== rest.author)
+          .map(id =>
+            update('connections', { pk: prefix.user(id), sk: 'meta' }, [
+              'ADD',
+              `unread_${channel}`,
+              id,
+            ])
+          )
+      )
+    ),
+  ])
 }
+
+export const getChannel = async (id: string) =>
+  await get('conversations', {
+    pk: prefix.channel(id),
+    sk: 'meta',
+  })
 
 export const getClients = async (ctx: 'channel' | 'conversation', id: string) =>
   await query(

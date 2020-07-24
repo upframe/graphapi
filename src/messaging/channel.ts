@@ -8,10 +8,13 @@ import * as db from './db'
 export default class Channel {
   constructor(public readonly channelId: string) {}
 
-  public async create(conversationId: string): Promise<Channel> {
+  public async create(
+    conversationId: string,
+    participants: string[]
+  ): Promise<Channel> {
     logger.info(`create channel ${this.channelId} in ${conversationId}`)
 
-    await db.createChannel(conversationId, this.channelId)
+    await db.createChannel(conversationId, this.channelId, participants)
 
     return this
   }

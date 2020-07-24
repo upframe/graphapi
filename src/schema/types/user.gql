@@ -20,6 +20,7 @@ interface Person {
   inferTz: Boolean
   conversations: [Conversation!]
   msgToken: ID
+  unread: [Unread!]
 }
 
 type User implements Person {
@@ -44,6 +45,7 @@ type User implements Person {
   inferTz: Boolean
   conversations: [Conversation!]
   msgToken: ID
+  unread: [Unread!]
 }
 
 type Mentor implements Person {
@@ -73,6 +75,7 @@ type Mentor implements Person {
   inferTz: Boolean
   conversations: [Conversation!]
   msgToken: ID
+  unread: [Unread!]
 }
 
 enum Role {

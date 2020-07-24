@@ -18,7 +18,10 @@ export const createConversation = resolver<any>().loggedIn(
     if (!conversation) throw new UserInputError('conversation already exists')
 
     if (msg) {
-      const channel = await new Channel(channelId).create(conversation.id)
+      const channel = await new Channel(channelId).create(
+        conversation.id,
+        participants
+      )
       await channel.publish({ author: id, content: msg })
     }
 
@@ -30,7 +33,10 @@ export const createThread = resolver<any>().loggedIn(
   async ({ args: { conversationId, msg }, ctx: { id } }) => {
     const channel = await new Channel(
       ((Date.now() / 1000) | 0) + token().slice(0, 4)
-    ).create(conversationId)
+    ).create(
+      conversationId,
+      (await Conversation.get(conversationId)).participants
+    )
     if (msg) await channel.publish({ author: id, content: msg })
     logger.info(channel)
     return { id: channel.channelId }

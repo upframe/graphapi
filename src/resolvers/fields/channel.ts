@@ -2,6 +2,7 @@ import resolver from '../resolver'
 import Channel from '~/messaging/channel'
 import type { Message } from '~/messaging/channel'
 import { UserInputError } from 'apollo-server-lambda'
+import * as db from '~/messaging/db'
 
 export const messages = resolver<Connection<Message>, any>()(
   async ({ parent, args: { first, last, after, before } }) => {
@@ -44,4 +45,9 @@ export const messages = resolver<Connection<Message>, any>()(
       },
     }
   }
+)
+
+export const conversationId = resolver<string, any>()(
+  async ({ parent: { conversationId, id } }) =>
+    conversationId ?? (await db.getChannel(id)).conversation
 )
