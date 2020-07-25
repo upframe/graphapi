@@ -38,3 +38,9 @@ type Unread {
   channelId: ID!
   unread: [ID!]!
 }
+
+type Read {
+  userId: ID!
+  channelId: ID!
+  msgId: ID!
+}

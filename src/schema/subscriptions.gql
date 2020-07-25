@@ -2,4 +2,5 @@ type Subscription {
   message(token: ID!): Message
   channel(token: ID!): Channel
   conversation(token: ID!): Conversation
+  read(token: ID!): Read
 }

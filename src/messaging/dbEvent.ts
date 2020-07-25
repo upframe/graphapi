@@ -6,10 +6,12 @@ import Client from './client'
 import logger from '~/logger'
 import AuthUser from '~/authorization/user'
 import dbConnect from '~/db'
+import { diff } from '~/utils/array'
 
 export default async function (
   event: 'INSERT' | 'MODIFY' | 'REMOVE',
-  newImage: any
+  newImage: any,
+  oldImage?: any
 ) {
   const prefix = Object.fromEntries(
     ['pk', 'sk'].map(k => [k, newImage[k]?.split('|')[0]?.replace(/\|$/, '')])
@@ -26,6 +28,7 @@ export default async function (
 
   if (prefix.sk === 'MSG') {
     if (event === 'INSERT') await newMessage(newImage, knex)
+    else if (event === 'MODIFY') await msgMod(newImage, oldImage, knex)
   } else if (prefix.pk === 'CHANNEL') {
     if (event === 'INSERT') await newChannel(newImage, knex)
   } else if (prefix.pk === 'CONV' && newImage.sk === 'meta') {
@@ -115,14 +118,12 @@ async function newConversation(
   )
 
   const clients = users.flatMap(({ clients }) => clients ?? [])
-
   if (!clients.length) return
 
   const subs = await batchRead(
     'connections',
     clients.map(id => ({ pk: db.prefix.client(id), sk: 'SUB_CONV' }))
   )
-
   if (!subs.length) return
 
   await Promise.all(
@@ -135,6 +136,56 @@ async function newConversation(
         rdb
       ).then(res =>
         new Client(pk.replace(db.prefix.client(), '')).post(res, subscriptionId)
+      )
+    )
+  )
+}
+
+async function msgMod(newMsg: any, oldMsg: any, rdb: any) {
+  const { added } = diff<string>(oldMsg?.read ?? [], newMsg.read ?? [], {
+    deleted: false,
+  })
+  if (added.length === 0) return
+
+  const { participants } = await db.getChannel(
+    newMsg.pk.replace(db.prefix.channel(), '')
+  )
+
+  const users = await batchRead(
+    'connections',
+    participants.map((id: string) => ({ pk: db.prefix.user(id), sk: 'meta' }))
+  )
+
+  const clients = users.flatMap(({ clients }) => clients ?? [])
+  if (!clients.length) return
+
+  const subs = await batchRead(
+    'connections',
+    clients.map(id => ({ pk: db.prefix.client(id), sk: 'SUB_READ' }))
+  )
+  if (!subs.length) return
+
+  await Promise.all(
+    added.flatMap(add =>
+      subs.map(({ pk, query, variables, subscriptionId, user }) =>
+        exec(
+          {
+            read: {
+              userId: add,
+              channelId: newMsg.pk.replace(db.prefix.channel(), ''),
+              msgId: newMsg.sk.replace(db.prefix.message(), ''),
+            },
+          },
+          query,
+          variables,
+          user,
+          rdb
+        ).then(res =>
+          new Client(pk.replace(db.prefix.client(), '')).post(
+            res,
+            subscriptionId
+          )
+        )
       )
     )
   )

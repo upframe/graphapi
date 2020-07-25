@@ -36,7 +36,10 @@ export default class Client {
             ),
           ]
         : []),
-      ...(item.subConv ? [db.unsubscribeConversations(this.connectionId)] : []),
+      ...(item.subConv
+        ? [db.unsubscribeConversations(this.connectionId, true)]
+        : []),
+      ...(item.subRead ? [db.unsubscribeRead(this.connectionId, true)] : []),
       ...(item.user ? [db.removeUserClient(item.user, this.connectionId)] : []),
     ])
   }
@@ -86,6 +89,21 @@ export default class Client {
     user: string
   ) {
     await db.subscribeConversations(
+      this.connectionId,
+      subscriptionId,
+      query,
+      variables,
+      user
+    )
+  }
+
+  public async subscribeRead(
+    query: string,
+    variables: any,
+    subscriptionId: string,
+    user: string
+  ) {
+    await db.subscribeRead(
       this.connectionId,
       subscriptionId,
       query,

@@ -79,3 +79,26 @@ export const conversation = {
     return pubsub.asyncIterator('CONVERSATION_ADDED')
   },
 }
+
+export const read = {
+  subscribe: async (
+    _,
+    { token },
+    { connectionId, subscriptionId },
+    { rootValue }
+  ) => {
+    let { user } = decode(token)
+    if (!user?.startsWith('msg:'))
+      throw new AuthenticationError('invalid message token')
+
+    user = user.replace(/^msg:/, '')
+
+    const client = new Client(connectionId)
+    await client.identify(user)
+
+    const { query, variables } = rootValue.payload
+    await client.subscribeRead(query, variables, subscriptionId, user)
+
+    return pubsub.asyncIterator('MSG_READ')
+  },
+}

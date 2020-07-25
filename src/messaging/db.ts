@@ -25,6 +25,8 @@ export const prefix = {
   message: (id = '') => `MSG|${id}`,
 }
 
+const connectTTL = () => Date.now() + 1000 * 60 ** 2 * 12
+
 export const getConversation = async (id: string) =>
   await get('conversations', { pk: prefix.conversation(id), sk: 'meta' })
 
@@ -136,7 +138,7 @@ export const subscribeClient = async (
         subscriptionId,
         query,
         variables,
-        ttl: Date.now() + 1000 * 60 ** 2 * 12,
+        ttl: connectTTL(),
         user,
       }))
     ),
@@ -191,6 +193,7 @@ export const subscribeConversations = async (
       query,
       variables,
       user,
+      ttl: connectTTL(),
     }),
   ])
 }
@@ -206,6 +209,41 @@ export const unsubscribeConversations = async (
       : [
           update('connections', { pk: prefix.client(client), sk: 'meta' }, [
             ['SET', 'subConv', false],
+          ]),
+        ]),
+  ])
+}
+
+export const subscribeRead = async (
+  client: string,
+  subscriptionId: string,
+  query: string,
+  variables: any,
+  user: string
+) => {
+  await Promise.all([
+    update('connections', { pk: prefix.client(client), sk: 'meta' }, [
+      ['SET', 'subRead', true],
+    ]),
+    put('connections', {
+      key: { pk: prefix.client(client), sk: 'SUB_READ' },
+      subscriptionId,
+      query,
+      variables,
+      user,
+      ttl: connectTTL(),
+    }),
+  ])
+}
+
+export const unsubscribeRead = async (client: string, skipMeta = false) => {
+  await Promise.all([
+    remove('connections', { pk: prefix.client(client), sk: 'SUB_READ' }),
+    ...(skipMeta
+      ? []
+      : [
+          update('connections', { pk: prefix.client(client), sk: 'meta' }, [
+            ['SET', 'subRead', false],
           ]),
         ]),
   ])
@@ -308,6 +346,18 @@ export const markRead = async (
       'connections',
       { pk: prefix.user(userId), sk: 'meta' },
       batches.map(({ channel, msgs }) => ['DELETE', `unread_${channel}`, msgs])
+    ),
+    ...batches.flatMap(({ msgs, channel }) =>
+      msgs.map(id =>
+        update(
+          'conversations',
+          {
+            pk: prefix.channel(channel),
+            sk: prefix.message(id),
+          },
+          [['ADD', 'read', userId]]
+        )
+      )
     ),
   ])
 }

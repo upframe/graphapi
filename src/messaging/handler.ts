@@ -89,7 +89,11 @@ export const dbEvent = async (event: DynamoDBStreamEvent) => {
   try {
     await Promise.allSettled(
       event.Records.map(({ dynamodb, eventName }) =>
-        handleDbRecord(eventName, format(unmarshall(dynamodb.NewImage)))
+        handleDbRecord(
+          eventName,
+          format(unmarshall(dynamodb.NewImage)),
+          dynamodb.OldImage && format(unmarshall(dynamodb.OldImage))
+        )
       )
     )
   } catch (error) {
