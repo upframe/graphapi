@@ -68,9 +68,7 @@ export const createConversation = async ({
       ),
       participants.flatMap(user => [
         update('connections', { pk: prefix.user(user), sk: 'meta' }, [
-          'ADD',
-          'conversations',
-          id,
+          ['ADD', 'conversations', id],
         ]),
       ]),
     ])
@@ -98,14 +96,12 @@ export const identifyClient = async (client: string, user: string) => {
     await update(
       'connections',
       { pk: prefix.client(client), sk: 'meta' },
-      ['SET', 'user', user],
+      [['SET', 'user', user]],
       undefined,
       'EXISTS'
     )
     await update('connections', { pk: prefix.user(user), sk: 'meta' }, [
-      'ADD',
-      'clients',
-      client,
+      ['ADD', 'clients', client],
     ])
   } catch (e) {
     console.error(e)
@@ -116,9 +112,7 @@ export const identifyClient = async (client: string, user: string) => {
 
 export const removeUserClient = async (user: string, client: string) => {
   await update('connections', { pk: prefix.user(user), sk: 'meta' }, [
-    'DELETE',
-    'clients',
-    client,
+    ['DELETE', 'clients', client],
   ])
 }
 
@@ -147,9 +141,7 @@ export const subscribeClient = async (
       }))
     ),
     update('connections', { pk: prefix.client(client), sk: 'meta' }, [
-      'ADD',
-      type === 'messages' ? 'channels' : 'conversations',
-      items,
+      ['ADD', type === 'messages' ? 'channels' : 'conversations', items],
     ]),
   ])
 }
@@ -172,9 +164,11 @@ export const unsubscribeClient = async (
       ? []
       : [
           update('connections', { pk: prefix.client(client), sk: 'meta' }, [
-            'DELETE',
-            type === 'messages' ? 'channels' : 'conversations',
-            items,
+            [
+              'DELETE',
+              type === 'messages' ? 'channels' : 'conversations',
+              items,
+            ],
           ]),
         ]) as Promise<any>[]),
   ])
@@ -189,9 +183,7 @@ export const subscribeConversations = async (
 ) => {
   await Promise.all([
     update('connections', { pk: prefix.client(client), sk: 'meta' }, [
-      'SET',
-      'subConv',
-      true,
+      ['SET', 'subConv', true],
     ]),
     put('connections', {
       key: { pk: prefix.client(client), sk: 'SUB_CONV' },
@@ -213,9 +205,7 @@ export const unsubscribeConversations = async (
       ? []
       : [
           update('connections', { pk: prefix.client(client), sk: 'meta' }, [
-            'SET',
-            'subConv',
-            false,
+            ['SET', 'subConv', false],
           ]),
         ]),
   ])
@@ -241,15 +231,13 @@ export const createChannel = async (
         pk: prefix.conversation(conversationId),
         sk: 'meta',
       },
-      ['ADD', 'channels', channelId],
+      [['ADD', 'channels', channelId]],
       true
     ).then(({ participants }) => {
       Promise.all(
         participants?.map((id: string) =>
           update('connections', { pk: prefix.user(id), sk: 'meta' }, [
-            'ADD',
-            'channels',
-            channelId,
+            ['ADD', 'channels', channelId],
           ])
         ) ?? []
       )
@@ -287,12 +275,10 @@ export const publishMessage = async ({
     getChannel(channel).then(({ participants }) =>
       Promise.all(
         participants
-          .filter(id => id !== rest.author)
-          .map(id =>
-            update('connections', { pk: prefix.user(id), sk: 'meta' }, [
-              'ADD',
-              `unread_${channel}`,
-              id,
+          .filter(user => user !== rest.author)
+          .map(user =>
+            update('connections', { pk: prefix.user(user), sk: 'meta' }, [
+              ['ADD', `unread_${channel}`, id],
             ])
           )
       )
@@ -312,3 +298,16 @@ export const getClients = async (ctx: 'channel' | 'conversation', id: string) =>
     ['pk', '=', prefix[ctx](id)],
     ['sk', 'begins', prefix.client()]
   )
+
+export const markRead = async (
+  userId: string,
+  batches: { channel: string; msgs: string[] }[]
+) => {
+  await Promise.all([
+    update(
+      'connections',
+      { pk: prefix.user(userId), sk: 'meta' },
+      batches.map(({ channel, msgs }) => ['DELETE', `unread_${channel}`, msgs])
+    ),
+  ])
+}

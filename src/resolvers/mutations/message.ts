@@ -4,6 +4,7 @@ import Conversation from '~/messaging/conversation'
 import { UserInputError } from '~/error'
 import token from '~/utils/token'
 import logger from '~/logger'
+import * as db from '~/messaging/db'
 
 export const sendMessage = resolver<any>().loggedIn(
   async ({ args: { content, channel }, ctx: { id } }) =>
@@ -40,5 +41,12 @@ export const createThread = resolver<any>().loggedIn(
     if (msg) await channel.publish({ author: id, content: msg })
     logger.info(channel)
     return { id: channel.channelId }
+  }
+)
+
+export const markRead = resolver<any>().loggedIn(
+  async ({ args: { input }, ctx: { id } }) => {
+    logger.info(input)
+    await db.markRead(id, input)
   }
 )

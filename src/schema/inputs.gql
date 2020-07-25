@@ -56,3 +56,8 @@ input RequestSlotInput {
   slotId: ID!
   message: String!
 }
+
+input MarkReadInput {
+  channel: ID!
+  msgs: [ID!]!
+}
