@@ -27,7 +27,7 @@
     "googleapis": "^47.0.0",
     "jsonwebtoken": "^8.5.1",
     "knex": "^0.20.12",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "mjml": "^4.6.2",
     "moment-timezone": "^0.5.31",
     "mustache": "^4.0.1",
