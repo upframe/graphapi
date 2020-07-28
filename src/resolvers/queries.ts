@@ -120,12 +120,13 @@ export const list = resolver<List>()(async ({ query, args: { name } }) => {
   const res = await query({ join: true, include: 'users.mentors' })
     .where({ 'lists.name': name })
     .first()
-  res.users = res.users.sort(
-    (a, b) =>
-      Math.min(b.mentors?.score ?? 0, 1) +
-      Math.random() -
-      (Math.min(a.mentors?.score ?? 0, 1) + Math.random())
-  )
+  if (res.users)
+    res.users = res.users.sort(
+      (a, b) =>
+        Math.min(b.mentors?.score ?? 0, 1) +
+        Math.random() -
+        (Math.min(a.mentors?.score ?? 0, 1) + Math.random())
+    )
   return res
 })
 

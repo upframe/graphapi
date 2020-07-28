@@ -21,7 +21,7 @@
     ]
   },
   "lists": {
-    "columns": ["id", "name"]
+    "columns": ["id", "name", "description", "public_view", "picture_url"]
   },
   "meetups": {
     "columns": [
