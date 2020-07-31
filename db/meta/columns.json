@@ -80,7 +80,8 @@
       "searchable",
       "headline",
       "timezone",
-      "tz_infer"
+      "tz_infer",
+      "display_name"
     ]
   },
   "user_handles": {
