@@ -25,6 +25,8 @@ interface AccessGraph {
   [field: string]: boolean | AccessGraph
 }
 
+type _fastTrack = typeof import('./resolvers/fastTrack').default
+
 interface ResolverCtx {
   user: import('./authorization/user').default
   id: string
@@ -33,6 +35,7 @@ interface ResolverCtx {
   clientIp: string
   setHeader(header: string, value: string): void
   knex: import('knex')
+  fastTrack?: _fastTrack[keyof _fastTrack]
 }
 
 type ModelContent<M extends Model> = {

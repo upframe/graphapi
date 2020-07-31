@@ -25,13 +25,57 @@ export const me = resolver<User>().loggedIn(
   async ({ query, ctx: { id } }) => await query().findById(id)
 )
 
-export const mentors = resolver<User>()(async ({ query, knex }) =>
-  (
-    await query({ join: true, include: 'mentors' })
-      .select(knex.raw('LEAST(mentors.score, 1) as rank'))
-      .whereIn('role', ['mentor', 'admin'])
-      .andWhere({ listed: true })
-  ).sort((a: any, b: any) => b.rank + Math.random() - (a.rank + Math.random()))
+export const mentors = resolver<User>()(
+  async ({ query, knex, ctx: { fastTrack } }) => {
+    if (fastTrack === 'mentorsDefault') {
+      const res = await knex('users')
+        .select(
+          'users.id',
+          'users.name',
+          'users.headline',
+          'users.headline',
+          'users.handle',
+          'users.role',
+          'users.biography',
+          'mentors.company',
+          'profile_pictures.*',
+          knex.raw('LEAST(mentors.score, 1) as rank')
+        )
+        .leftJoin('mentors', 'mentors.id', '=', 'users.id')
+        .leftJoin(
+          'profile_pictures',
+          'profile_pictures.user_id',
+          '=',
+          'users.id'
+        )
+        .whereIn('role', ['mentor', 'admin'])
+        .andWhere('listed', true)
+
+      res.forEach(({ id, url, size, type, company, ...rest }) => {
+        if (!(id in users))
+          users[id] = {
+            id,
+            profile_pictures: [{ url, size, type }],
+            mentors: { company },
+            ...rest,
+          }
+        else users[id].profile_pictures.push({ url, size, type })
+      })
+
+      return Object.values(users).sort(
+        (a: any, b: any) => b.rank + Math.random() - (a.rank + Math.random())
+      )
+    }
+    const res = (
+      await query({ join: true, include: 'mentors' })
+        .select(knex.raw('LEAST(mentors.score, 1) as rank'))
+        .whereIn('role', ['mentor', 'admin'])
+        .andWhere({ listed: true })
+    ).sort(
+      (a: any, b: any) => b.rank + Math.random() - (a.rank + Math.random())
+    )
+    return res
+  }
 )
 
 export const user = resolver<User>()(
