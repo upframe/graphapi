@@ -7,6 +7,8 @@ export async function up(knex: Knex): Promise<any> {
       .notNullable()
       .defaultTo(true)
     t.string('picture_url')
+    t.string('background_color')
+    t.string('text_color')
   })
 }
 
@@ -15,5 +17,7 @@ export async function down(knex: Knex): Promise<any> {
     t.dropColumn('description')
     t.dropColumn('public_view')
     t.dropColumn('picture_url')
+    t.dropColumn('background_color')
+    t.dropColumn('text_color')
   })
 }

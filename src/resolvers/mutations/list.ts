@@ -8,13 +8,25 @@ import { List, UserLists } from '../../models'
 import resolver from '../resolver'
 
 export const createList = resolver<List>().isAdmin(
-  async ({ args: { name, description, photoUrl, publicView }, query }) => {
+  async ({
+    args: {
+      name,
+      description,
+      photoUrl,
+      publicView,
+      backgroundColor,
+      textColor,
+    },
+    query,
+  }) => {
     try {
       const { id } = await query.raw().insert({
         name,
         description,
         picture_url: photoUrl,
         public_view: publicView,
+        text_color: textColor,
+        background_color: backgroundColor,
       })
       return await query().findById(id)
     } catch (e) {
@@ -79,6 +91,13 @@ export const changeListInfo = resolver<UserLists>().isAdmin(
 
     if (input.photoUrl) update.photo_url = input.photoUrl
     else if (input.remove?.includes('photoUrl')) update.photo_url = null
+
+    if (input.backgroundColor) update.background_color = input.backgroundColor
+    else if (input.remove?.includes('backgroundColor'))
+      update.background_color = null
+
+    if (input.textColor) update.text_color = input.textColor
+    else if (input.remove?.includes('backgroundColor')) update.text_color = null
 
     return await query().patchAndFetchById(input.listId, update)
   }

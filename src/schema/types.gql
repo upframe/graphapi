@@ -158,6 +158,8 @@ type List {
   name: String!
   description: String
   pictureUrl: String
+  backgroundColor: String
+  textColor: String
   publicView: Boolean!
   users: [Person!]
 }

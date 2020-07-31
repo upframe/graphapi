@@ -9,6 +9,8 @@ export class List extends Model {
   description: string
   picture_url: string
   public_view!: boolean
+  background_color: string
+  text_color: string
   users?: import('./user').User[]
 }
 
