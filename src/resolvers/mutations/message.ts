@@ -46,7 +46,6 @@ export const createThread = resolver<any>().loggedIn(
 
 export const markRead = resolver<any>().loggedIn(
   async ({ args: { input }, ctx: { id } }) => {
-    logger.info(input)
     await db.markRead(id, input)
   }
 )

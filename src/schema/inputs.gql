@@ -11,6 +11,7 @@ input createAccountInput {
 
 input ProfileInput {
   name: String
+  displayName: String
   handle: String
   location: String
   headline: String

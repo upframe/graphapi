@@ -103,3 +103,7 @@ export const unread = resolver<any, User>()(async ({ parent, ctx: { id } }) => {
     .filter(([k]) => k.startsWith('unread_'))
     .map(([k, v]) => ({ channelId: k.replace(/^unread_/, ''), unread: v }))
 })
+
+export const displayName = resolver<string, User>()(
+  ({ parent }) => parent.display_name
+)

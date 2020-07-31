@@ -91,14 +91,18 @@ export const updateProfile = resolver<User>()(
 
     return await query().upsertGraphAndFetch({
       id: user.id,
-      ...obj.filterKeys(input, [
-        'name',
-        'handle',
-        'location',
-        'website',
-        'biography',
-        'headline',
-      ]),
+      ...obj.mapKeys(
+        obj.filterKeys(input, [
+          'name',
+          'displayName',
+          'handle',
+          'location',
+          'website',
+          'biography',
+          'headline',
+        ]),
+        k => (k === 'displayName' ? 'display_name' : k)
+      ),
       ...(user.groups.includes('mentor') && {
         mentors: {
           id: user.id,

@@ -229,6 +229,7 @@ export const completeSignup = resolver<User>()(
       location,
       allow_emails: true,
       headline,
+      display_name: name.split(/[\s_.]/)[0],
     }
 
     if (signup.email) user.email = signup.email
