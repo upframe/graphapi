@@ -528,7 +528,7 @@ export const changePassword = resolver<User>()(
       await query.raw(SigninUpframe).insert({
         email,
         password: hashPassword(password),
-        user_id: token.subject,
+        user_id: token?.subject ?? ctx.id,
       })
 
     const user = await query()
