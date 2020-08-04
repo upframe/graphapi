@@ -12,7 +12,7 @@ export const createList = resolver<List>().isAdmin(
     args: {
       name,
       description,
-      photoUrl,
+      pictureUrl,
       publicView,
       backgroundColor,
       textColor,
@@ -23,7 +23,7 @@ export const createList = resolver<List>().isAdmin(
       const { id } = await query.raw().insert({
         name,
         description,
-        picture_url: photoUrl,
+        picture_url: pictureUrl,
         public_view: publicView,
         text_color: textColor,
         background_color: backgroundColor,
@@ -89,8 +89,8 @@ export const changeListInfo = resolver<UserLists>().isAdmin(
     if (typeof input.publicView === 'boolean')
       update.public_view = input.publicView
 
-    if (input.photoUrl) update.photo_url = input.photoUrl
-    else if (input.remove?.includes('photoUrl')) update.photo_url = null
+    if (input.pictureUrl) update.photo_url = input.pictureUrl
+    else if (input.remove?.includes('pictureUrl')) update.photo_url = null
 
     if (input.backgroundColor) update.background_color = input.backgroundColor
     else if (input.remove?.includes('backgroundColor'))

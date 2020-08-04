@@ -61,7 +61,7 @@ input ChangeListInput {
   listId: Int!
   description: String
   publicView: Boolean
-  photoUrl: String
+  pictureUrl: String
   backgroundColor: String
   textColor: String
   remove: [String!]
@@ -118,7 +118,7 @@ type Mutation {
     name: String!
     description: String
     publicView: Boolean!
-    photoUrl: String
+    pictureUrl: String
     backgroundColor: String
     textColor: String
   ): List
