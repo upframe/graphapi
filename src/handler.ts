@@ -3,7 +3,7 @@ import { datadog } from 'datadog-lambda-js'
 import logger from './logger'
 import { handler as apolloHandler, requests } from './apollo'
 import dbConnect from './db'
-import { APIGatewayEvent, Context } from 'aws-lambda'
+import type { APIGatewayEvent, Context } from 'aws-lambda'
 
 const handler = async (event: APIGatewayEvent, context: Context) => {
   context.callbackWaitsForEmptyEventLoop = false
