@@ -5,14 +5,17 @@ enum Visibility {
 
 interface NotificationPreferences {
   receiveEmails: Boolean
+  msgEmails: Boolean
 }
 
 type UserNotificationPreferences implements NotificationPreferences {
   receiveEmails: Boolean
+  msgEmails: Boolean
 }
 
 type MentorNotificationPreferences implements NotificationPreferences {
   receiveEmails: Boolean
+  msgEmails: Boolean
   slotReminder: EmailInterval
 }
 

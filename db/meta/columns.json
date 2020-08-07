@@ -21,7 +21,15 @@
     ]
   },
   "lists": {
-    "columns": ["id", "name"]
+    "columns": [
+      "id",
+      "name",
+      "description",
+      "public_view",
+      "picture_url",
+      "background_color",
+      "text_color"
+    ]
   },
   "meetups": {
     "columns": [
@@ -81,7 +89,9 @@
       "headline",
       "timezone",
       "tz_infer",
-      "display_name"
+      "display_name",
+      "joined",
+      "msg_emails"
     ]
   },
   "user_handles": {

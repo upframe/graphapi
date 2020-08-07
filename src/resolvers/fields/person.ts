@@ -27,8 +27,9 @@ export const tags = resolver<any[], User>()(({ parent: { role, tags = [] } }) =>
 )
 
 export const notificationPrefs = resolver<any, User>()(
-  ({ parent: { allow_emails, ...parent } }) => ({
+  ({ parent: { allow_emails, msg_emails, ...parent } }) => ({
     receiveEmails: allow_emails,
+    msgEmails: msg_emails,
     ...parent,
   })
 )

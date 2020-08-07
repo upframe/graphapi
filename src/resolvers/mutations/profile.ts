@@ -133,6 +133,9 @@ export const updateNotificationPreferences = resolver<User>()(
       ...(typeof input.receiveEmails === 'boolean' && {
         allow_emails: input.receiveEmails,
       }),
+      ...(typeof input.msgEmails === 'boolean' && {
+        msg_emails: input.msgEmails,
+      }),
       ...(input.slotReminder && {
         mentors: {
           id,

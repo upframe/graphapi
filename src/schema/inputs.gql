@@ -35,6 +35,7 @@ input SocialInput {
 
 input NotificationSettingsInput {
   receiveEmails: Boolean
+  msgEmails: Boolean
   slotReminder: EmailInterval
 }
 
