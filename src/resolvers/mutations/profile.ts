@@ -4,6 +4,8 @@ import _ from 'lodash'
 import AuthUser from 'src/authorization/user'
 import resolver from '../resolver'
 import { UserInputError } from 'apollo-server-lambda'
+import { update } from '~/messaging/dbOps'
+import { prefix } from '~/messaging/db'
 
 const updateSocial = async (
   user: AuthUser,
@@ -128,21 +130,31 @@ export const setProfileSearchability = resolver<User>().loggedIn(
 
 export const updateNotificationPreferences = resolver<User>()(
   async ({ args: { input }, ctx: { id }, query }) => {
-    return await query().upsertGraphAndFetch({
-      id,
-      ...(typeof input.receiveEmails === 'boolean' && {
-        allow_emails: input.receiveEmails,
+    const [res] = await Promise.all([
+      query().upsertGraphAndFetch({
+        id,
+        ...(typeof input.receiveEmails === 'boolean' && {
+          allow_emails: input.receiveEmails,
+        }),
+        ...(typeof input.msgEmails === 'boolean' && {
+          msg_emails: input.msgEmails,
+        }),
+        ...(input.slotReminder && {
+          mentors: {
+            id,
+            slot_reminder_email: input.slotReminder.toLowerCase(),
+          },
+        }),
       }),
-      ...(typeof input.msgEmails === 'boolean' && {
-        msg_emails: input.msgEmails,
-      }),
-      ...(input.slotReminder && {
-        mentors: {
-          id,
-          slot_reminder_email: input.slotReminder.toLowerCase(),
-        },
-      }),
-    })
+      ...(typeof input.msgEmails === 'boolean'
+        ? [
+            update('connections', { pk: prefix.user(id), sk: 'meta' }, [
+              ['SET', 'subEmail', input.msgEmails],
+            ]),
+          ]
+        : []),
+    ])
+    return res as User
   }
 )
 

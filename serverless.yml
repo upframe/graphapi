@@ -32,6 +32,16 @@ provider:
         - execute-api:Invoke
       Resource:
         - arn:aws:execute-api:eu-west-1:312104790015:stzj06gng1/msg/*
+    - Effect: Allow
+      Action:
+        - states:StartExecution
+      Resource:
+        - ${ssm:/email/msgSF/arn}
+    - Effect: Allow
+      Action:
+        - states:StopExecution
+      Resource:
+        - arn:aws:states:*:*:execution:MsgBufferStateMachine:*
   environment:
     stage: ${self:provider.stage}
     PUBLIC_KEY: ${ssm:/API/PublicKey}
@@ -48,6 +58,7 @@ provider:
     BUCKET_URL: ${ssm:/API/ProfilePictures/BucketUrl}
     DEV_PASSWORD: ${ssm:/API/DevPassword~true}
     EMAIL_SNS: ${ssm:/email/SNS/arn}
+    MSG_EMAIL_SF_ARN: ${ssm:/email/msgSF/arn}
 
     DB_HOST: ${ssm:/DB/Host}
     DB_PROXY_HOST: ${ssm:/DB/Proxy/Host}

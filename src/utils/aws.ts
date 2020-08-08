@@ -31,3 +31,5 @@ export const gateway = new AWS.ApiGatewayManagementApi({
     ? 'http://localhost:3001'
     : 'https://stzj06gng1.execute-api.eu-west-1.amazonaws.com/msg/',
 })
+
+export const stepFunc = new AWS.StepFunctions()

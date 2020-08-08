@@ -1,5 +1,5 @@
 import * as db from './db'
-import { batchRead } from './dbOps'
+import { batchRead, update } from './dbOps'
 import { execute, parse } from 'graphql'
 import { schema } from '~/apollo'
 import Client from './client'
@@ -7,6 +7,7 @@ import logger from '~/logger'
 import AuthUser from '~/authorization/user'
 import dbConnect from '~/db'
 import { diff } from '~/utils/array'
+import { stepFunc } from '~/utils/aws'
 
 export default async function (
   event: 'INSERT' | 'MODIFY' | 'REMOVE',
@@ -65,15 +66,48 @@ async function newMessage(
     })
   )
 
-  logger.info('new message', { type: typeof message, cont: message })
+  const userIds = Array.from(new Set(clients.map(({ user }) => user))).filter(
+    Boolean
+  ) as string[]
 
-  await Promise.all(
-    clients.map(({ id, query, variables, subscriptionId, user }) =>
+  await Promise.all([
+    ...clients.map(({ id, query, variables, subscriptionId, user }) =>
       exec({ message }, query, variables, user, rdb).then(res =>
         new Client(id).post(res, subscriptionId)
       )
-    )
-  )
+    ),
+    !process.env.IS_OFFLINE &&
+      db.getUsers(userIds).then(users =>
+        Promise.all(
+          users
+            .filter(({ subEmail }) => subEmail)
+            .map(({ pk, mailSFArn }) => {
+              const user = pk.replace(db.prefix.user(), '')
+              const channel = message.channel
+              return Promise.allSettled([
+                mailSFArn &&
+                  stepFunc
+                    .stopExecution({ executionArn: mailSFArn })
+                    .promise()
+                    .catch(logger.error),
+                stepFunc
+                  .startExecution({
+                    stateMachineArn: process.env.MSG_EMAIL_SF_ARN,
+                    input: JSON.stringify({ user, channel }),
+                  })
+                  .promise()
+                  .then(({ executionArn }) =>
+                    update(
+                      'connections',
+                      { pk: db.prefix.user(user), sk: 'meta' },
+                      [['SET', 'mailSFArn', executionArn]]
+                    )
+                  ),
+              ])
+            })
+        )
+      ),
+  ])
 }
 
 async function newChannel({ pk, sk }: { pk: string; sk: string }, rdb: any) {

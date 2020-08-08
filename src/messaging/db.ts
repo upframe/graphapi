@@ -39,6 +39,12 @@ export const getConversations = async (ids: string[]) =>
 export const getUser = async (id: string) =>
   await get('connections', { pk: prefix.user(id), sk: 'meta' })
 
+export const getUsers = async (users: string[]) =>
+  await batchRead(
+    'connections',
+    users.map(id => ({ pk: prefix.user(id), sk: 'meta' }))
+  )
+
 export const createUser = async (id: string) => {
   try {
     await put(
