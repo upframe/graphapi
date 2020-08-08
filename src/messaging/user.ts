@@ -1,0 +1,69 @@
+import * as db from './db'
+import { update } from './dbOps'
+import { stepFunc } from '~/utils/aws'
+import logger from '~/logger'
+
+export default class User {
+  constructor(public readonly id: string) {}
+
+  public async info() {
+    return { ...this, ...(await db.getUser(this.id)) }
+  }
+
+  public async wantsEmailNotifications(v: boolean) {
+    const old = await update(
+      'connections',
+      { pk: db.prefix.user(this.id), sk: 'meta' },
+      [['SET', 'subEmail', v]],
+      'OLD'
+    )
+    if (v) return
+    await Promise.all([
+      update(
+        'connections',
+        { pk: db.prefix.user(this.id), sk: 'meta' },
+        Object.keys(old)
+          .filter(k => k.startsWith('mail_'))
+          .map(k => ['REMOVE', k])
+      ),
+      ...(Object.entries(old)
+        .filter(([k]) => k.startsWith('mail_arn_'))
+        .map(([, v]) => this.stopMailSF(v)) as Promise<any>[]),
+    ])
+  }
+
+  private async stopMailSF(executionArn: string) {
+    await stepFunc.stopExecution({ executionArn }).promise().catch(logger.error)
+  }
+
+  public async queueEmailNotification(
+    channelId: string,
+    msgId: string,
+    checkSubscription = false
+  ) {
+    if (checkSubscription) {
+      const { subEmail } = await this.info()
+      if (!subEmail) return
+    }
+
+    const { executionArn } = await stepFunc
+      .startExecution({
+        stateMachineArn: process.env.MSG_EMAIL_SF_ARN,
+        input: JSON.stringify({ user: this.id, channel: channelId }),
+      })
+      .promise()
+
+    const old = await update(
+      'connections',
+      { pk: db.prefix.user(this.id), sk: 'meta' },
+      [
+        ['SET', `mail_arn_channel_${channelId}`, executionArn],
+        ['ADD', `mail_pending_channel_${channelId}`, msgId],
+      ],
+      'OLD'
+    )
+
+    if (old?.[`mail_arn_channel_${channelId}`])
+      await this.stopMailSF(old?.[`mail_arn_channel_${channelId}`])
+  }
+}

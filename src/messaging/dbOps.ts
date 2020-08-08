@@ -150,14 +150,14 @@ export const remove = async <T extends keyof tables>(
   return Attributes && format(Attributes)
 }
 
-type UpdateExpr = [UpdateVerb, string, any]
+type UpdateExpr = [UpdateVerb, string, any?]
 type UpdateVerb = 'ADD' | 'DELETE' | 'SET' | 'REMOVE'
 
 export const update = async <T extends keyof tables>(
   table: T,
   key: tables[T],
   exprs: UpdateExpr[],
-  returnValue = false,
+  returnValue: boolean | 'OLD' = false,
   cond?: 'EXISTS'
 ) => {
   const UpdateExpression = exprs
@@ -187,7 +187,8 @@ export const update = async <T extends keyof tables>(
       Key: key,
       UpdateExpression,
       ExpressionAttributeValues,
-      ReturnValues: returnValue ? 'ALL_NEW' : 'NONE',
+      ReturnValues:
+        returnValue === 'OLD' ? 'ALL_OLD' : returnValue ? 'ALL_NEW' : 'NONE',
       ...(cond === 'EXISTS' && {
         ConditionExpression: Object.keys(key)
           .map(k => `attribute_exists(${k})`)

@@ -1,13 +1,12 @@
 import * as db from './db'
-import { batchRead, update } from './dbOps'
+import { batchRead } from './dbOps'
 import { execute, parse } from 'graphql'
 import { schema } from '~/apollo'
 import Client from './client'
-import logger from '~/logger'
+import User from './user'
 import AuthUser from '~/authorization/user'
 import dbConnect from '~/db'
 import { diff } from '~/utils/array'
-import { stepFunc } from '~/utils/aws'
 
 export default async function (
   event: 'INSERT' | 'MODIFY' | 'REMOVE',
@@ -77,35 +76,8 @@ async function newMessage(
       )
     ),
     !process.env.IS_OFFLINE &&
-      db.getUsers(userIds).then(users =>
-        Promise.all(
-          users
-            .filter(({ subEmail }) => subEmail)
-            .map(({ pk, mailSFArn }) => {
-              const user = pk.replace(db.prefix.user(), '')
-              const channel = message.channel
-              return Promise.allSettled([
-                mailSFArn &&
-                  stepFunc
-                    .stopExecution({ executionArn: mailSFArn })
-                    .promise()
-                    .catch(logger.error),
-                stepFunc
-                  .startExecution({
-                    stateMachineArn: process.env.MSG_EMAIL_SF_ARN,
-                    input: JSON.stringify({ user, channel }),
-                  })
-                  .promise()
-                  .then(({ executionArn }) =>
-                    update(
-                      'connections',
-                      { pk: db.prefix.user(user), sk: 'meta' },
-                      [['SET', 'mailSFArn', executionArn]]
-                    )
-                  ),
-              ])
-            })
-        )
+      userIds.map(id =>
+        new User(id).queueEmailNotification(message.channel, message.id, true)
       ),
   ])
 }

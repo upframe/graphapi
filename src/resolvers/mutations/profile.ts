@@ -4,8 +4,7 @@ import _ from 'lodash'
 import AuthUser from 'src/authorization/user'
 import resolver from '../resolver'
 import { UserInputError } from 'apollo-server-lambda'
-import { update } from '~/messaging/dbOps'
-import { prefix } from '~/messaging/db'
+import MsgUser from '~/messaging/user'
 
 const updateSocial = async (
   user: AuthUser,
@@ -130,7 +129,7 @@ export const setProfileSearchability = resolver<User>().loggedIn(
 
 export const updateNotificationPreferences = resolver<User>()(
   async ({ args: { input }, ctx: { id }, query }) => {
-    const [res] = await Promise.all([
+    const [res] = await Promise.allSettled([
       query().upsertGraphAndFetch({
         id,
         ...(typeof input.receiveEmails === 'boolean' && {
@@ -146,15 +145,10 @@ export const updateNotificationPreferences = resolver<User>()(
           },
         }),
       }),
-      ...(typeof input.msgEmails === 'boolean'
-        ? [
-            update('connections', { pk: prefix.user(id), sk: 'meta' }, [
-              ['SET', 'subEmail', input.msgEmails],
-            ]),
-          ]
-        : []),
+      typeof input.msgEmails === 'boolean' &&
+        new MsgUser(id).wantsEmailNotifications(input.msgEmails),
     ])
-    return res as User
+    if (res.status === 'fulfilled') return res.value
   }
 )
 
