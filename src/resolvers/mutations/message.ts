@@ -1,10 +1,10 @@
 import resolver from '../resolver'
 import Channel from '~/messaging/channel'
 import Conversation from '~/messaging/conversation'
+import User from '~/messaging/user'
 import { UserInputError } from '~/error'
 import token from '~/utils/token'
 import logger from '~/logger'
-import * as db from '~/messaging/db'
 
 export const sendMessage = resolver<any>().loggedIn(
   async ({ args: { content, channel }, ctx: { id } }) =>
@@ -46,6 +46,6 @@ export const createThread = resolver<any>().loggedIn(
 
 export const markRead = resolver<any>().loggedIn(
   async ({ args: { input }, ctx: { id } }) => {
-    await db.markRead(id, input)
+    await new User(id).markRead(input)
   }
 )

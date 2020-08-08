@@ -1,6 +1,7 @@
 import { ddb } from '~/utils/aws'
 import { batch } from '~/utils/array'
 import { group } from '~/utils/array'
+import logger from '~/logger'
 
 export type tables = {
   conversations: {
@@ -167,32 +168,44 @@ export const update = async <T extends keyof tables>(
         .map(
           ([verb, field], i) =>
             `${i === 0 ? verb : ''} #${field} ${
-              ['SET', 'REMOVE'].includes(verb) ? '= ' : ''
-            }:${field}`
+              verb === 'REMOVE' ? '' : `${verb === 'SET' ? '= ' : ''}:${field}`
+            }`
         )
         .join(',')
     )
     .join('  ')
 
   const ExpressionAttributeValues = Object.fromEntries(
-    exprs.map(([verb, field, value]) => [
-      `:${field}`,
-      ['SET', 'REMOVE'].includes(verb)
-        ? value
-        : ddb.createSet(Array.isArray(value) ? value : [value]),
-    ])
+    exprs
+      .filter(([verb]) => verb !== 'REMOVE')
+      .map(([verb, field, value]) => [
+        `:${field}`,
+        ['SET', 'REMOVE'].includes(verb)
+          ? value
+          : ddb.createSet(Array.isArray(value) ? value : [value]),
+      ])
   )
 
   const ExpressionAttributeNames = Object.fromEntries(
     exprs.map(([, field]) => [`#${field}`, field])
   )
 
+  logger.info({
+    UpdateExpression,
+    ExpressionAttributeNames,
+    ExpressionAttributeValues,
+  })
+
   const { Attributes } = await ddb
     .update({
       TableName: table,
       Key: key,
       UpdateExpression,
-      ExpressionAttributeValues,
+      ExpressionAttributeNames,
+      ...(ExpressionAttributeValues &&
+        Object.values(ExpressionAttributeValues).length > 0 && {
+          ExpressionAttributeValues,
+        }),
       ReturnValues:
         returnValue === 'OLD' ? 'ALL_OLD' : returnValue ? 'ALL_NEW' : 'NONE',
       ...(cond === 'EXISTS' && {
@@ -200,7 +213,6 @@ export const update = async <T extends keyof tables>(
           .map(k => `attribute_exists(${k})`)
           .join(' AND '),
       }),
-      ExpressionAttributeNames,
     })
     .promise()
 

@@ -49,7 +49,10 @@ export default class User {
     const { executionArn } = await stepFunc
       .startExecution({
         stateMachineArn: process.env.MSG_EMAIL_SF_ARN,
-        input: JSON.stringify({ user: this.id, channel: channelId }),
+        input: JSON.stringify({
+          user: this.id,
+          channel: channelId,
+        }),
       })
       .promise()
 
@@ -65,5 +68,51 @@ export default class User {
 
     if (old?.[`mail_arn_channel_${channelId}`])
       await this.stopMailSF(old?.[`mail_arn_channel_${channelId}`])
+  }
+
+  public async markRead(batches: { channel: string; msgs: string[] }[]) {
+    await Promise.all([
+      update(
+        'connections',
+        { pk: db.prefix.user(this.id), sk: 'meta' },
+        batches.flatMap(({ channel, msgs }) => [
+          ['DELETE', `unread_${channel}`, msgs],
+          ['DELETE', `mail_pending_channel_${channel}`, msgs],
+        ]),
+        true
+      ).then(info => {
+        logger.info('read', { info, batches })
+        const allRead = batches
+          .filter(
+            ({ channel }) =>
+              !info[`mail_pending_channel_${channel}`] &&
+              info[`mail_arn_channel_${channel}`]
+          )
+          .map(({ channel }) => channel)
+        if (allRead.length === 0) return
+        return Promise.all([
+          update(
+            'connections',
+            { pk: db.prefix.user(this.id), sk: 'meta' },
+            allRead.map(channel => ['REMOVE', `mail_arn_channel_${channel}`])
+          ),
+          ...(allRead.map(channel =>
+            this.stopMailSF(info[`mail_arn_channel_${channel}`])
+          ) as Promise<any>[]),
+        ])
+      }),
+      ...batches.flatMap(({ msgs, channel }) =>
+        msgs.map(id =>
+          update(
+            'conversations',
+            {
+              pk: db.prefix.channel(channel),
+              sk: db.prefix.message(id),
+            },
+            [['ADD', 'read', this.id]]
+          )
+        )
+      ),
+    ])
   }
 }

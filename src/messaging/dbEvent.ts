@@ -75,10 +75,10 @@ async function newMessage(
         new Client(id).post(res, subscriptionId)
       )
     ),
-    !process.env.IS_OFFLINE &&
+    ...(!process.env.IS_OFFLINE &&
       userIds.map(id =>
         new User(id).queueEmailNotification(message.channel, message.id, true)
-      ),
+      )),
   ])
 }
 

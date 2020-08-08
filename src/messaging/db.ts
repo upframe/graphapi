@@ -342,28 +342,3 @@ export const getClients = async (ctx: 'channel' | 'conversation', id: string) =>
     ['pk', '=', prefix[ctx](id)],
     ['sk', 'begins', prefix.client()]
   )
-
-export const markRead = async (
-  userId: string,
-  batches: { channel: string; msgs: string[] }[]
-) => {
-  await Promise.all([
-    update(
-      'connections',
-      { pk: prefix.user(userId), sk: 'meta' },
-      batches.map(({ channel, msgs }) => ['DELETE', `unread_${channel}`, msgs])
-    ),
-    ...batches.flatMap(({ msgs, channel }) =>
-      msgs.map(id =>
-        update(
-          'conversations',
-          {
-            pk: prefix.channel(channel),
-            sk: prefix.message(id),
-          },
-          [['ADD', 'read', userId]]
-        )
-      )
-    ),
-  ])
-}
