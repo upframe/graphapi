@@ -3,6 +3,20 @@ export const batch = (arr: any[], batchSize: number): any[][] =>
     .fill(0)
     .map((_, i) => arr.slice(i * batchSize, (i + 1) * batchSize))
 
+export const group = <T extends Array<unknown>>(
+  arr: T,
+  select: (v: T[number]) => any
+): T[] => {
+  return Object.values(
+    arr.reduce((a: object, c) => {
+      const id = select(c)
+      if (!(id in a)) a[id] = []
+      a[id].push(c)
+      return a
+    }, {})
+  )
+}
+
 export const diff = <T extends any = unknown>(
   oldArray: T[],
   newArray: T[],

@@ -1,5 +1,6 @@
 import { ddb } from '~/utils/aws'
 import { batch } from '~/utils/array'
+import { group } from '~/utils/array'
 
 export type tables = {
   conversations: {
@@ -160,14 +161,19 @@ export const update = async <T extends keyof tables>(
   returnValue: boolean | 'OLD' = false,
   cond?: 'EXISTS'
 ) => {
-  const UpdateExpression = exprs
-    .map(
-      ([verb, field]) =>
-        `${verb} #${field} ${
-          ['SET', 'REMOVE'].includes(verb) ? '= ' : ''
-        }:${field}`
+  const UpdateExpression = group(exprs, ([verb]) => verb)
+    .map(exprs =>
+      exprs
+        .map(
+          ([verb, field], i) =>
+            `${i === 0 ? verb : ''} #${field} ${
+              ['SET', 'REMOVE'].includes(verb) ? '= ' : ''
+            }:${field}`
+        )
+        .join(',')
     )
-    .join(', ')
+    .join('  ')
+
   const ExpressionAttributeValues = Object.fromEntries(
     exprs.map(([verb, field, value]) => [
       `:${field}`,
