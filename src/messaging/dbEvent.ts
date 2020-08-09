@@ -76,9 +76,11 @@ async function newMessage(
       )
     ),
     ...(!process.env.IS_OFFLINE &&
-      userIds.map(id =>
-        new User(id).queueEmailNotification(message.channel, message.id, true)
-      )),
+      userIds
+        .filter(id => id !== message.author)
+        .map(id =>
+          new User(id).queueEmailNotification(message.channel, message.id, true)
+        )),
   ])
 }
 

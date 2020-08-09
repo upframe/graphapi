@@ -1,7 +1,6 @@
 import { ddb } from '~/utils/aws'
 import { batch } from '~/utils/array'
 import { group } from '~/utils/array'
-import logger from '~/logger'
 
 export type tables = {
   conversations: {
@@ -189,12 +188,6 @@ export const update = async <T extends keyof tables>(
   const ExpressionAttributeNames = Object.fromEntries(
     exprs.map(([, field]) => [`#${field}`, field])
   )
-
-  logger.info({
-    UpdateExpression,
-    ExpressionAttributeNames,
-    ExpressionAttributeValues,
-  })
 
   const { Attributes } = await ddb
     .update({
