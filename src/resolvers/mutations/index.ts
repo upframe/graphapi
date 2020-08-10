@@ -1,6 +1,5 @@
 export * from './account'
 export * from './profile'
-export * from './messaging'
 export * from './calendar'
 export * from './scheduling'
 export * from './list'

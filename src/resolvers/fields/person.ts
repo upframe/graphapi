@@ -50,8 +50,11 @@ export const categories = resolver<
   User
 >()(({ parent: { lists = [] } }) => lists.map(({ name }) => name))
 
-export const role = resolver<string, User>()(({ parent: { role } }) =>
-  role.toUpperCase()
+export const role = resolver<string, User>()(
+  ({ parent: { role }, ctx: { roles } }) => {
+    if (role === 'admin' && !roles.includes('admin')) role = 'mentor'
+    return role.toUpperCase()
+  }
 )
 
 export const invites = resolver<any[], User>()(({ parent: { invites } }) =>
