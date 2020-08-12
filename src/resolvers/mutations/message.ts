@@ -2,9 +2,10 @@ import resolver from '../resolver'
 import Channel from '~/messaging/channel'
 import Conversation from '~/messaging/conversation'
 import User from '~/messaging/user'
-import { UserInputError } from '~/error'
+import { UserInputError, AuthenticationError } from '~/error'
 import token from '~/utils/token'
 import logger from '~/logger'
+import type { User as UserModel } from '~/models'
 
 export const sendMessage = resolver<any>().loggedIn(
   async ({ args: { content, channel }, ctx: { id } }) =>
@@ -47,5 +48,21 @@ export const createThread = resolver<any>().loggedIn(
 export const markRead = resolver<any>().loggedIn(
   async ({ args: { input }, ctx: { id } }) => {
     await new User(id).markRead(input)
+  }
+)
+
+export const unsubscribeEmailNotifications = resolver<UserModel>()(
+  async ({ args: { token }, ctx: { id }, knex, query }) => {
+    const email = await knex('emails').where({ id: token }).first()
+    if (!email?.id) throw new UserInputError('invalid unsubscribe token')
+    if (email.to_user !== id)
+      throw new AuthenticationError('must sign in with correct account')
+
+    const [user] = await Promise.all([
+      query().upsertGraphAndFetch({ id, msg_emails: false }),
+      new User(id).wantsEmailNotifications(false),
+    ])
+
+    return user
   }
 )

@@ -18,14 +18,17 @@ export default class User {
       'OLD'
     )
     if (v) return
+    const cancel = Object.keys(old).filter(k => k.startsWith('mail_'))
     await Promise.all([
-      update(
-        'connections',
-        { pk: db.prefix.user(this.id), sk: 'meta' },
-        Object.keys(old)
-          .filter(k => k.startsWith('mail_'))
-          .map(k => ['REMOVE', k])
-      ),
+      ...(cancel.length
+        ? [
+            update(
+              'connections',
+              { pk: db.prefix.user(this.id), sk: 'meta' },
+              cancel.map(k => ['REMOVE', k])
+            ),
+          ]
+        : []),
       ...(Object.entries(old)
         .filter(([k]) => k.startsWith('mail_arn_'))
         .map(([, v]) => this.stopMailSF(v)) as Promise<any>[]),

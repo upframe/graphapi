@@ -7,6 +7,7 @@ import User from './user'
 import AuthUser from '~/authorization/user'
 import dbConnect from '~/db'
 import { diff } from '~/utils/array'
+import logger from '~/logger'
 
 export default async function (
   event: 'INSERT' | 'MODIFY' | 'REMOVE',
@@ -58,16 +59,17 @@ async function newMessage(
     ...rest,
   }
 
-  const clients: any = (await db.getClients('channel', message.channel)).map(
-    ({ sk, ...rest }) => ({
-      id: sk.replace(db.prefix.client(), ''),
-      ...rest,
-    })
-  )
+  let [clients, channel] = await Promise.all([
+    db.getClients('channel', message.channel),
+    db.getChannel(message.channel),
+  ])
 
-  const userIds = Array.from(new Set(clients.map(({ user }) => user))).filter(
-    Boolean
-  ) as string[]
+  clients = clients.map(({ sk, ...rest }) => ({
+    id: sk.replace(db.prefix.client(), ''),
+    ...rest,
+  }))
+
+  const userIds = JSON.parse(JSON.stringify(channel.participants))
 
   await Promise.all([
     ...clients.map(({ id, query, variables, subscriptionId, user }) =>
@@ -79,7 +81,12 @@ async function newMessage(
       userIds
         .filter(id => id !== message.author)
         .map(id =>
-          new User(id).queueEmailNotification(message.channel, message.id, true)
+          new User(id)
+            .queueEmailNotification(message.channel, message.id, true)
+            .catch(error => {
+              logger.error("couldn't queue message notification", { error })
+              throw error
+            })
         )),
   ])
 }

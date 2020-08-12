@@ -59,6 +59,7 @@ type Mutation {
   createConversation(participants: [ID!]!, msg: String): Conversation!
   createThread(conversationId: ID!, msg: String): Channel!
   markRead(input: [MarkReadInput!]!): Int
+  unsubscribeEmailNotifications(token: ID!): Person
 
   setRedirect(from: String!, to: String!, expires: Int): Int
   deleteRedirect(path: String!): Int
