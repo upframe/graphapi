@@ -6,7 +6,22 @@ import logger from '~/logger'
 import * as db from './db'
 
 export default class Channel {
-  constructor(public readonly channelId: string) {}
+  private static readonly instances: Channel[] = []
+
+  constructor(
+    public readonly channelId: string,
+    public participants?: string[]
+  ) {}
+
+  public static async get(id: string): Promise<Channel> {
+    let channel = this.instances.find(({ channelId }) => channelId === id)
+    if (channel) return channel
+    const res = await db.getChannel(id)
+    if (!res) return
+    channel = new Channel(id, res.participants)
+    Channel.instances.push(channel)
+    return channel
+  }
 
   public async create(
     conversationId: string,
@@ -15,6 +30,9 @@ export default class Channel {
     logger.info(`create channel ${this.channelId} in ${conversationId}`)
 
     await db.createChannel(conversationId, this.channelId, participants)
+
+    this.participants = participants
+    Channel.instances.push(this)
 
     return this
   }

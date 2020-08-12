@@ -19,7 +19,9 @@ import {
   signUpInfo as googleInfo,
 } from '../google'
 import Conversation from '~/messaging/conversation'
+import Channel from '~/messaging/channel'
 import { ddb } from '../utils/aws'
+import logger from '~/logger'
 
 export const me = resolver<User>().loggedIn(
   async ({ query, ctx: { id } }) => await query().findById(id)
@@ -276,12 +278,19 @@ export const checkValidity = resolver<any>()(
 )
 
 export const conversation = resolver<any>().loggedIn(
-  async ({ args: { conversationId } }) => await Conversation.get(conversationId)
+  async ({ args: { conversationId }, ctx: { id } }) => {
+    const con = await Conversation.get(conversationId)
+    return con?.participants?.includes(id) ? con : null
+  }
 )
 
-export const channel = resolver<any>().loggedIn(({ args: { channelId } }) => ({
-  id: channelId,
-}))
+export const channel = resolver<any>().loggedIn(
+  async ({ args: { channelId }, ctx: { id } }) => {
+    const ch = await Channel.get(channelId)
+    logger.info({ ch })
+    return ch?.participants?.includes(id) ? { ...ch, id: ch.channelId } : null
+  }
+)
 
 export const redirects = resolver<any[]>().isAdmin(async () => {
   const { Items } = await ddb.scan({ TableName: 'redirects' }).promise()
