@@ -59,6 +59,7 @@ provider:
     DEV_PASSWORD: ${ssm:/API/DevPassword~true}
     EMAIL_SNS: ${ssm:/email/SNS/arn}
     MSG_EMAIL_SF_ARN: ${ssm:/email/msgSF/arn}
+    EMAIL_SECRET: ${ssm:/email/secret~true}
 
     DB_HOST: ${ssm:/DB/Host}
     DB_PROXY_HOST: ${ssm:/DB/Proxy/Host}

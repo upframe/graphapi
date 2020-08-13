@@ -12,6 +12,7 @@ import { ValidationError } from 'objection'
 import logger from './logger'
 import crypto from 'crypto'
 import fastTrack from '~/resolvers/fastTrack'
+import { mapKeys } from '~/utils/object'
 
 export const requests = {}
 
@@ -24,15 +25,15 @@ export const schema = makeExecutableSchema({
 export const server = new ApolloServer({
   schema,
   context: ({ event, context }): ResolverCtx => {
+    const headers = mapKeys(event.headers ?? {}, k => k.toLowerCase())
     const { id, role, sub } =
-      decode(
-        parseCookies(event.headers?.Cookie ?? event.headers?.cookie).auth
-      ) ?? {}
+      decode(parseCookies(headers.cookie as string).auth) ?? {}
     const roles = role?.split('.').map(v => v.trim()) ?? []
     const user = new AuthUser(id, sub)
     user.groups = roles.length ? roles : ['visitor']
     const requestId = context.awsRequestId
     logger.setUserId(id)
+
     return {
       id,
       user,
@@ -45,6 +46,11 @@ export const server = new ApolloServer({
       knex: requests[requestId].knex,
       fastTrack:
         fastTrack[crypto.createHash('sha1').update(event.body).digest('hex')],
+      service:
+        headers['service-auth'] &&
+        headers['service-auth'] === process.env.EMAIL_SECRET
+          ? 'EMAIL'
+          : undefined,
     }
   },
   debug: !!process.env.IS_OFFLINE,

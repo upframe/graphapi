@@ -36,6 +36,7 @@ interface ResolverCtx {
   setHeader(header: string, value: string): void
   knex: import('knex')
   fastTrack?: _fastTrack[keyof _fastTrack]
+  service?: 'EMAIL'
 }
 
 type ModelContent<M extends Model> = {

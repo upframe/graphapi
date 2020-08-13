@@ -66,3 +66,30 @@ export const unsubscribeEmailNotifications = resolver<UserModel>()(
     return user
   }
 )
+
+export const postForUser = resolver<any>()(
+  async ({
+    args: { content, channel: channelId, email },
+    ctx: { service },
+    knex,
+  }) => {
+    logger.info({ content, channelId, email })
+    if (service !== 'EMAIL') throw new AuthenticationError('must authenticate')
+    const channel = await Channel.get(channelId)
+    if (!channel?.participants?.length) throw new AuthenticationError('')
+
+    const participants = await knex('users')
+      .whereIn('id', channel.participants)
+      .select('id', 'email')
+
+    const user = participants.find(
+      v => v.email.toLowerCase() === email.toLowerCase()
+    )
+
+    logger.info({ participants, user })
+
+    if (!user) throw new AuthenticationError('')
+
+    await new Channel(channelId).publish({ author: user.id, content })
+  }
+)
