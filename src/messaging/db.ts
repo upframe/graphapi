@@ -25,7 +25,7 @@ export const prefix = {
   message: (id = '') => `MSG|${id}`,
 }
 
-const connectTTL = () => Date.now() + 1000 * 60 ** 2 * 12
+const connectTTL = () => ((Date.now() + 1000 * 60 ** 2 * 12) / 1000) | 0
 
 export const getConversation = async (id: string) =>
   await get('conversations', { pk: prefix.conversation(id), sk: 'meta' })
@@ -90,7 +90,7 @@ export const createClient = async (id: string) => {
   await Promise.all([
     put(
       'connections',
-      { key: { pk: prefix.client(id), sk: 'meta' } },
+      { key: { pk: prefix.client(id), sk: 'meta' }, ttl: connectTTL() },
       'NOT_EXISTS'
     ),
   ])
