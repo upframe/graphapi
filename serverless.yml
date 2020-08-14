@@ -75,6 +75,8 @@ provider:
     DD_LOGS_INJECTION: ${file(./sls.conf.js):DD_LOG_INJECT}
     DD_ENV: ${file(./sls.conf.js):DD_ENV}
 
+    GATEWAY: ${file(./sls.conf.js):GATEWAY}
+
 functions:
   graphapi:
     handler: src/handler.graphapi
