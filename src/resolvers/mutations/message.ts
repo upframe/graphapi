@@ -69,7 +69,7 @@ export const unsubscribeEmailNotifications = resolver<UserModel>()(
 
 export const postForUser = resolver<any>()(
   async ({
-    args: { content, channel: channelId, email },
+    args: { content, channel: channelId, email, timestamp },
     ctx: { service },
     knex,
   }) => {
@@ -90,6 +90,13 @@ export const postForUser = resolver<any>()(
 
     if (!user) throw new AuthenticationError('')
 
-    await new Channel(channelId).publish({ author: user.id, content })
+    let time = Date.now()
+    try {
+      if (timestamp) time = new Date(timestamp).getTime()
+    } catch (e) {
+      logger.warn(`invalid timestamp ${timestamp}`)
+    }
+
+    await new Channel(channelId).publish({ author: user.id, content, time })
   }
 )
