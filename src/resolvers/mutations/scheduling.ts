@@ -51,11 +51,7 @@ export const updateSlots = resolver<User>().loggedIn(
 
     await Promise.all([
       addList.length && query.raw(Slots).insert(addList),
-      deleted.length &&
-        query
-          .raw(Slots)
-          .delete()
-          .whereIn('id', deleted),
+      deleted.length && query.raw(Slots).delete().whereIn('id', deleted),
     ])
 
     logger.info('slots updated', { user: id, added: addList, deleted })
@@ -229,10 +225,7 @@ export const cancelMeetup = resolver().loggedIn(
       : undefined
 
     await Promise.all([
-      query
-        .raw(Meetup)
-        .deleteById(meetupId)
-        .asUser(system),
+      query.raw(Meetup).deleteById(meetupId).asUser(system),
       connectGoogle &&
         client.calendar.events.patch({
           calendarId: connectGoogle.calendar_id,

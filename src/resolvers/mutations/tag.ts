@@ -11,12 +11,8 @@ export const setTagName = resolver<Tags>().isAdmin(
 export const mergeTags = resolver<Tags>().isAdmin(
   async ({ query, knex, args: { from, into } }) => {
     await knex.transaction(async trx => {
-      await trx('user_tags')
-        .where({ tag_id: from })
-        .update({ tag_id: into })
-      await trx('tags')
-        .where({ id: from })
-        .delete()
+      await trx('user_tags').where({ tag_id: from }).update({ tag_id: into })
+      await trx('tags').where({ id: from }).delete()
     })
     return query().findById(into)
   }

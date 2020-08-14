@@ -3,8 +3,9 @@ import { datadog } from 'datadog-lambda-js'
 import logger from './logger'
 import { handler as apolloHandler, requests } from './apollo'
 import dbConnect from './db'
+import type { APIGatewayEvent, Context } from 'aws-lambda'
 
-const handler = async (event, context) => {
+const handler = async (event: APIGatewayEvent, context: Context) => {
   context.callbackWaitsForEmptyEventLoop = false
   requests[context.awsRequestId] = { responseHeaders: {} }
 
@@ -44,14 +45,7 @@ const handler = async (event, context) => {
   return data
 }
 
-export const graphapi = datadog(
-  handler,
-  process.env.IS_OFFLINE
-    ? {
-        mergeDatadogXrayTraces: false,
-      }
-    : {
-        mergeDatadogXrayTraces: true,
-        logger,
-      }
-)
+export const graphapi = datadog(handler, {
+  mergeDatadogXrayTraces: !process.env.IS_OFFLINE,
+  logger,
+})

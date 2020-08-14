@@ -13,9 +13,7 @@ export const invite = resolver<User>().isMentor(
     if (!['USER', 'MENTOR'].includes(role))
       throw new ForbiddenError('can only invite as user or mentor')
 
-    const exists = await query()
-      .whereIn('email', emails)
-      .asUser(system)
+    const exists = await query().whereIn('email', emails).asUser(system)
     if (exists.length)
       throw new UserInputError(
         `${exists.map(({ email }) => email).join(', ')} is already a user`

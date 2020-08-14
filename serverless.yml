@@ -23,7 +23,57 @@ provider:
     - Effect: Allow
       Action:
         - dynamodb:*
-      Resource: ${ssm:/dynamodb/redirects/arn}
+      Resource:
+        - ${ssm:/dynamodb/redirects/arn}
+        - ${ssm:/dynamodb/conversations/arn}
+        - ${ssm:/dynamodb/connections/arn}
+    - Effect: Allow
+      Action:
+        - execute-api:Invoke
+      Resource:
+        - arn:aws:execute-api:eu-west-1:312104790015:stzj06gng1/msg/*
+    - Effect: Allow
+      Action:
+        - states:StartExecution
+      Resource:
+        - ${ssm:/email/msgSF/arn}
+    - Effect: Allow
+      Action:
+        - states:StopExecution
+      Resource:
+        - arn:aws:states:*:*:execution:MsgBufferStateMachine:*
+  environment:
+    stage: ${self:provider.stage}
+    PUBLIC_KEY: ${ssm:/API/PublicKey}
+    PRIVATE_KEY: ${ssm:/API/PrivateKey~true}
+    APOLLO_KEY: ${ssm:/API/ApolloKey~true}
+    MAILGUN_KEY: ${ssm:/API/MailgunKey~true}
+    OAUTH_CLIENT_ID: ${ssm:/API/OAuth/ClientId}
+    OAUTH_CLIENT_SECRET: ${ssm:/API/OAuth/ClientSecret~true}
+    CALENDAR_ID: ${ssm:/API/CalendarId}
+    CALENDAR_REFRESH_TOKEN: ${ssm:/API/CalendarRefreshToken~true}
+    AWS_KEY_ID: ${ssm:/API/AwsKeyId}
+    AWS_KEY_SECRET: ${ssm:/API/AwsKeySecret~true}
+    BUCKET_NAME: ${ssm:/API/ProfilePictures/BucketName}
+    BUCKET_URL: ${ssm:/API/ProfilePictures/BucketUrl}
+    DEV_PASSWORD: ${ssm:/API/DevPassword~true}
+    EMAIL_SNS: ${ssm:/email/SNS/arn}
+    MSG_EMAIL_SF_ARN: ${ssm:/email/msgSF/arn}
+    EMAIL_SECRET: ${ssm:/email/secret~true}
+
+    DB_HOST: ${ssm:/DB/Host}
+    DB_PROXY_HOST: ${ssm:/DB/Proxy/Host}
+    DB_PORT: ${ssm:/DB/Port}
+    DB_NAME: ${ssm:/DB/Name}
+    DB_USER: ${ssm:/API/DB/User}
+    DB_PASSWORD: ${ssm:/API/DB/Password~true}
+
+    DD_API_KEY: ${ssm:/API/Datadog/ApiKey}
+    DD_SERVICE: ${file(./sls.conf.js):DD_SERVICE}
+    DD_FLUSH_TO_LOG: ${file(./sls.conf.js):DD_FLUSH}
+    DD_ENHANCED_METRICS: ${file(./sls.conf.js):DD_ENHANCED}
+    DD_LOGS_INJECTION: ${file(./sls.conf.js):DD_LOG_INJECT}
+    DD_ENV: ${file(./sls.conf.js):DD_ENV}
 
 functions:
   graphapi:
@@ -39,6 +89,7 @@ functions:
             origins:
               - https://beta.upframe.io
               - https://upframe.io
+              - https://msg.upframe.io
             allowCredentials: true
       - http:
           path: /
@@ -47,41 +98,38 @@ functions:
             origins:
               - https://beta.upframe.io
               - https://upframe.io
+              - https://msg.upframe.io
             allowCredentials: true
 
-    environment:
-      stage: ${self:provider.stage}
-      PUBLIC_KEY: ${ssm:/API/PublicKey}
-      PRIVATE_KEY: ${ssm:/API/PrivateKey~true}
-      APOLLO_KEY: ${ssm:/API/ApolloKey~true}
-      MAILGUN_KEY: ${ssm:/API/MailgunKey~true}
-      OAUTH_CLIENT_ID: ${ssm:/API/OAuth/ClientId}
-      OAUTH_CLIENT_SECRET: ${ssm:/API/OAuth/ClientSecret~true}
-      CALENDAR_ID: ${ssm:/API/CalendarId}
-      CALENDAR_REFRESH_TOKEN: ${ssm:/API/CalendarRefreshToken~true}
-      AWS_KEY_ID: ${ssm:/API/AwsKeyId}
-      AWS_KEY_SECRET: ${ssm:/API/AwsKeySecret~true}
-      BUCKET_NAME: ${ssm:/API/ProfilePictures/BucketName}
-      BUCKET_URL: ${ssm:/API/ProfilePictures/BucketUrl}
-      DEV_PASSWORD: ${ssm:/API/DevPassword~true}
-      EMAIL_SNS: ${ssm:/email/SNS/arn}
+  wsConnect:
+    handler: src/messaging/handler.wsConnect
+    layers:
+      - arn:aws:lambda:eu-west-1:464622532012:layer:Datadog-Node12-x:23
+    events:
+      - websocket:
+          route: $connect
+      - websocket:
+          route: $disconnect
+      - websocket:
+          route: $default
 
-      DB_HOST: ${ssm:/DB/Host}
-      DB_PROXY_HOST: ${ssm:/DB/Proxy/Host}
-      DB_PORT: ${ssm:/DB/Port}
-      DB_NAME: ${ssm:/DB/Name}
-      DB_USER: ${ssm:/API/DB/User}
-      DB_PASSWORD: ${ssm:/API/DB/Password~true}
-
-      DD_API_KEY: ${ssm:/API/Datadog/ApiKey}
-      DD_SERVICE: ${file(./sls.conf.js):DD_SERVICE}
-      DD_FLUSH_TO_LOG: ${file(./sls.conf.js):DD_FLUSH}
-      DD_ENHANCED_METRICS: ${file(./sls.conf.js):DD_ENHANCED}
-      DD_LOGS_INJECTION: ${file(./sls.conf.js):DD_LOG_INJECT}
-      DD_ENV: ${file(./sls.conf.js):DD_ENV}
+  dbEvent:
+    handler: src/messaging/handler.dbEvent
+    layers:
+      - arn:aws:lambda:eu-west-1:464622532012:layer:Datadog-Node12-x:23
+    events:
+      - stream:
+          enabled: true
+          type: dynamodb
+          batchSize: 1
+          maximumRetryAttempts: 3
+          startingPosition: LATEST
+          arn: ${ssm:/dynamodb/conversations/stream/arn}
+          tableName: conversations
 
 plugins:
   - serverless-webpack
+  - serverless-offline-dynamodb-streams
   - serverless-offline
   - serverless-domain-manager
 
@@ -95,6 +143,15 @@ custom:
         - aws-sdk
         - datadog-lambda-js
         - dd-trace
+        - chalk
+        - mssql
+        - mysql
+        - mysql2
+        - sqlite3
+        - '@types'
+    packagerOptions:
+      scripts:
+        - rm -rf node_modules/@types && curl -sf https://gobinaries.com/tj/node-prune | sh && node-prune
   customDomain:
     RestApiId:
       Ref: ApiGatewayRestApi
@@ -105,3 +162,9 @@ custom:
   serverless-offline-sns:
     port: 4002
     debug: true
+  serverless-offline-dynamodb-streams:
+    apiVersion: '2013-12-02'
+    endpoint: http://0.0.0.0:8000
+    region: eu-west-1
+    skipCacheInvalidation: false
+    readInterval: 500

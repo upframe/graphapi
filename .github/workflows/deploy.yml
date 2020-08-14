@@ -38,7 +38,7 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          ENGINE_API_KEY: ${{ secrets.ENGINE_API_KEY }}
+          APOLLO_KEY: ${{ secrets.ENGINE_API_KEY }}
           SECURITY_GROUP: ${{ secrets.SECURITY_GROUP }}
           SUBNET: ${{ secrets.SUBNET }}
         run: |

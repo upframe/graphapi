@@ -80,7 +80,10 @@
       "searchable",
       "headline",
       "timezone",
-      "tz_infer"
+      "tz_infer",
+      "display_name",
+      "joined",
+      "msg_emails"
     ]
   },
   "user_handles": {

@@ -1,0 +1,46 @@
+type Conversation {
+  id: ID!
+  participants(includeMe: Boolean = false): [Person!]!
+  channels: [Channel!]!
+}
+
+type Channel {
+  id: ID!
+  created: String
+  conversationId: ID!
+  messages(
+    first: Int
+    last: Int
+    before: ID
+    after: ID
+  ): ChannelMessageConnection!
+}
+
+type ChannelMessageConnection implements Connection {
+  edges: [ChannelMessageEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ChannelMessageEdge implements Edge {
+  node: Message
+  cursor: ID!
+}
+
+type Message implements Node {
+  id: ID!
+  content: String!
+  author: ID!
+  time: String!
+  channel: ID!
+}
+
+type Unread {
+  channelId: ID!
+  unread: [ID!]!
+}
+
+type Read {
+  userId: ID!
+  channelId: ID!
+  msgId: ID!
+}
