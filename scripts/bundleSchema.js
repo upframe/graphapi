@@ -1,5 +1,8 @@
 const fs = require('fs')
 
+fs.rmdirSync('src/schema/gen', { recursive: true })
+fs.mkdirSync('src/schema/gen')
+
 const readGqlFiles = path =>
   fs.readdirSync(path).flatMap(file => {
     return fs.lstatSync(path + file).isDirectory()
