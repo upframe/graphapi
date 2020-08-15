@@ -42,6 +42,7 @@ jobs:
           SECURITY_GROUP: ${{ secrets.SECURITY_GROUP }}
           SUBNET: ${{ secrets.SUBNET }}
         run: |
+          npm run gql:types
           if [ ${GITHUB_REF##*/} = "master" ]; then
             npx apollo service:push -v=prod
             npx sls deploy --stage prod
