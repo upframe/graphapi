@@ -164,10 +164,7 @@ export const lists = resolver<List>()(
 
 export const list = resolver<List>()(async ({ query, args: { name } }) => {
   const res = await query({ join: true, include: 'users.mentors' })
-    .where({ 'lists.name': name })
-    .andWhere(function () {
-      this.where({ listed: true }).orWhereNull('listed')
-    })
+    .where('lists.name', 'ILIKE', name.toLowerCase())
     .first()
   if (res.users)
     res.users = res.users.sort(
