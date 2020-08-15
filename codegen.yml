@@ -1,4 +1,4 @@
-schema: ./_schema.gql
+schema: ./src/schema/gen/_schema.gql
 overwrite: true
 generates:
   ./src/schema/gen/schema.ts:
