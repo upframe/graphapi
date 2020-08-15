@@ -59,7 +59,7 @@ set(List).add(User, 'users')
 set(Tags).add(User, 'users')
 
 export default Object.assign(
-  function<M extends Model>(
+  function <M extends Model>(
     info: any,
     {
       join = false,

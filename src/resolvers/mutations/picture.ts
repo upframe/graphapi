@@ -14,10 +14,7 @@ export const uploadProfilePicture = resolver<User>()(
       ].map(Key => ({ Key }))
 
       await Promise.all([
-        query
-          .raw(ProfilePicture)
-          .whereIn('url', urls)
-          .delete(),
+        query.raw(ProfilePicture).whereIn('url', urls).delete(),
         s3
           .deleteObjects({
             Bucket: process.env.BUCKET_NAME,
@@ -61,10 +58,7 @@ export const removeProfilePicture = resolver<User>()(
     ].map(Key => ({ Key }))
 
     await Promise.all([
-      query
-        .raw(ProfilePicture)
-        .whereIn('url', urls)
-        .delete(),
+      query.raw(ProfilePicture).whereIn('url', urls).delete(),
       s3
         .deleteObjects({
           Bucket: process.env.BUCKET_NAME,

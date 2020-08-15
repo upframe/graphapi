@@ -1,0 +1,20 @@
+# Pagination interfaces as per https://relay.dev/graphql/connections.htm
+
+interface Connection {
+  edges: [Edge!]!
+  pageInfo: PageInfo!
+}
+
+interface Edge {
+  node: Node
+  cursor: ID!
+}
+
+type PageInfo {
+  hasPreviousPage: Boolean!
+  hasNextPage: Boolean!
+}
+
+interface Node {
+  id: ID!
+}

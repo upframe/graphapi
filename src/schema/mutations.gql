@@ -1,72 +1,3 @@
-input LoginInput {
-  email: String!
-  password: String!
-}
-
-input createAccountInput {
-  name: String!
-  email: String!
-  password: String!
-}
-
-input ProfileInput {
-  name: String
-  handle: String
-  location: String
-  headline: String
-  company: String
-  website: String
-  biography: String
-  social: [SocialInput]
-  tags: TagInput
-}
-
-input TagInput {
-  addedIds: [Int!]
-  addedName: [String!]
-  removedIds: [Int!]
-}
-
-input SocialInput {
-  platform: Int
-  handle: String
-}
-
-input NotificationSettingsInput {
-  receiveEmails: Boolean
-  slotReminder: EmailInterval
-}
-
-input SlotInput {
-  start: String!
-  end: String
-}
-
-input SlotUpdateInput {
-  deleted: [ID!]
-  added: [SlotInput!]
-}
-
-input MsgExtInput {
-  to: ID!
-  message: String!
-}
-
-input RequestSlotInput {
-  slotId: ID!
-  message: String!
-}
-
-input ChangeListInput {
-  listId: Int!
-  description: String
-  publicView: Boolean
-  pictureUrl: String
-  backgroundColor: String
-  textColor: String
-  remove: [String!]
-}
-
 type Mutation {
   signIn(input: LoginInput!): Person
   signInGoogle(code: ID!, redirect: String!): Person
@@ -105,7 +36,6 @@ type Mutation {
   setInferTz(infer: Boolean!): Person
 
   updateSlots(slots: SlotUpdateInput!): Person
-  messageExt(input: MsgExtInput!): Int
   requestSlot(input: RequestSlotInput!): Int
 
   acceptMeetup(meetupId: ID!): Meetup
@@ -132,4 +62,19 @@ type Mutation {
   deleteTag(id: Int!): Int
 
   invite(emails: [String!]!, role: Role = USER): Person
+
+  sendMessage(content: String!, channel: ID!): Message!
+  createConversation(participants: [ID!]!, msg: String): Conversation!
+  createThread(conversationId: ID!, msg: String): Channel!
+  markRead(input: [MarkReadInput!]!): Int
+  unsubscribeEmailNotifications(token: ID!): Person
+  postForUser(
+    content: String!
+    channel: ID!
+    email: String!
+    timestamp: String
+  ): Int
+
+  setRedirect(from: String!, to: String!, expires: Int): Int
+  deleteRedirect(path: String!): Int
 }

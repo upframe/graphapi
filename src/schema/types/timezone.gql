@@ -1,0 +1,19 @@
+type Timezone {
+  iana: String!
+  utcOffset: Int!
+  nonDstOff: Int
+  informal: TzInformal
+  isDst: Boolean!
+  hasDst: Boolean!
+}
+
+type TzInformal {
+  standard: TzAbbr!
+  dst: TzAbbr
+  current: TzAbbr!
+}
+
+type TzAbbr {
+  name: String
+  abbr: String!
+}

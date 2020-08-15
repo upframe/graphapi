@@ -39,12 +39,7 @@ export const createList = resolver<List>().isAdmin(
 
 export const deleteList = resolver().isAdmin(
   async ({ args: { listId }, query }) => {
-    if (
-      (await query
-        .raw(List)
-        .findById(listId)
-        .delete()) === 0
-    )
+    if ((await query.raw(List).findById(listId).delete()) === 0)
       throw new UserInputError(`list with id ${listId} doesn't exist`)
   }
 )
@@ -69,12 +64,7 @@ export const addToList = resolver<List>().isAdmin(
 
 export const removeFromList = resolver<UserLists>().isAdmin(
   async ({ args: { listId, userId }, query }) => {
-    if (
-      (await query
-        .raw(UserLists)
-        .findById([userId, listId])
-        .delete()) === 0
-    )
+    if ((await query.raw(UserLists).findById([userId, listId]).delete()) === 0)
       throw new UserInputError(`user ${userId} is not part of list ${listId}`)
     return await query().findById(listId)
   }

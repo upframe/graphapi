@@ -24,10 +24,12 @@ export class User extends Model {
   location: string
   biography: string
   allow_emails: boolean
+  msg_emails: boolean
   searchable: boolean
   headline: string
   timezone: string
   tz_infer: boolean
+  display_name: string
 
   mentors?: Mentor
   socialmedia?: SocialMedia[]

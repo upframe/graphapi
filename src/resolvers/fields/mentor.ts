@@ -19,8 +19,9 @@ export const company = resolver<string, User>()(
 )
 
 export const notificationPrefs = resolver<any, User>()(
-  ({ parent: { mentors, allow_emails } }) => ({
+  ({ parent: { mentors, allow_emails, msg_emails } }) => ({
     slotReminder: mentors?.slot_reminder_email,
+    msgEmails: msg_emails,
     receiveEmails: allow_emails,
   })
 )

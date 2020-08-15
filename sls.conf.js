@@ -7,6 +7,7 @@ const config = {
     DD_LAYERS: false,
     DD_SERVICE: 'graphapi',
     DOMAIN: 'localhost',
+    PROVISIONED: 0,
   },
 
   online: {
@@ -20,12 +21,23 @@ const config = {
     DD_ENV: 'beta',
     DD_SERVICE: 'graphapi-dev-graphapi',
     DOMAIN: 'dev.graphapi.upframe.io',
+    PROVISIONED: 0,
+    GATEWAY: 'https://jwzd1gng5l.execute-api.eu-west-1.amazonaws.com/dev/',
   },
 
   prod: {
     DD_ENV: 'prod',
     DD_SERVICE: 'graphapi-prod-graphapi',
     DOMAIN: 'graphapi.upframe.io',
+    PROVISIONED: 1,
+  },
+
+  msg: {
+    DD_ENV: 'msg',
+    DD_SERVICE: 'graphapi-msg-graphapi',
+    DOMAIN: 'msg.graphapi.upframe.io',
+    PROVISIONED: 0,
+    GATEWAY: 'https://stzj06gng1.execute-api.eu-west-1.amazonaws.com/msg/',
   },
 }
 

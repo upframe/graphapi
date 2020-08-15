@@ -26,4 +26,7 @@ type Query {
     location: String
     headline: String
   ): [Validity!]!
+  conversation(conversationId: ID!): Conversation
+  channel(channelId: ID!): Channel
+  redirects: [Redirect!]!
 }

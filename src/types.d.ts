@@ -25,6 +25,8 @@ interface AccessGraph {
   [field: string]: boolean | AccessGraph
 }
 
+type _fastTrack = typeof import('./resolvers/fastTrack').default
+
 interface ResolverCtx {
   user: import('./authorization/user').default
   id: string
@@ -33,10 +35,29 @@ interface ResolverCtx {
   clientIp: string
   setHeader(header: string, value: string): void
   knex: import('knex')
+  fastTrack?: _fastTrack[keyof _fastTrack]
+  service?: 'EMAIL'
 }
 
 type ModelContent<M extends Model> = {
   [K in keyof Omit<M, keyof Model>]: M[K] extends Model
     ? ModelContent<M[K]>
     : M[K]
+}
+
+// GraphQL types
+
+type Connection<T> = {
+  edges: Edge<T>[]
+  pageInfo: PageInfo
+}
+
+type Edge<T> = {
+  cursor: string | number
+  node: T
+}
+
+type PageInfo = {
+  hasNextPage: boolean
+  hasPreviousPage: boolean
 }
