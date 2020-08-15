@@ -44,10 +44,12 @@ type Mutation {
   connectCalendar(code: ID!, redirect: String!): Person
   disconnectCalendar: Person
 
-  createList(name: String!): List
+  createList(input: CreateListInput!): List
   deleteList(listId: Int!): Int
   addToList(listId: Int!, userId: ID!): List
   removeFromList(listId: Int!, userId: ID!): List
+  changeListInfo(input: ChangeListInput): List
+  setListPosition(listId: Int!, pos: Int!): Int
 
   setTagName(id: Int!, name: String!): Tag
   mergeTags(from: Int!, into: Int!): Tag

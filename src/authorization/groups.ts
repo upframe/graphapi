@@ -43,6 +43,11 @@ export const visitor: Group = {
       resource: 'lists',
     },
     {
+      effect: 'disallow',
+      action: 'read',
+      resource: 'sort_pos',
+    },
+    {
       effect: 'allow',
       action: 'read',
       resource: 'socialmedia',

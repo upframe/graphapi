@@ -21,7 +21,15 @@
     ]
   },
   "lists": {
-    "columns": ["id", "name"]
+    "columns": [
+      "id",
+      "name",
+      "description",
+      "public",
+      "illustration",
+      "background_color",
+      "text_color"
+    ]
   },
   "meetups": {
     "columns": [

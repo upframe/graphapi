@@ -13,6 +13,7 @@ import * as Channel from './fields/channel'
 import { Connection, Edge, Node } from './fields/connections'
 import * as Timezone from './fields/timezone'
 import * as Conversation from './fields/conversation'
+import * as List from './fields/list'
 
 export default {
   Query,
@@ -32,4 +33,5 @@ export default {
   Node,
   Timezone,
   Conversation,
+  List,
 }

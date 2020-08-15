@@ -60,6 +60,7 @@ provider:
     EMAIL_SNS: ${ssm:/email/SNS/arn}
     MSG_EMAIL_SF_ARN: ${ssm:/email/msgSF/arn}
     EMAIL_SECRET: ${ssm:/email/secret~true}
+    ASSET_BUCKET: ${ssm:/S3/assets/bucketUrl}
 
     DB_HOST: ${ssm:/DB/Host}
     DB_PROXY_HOST: ${ssm:/DB/Proxy/Host}
@@ -74,6 +75,8 @@ provider:
     DD_ENHANCED_METRICS: ${file(./sls.conf.js):DD_ENHANCED}
     DD_LOGS_INJECTION: ${file(./sls.conf.js):DD_LOG_INJECT}
     DD_ENV: ${file(./sls.conf.js):DD_ENV}
+
+    GATEWAY: ${file(./sls.conf.js):GATEWAY}
 
 functions:
   graphapi:

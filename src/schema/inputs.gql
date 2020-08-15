@@ -63,3 +63,30 @@ input MarkReadInput {
   channel: ID!
   msgs: [ID!]!
 }
+
+enum ListFields {
+  description
+  backgroundColor
+  textColor
+  illustration
+}
+
+input CreateListInput {
+  name: String!
+  listed: Boolean
+  description: String
+  illustration: String
+  backgroundColor: String
+  textColor: String
+}
+
+input ChangeListInput {
+  id: Int!
+  name: String
+  listed: Boolean
+  description: String
+  illustration: String
+  backgroundColor: String
+  textColor: String
+  remove: [ListFields!]
+}

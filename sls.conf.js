@@ -8,6 +8,7 @@ const config = {
     DD_SERVICE: 'graphapi',
     DOMAIN: 'localhost',
     PROVISIONED: 0,
+    GATEWAY: '',
   },
 
   online: {
@@ -22,6 +23,7 @@ const config = {
     DD_SERVICE: 'graphapi-dev-graphapi',
     DOMAIN: 'dev.graphapi.upframe.io',
     PROVISIONED: 0,
+    GATEWAY: 'https://jwzd1gng5l.execute-api.eu-west-1.amazonaws.com/dev/',
   },
 
   prod: {
@@ -36,6 +38,7 @@ const config = {
     DD_SERVICE: 'graphapi-msg-graphapi',
     DOMAIN: 'msg.graphapi.upframe.io',
     PROVISIONED: 0,
+    GATEWAY: 'https://stzj06gng1.execute-api.eu-west-1.amazonaws.com/msg/',
   },
 }
 
