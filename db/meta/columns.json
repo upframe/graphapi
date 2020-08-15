@@ -25,8 +25,8 @@
       "id",
       "name",
       "description",
-      "public_view",
-      "picture_url",
+      "listed",
+      "illustration",
       "background_color",
       "text_color"
     ]

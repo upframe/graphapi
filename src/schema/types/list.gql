@@ -1,0 +1,9 @@
+type List {
+  id: Int!
+  name: String!
+  description: String
+  illustration: String
+  backgroundColor: String
+  textColor: String
+  users: [Person!]
+}

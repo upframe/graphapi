@@ -99,9 +99,3 @@ type SocialHandle {
   url: String
   handle: String
 }
-
-type List {
-  id: Int
-  name: String!
-  users: [Person!]
-}

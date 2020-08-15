@@ -7,10 +7,11 @@ export class List extends Model {
   id!: number
   name!: string
   description: string
-  picture_url: string
-  public_view!: boolean
+  illustration: string
+  listed!: boolean
   background_color: string
   text_color: string
+
   users?: import('./user').User[]
 }
 

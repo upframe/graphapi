@@ -1,18 +1,22 @@
 import resolver from '../resolver'
-import { List } from '../../models/'
-
-export const publicView = resolver<boolean, List>()(
-  ({ parent: { public_view } }) => public_view
-)
-
-export const pictureUrl = resolver<string, List>()(
-  ({ parent: { picture_url } }) => picture_url
-)
+import type { List } from '~/models'
+import { hexToRGB, luminance, contrast } from '~/utils/color'
 
 export const backgroundColor = resolver<string, List>()(
-  ({ parent: { background_color } }) => background_color
+  ({ parent }) => parent.background_color
 )
 
+const light = '#fffe'
+const dark = '#000e'
+const [lightLum, darkLum] = [light, dark].map(v => luminance(...hexToRGB(v)))
+
 export const textColor = resolver<string, List>()(
-  ({ parent: { text_color } }) => text_color
+  ({ parent: { background_color, text_color } }) => {
+    if (text_color) return text_color
+    if (!background_color) return null
+    const backLum = luminance(...hexToRGB(background_color))
+    return contrast(lightLum, backLum) > contrast(darkLum, backLum)
+      ? light
+      : dark
+  }
 )

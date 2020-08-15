@@ -8,6 +8,7 @@ const config = {
     DD_SERVICE: 'graphapi',
     DOMAIN: 'localhost',
     PROVISIONED: 0,
+    GATEWAY: '',
   },
 
   online: {
