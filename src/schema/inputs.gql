@@ -64,12 +64,29 @@ input MarkReadInput {
   msgs: [ID!]!
 }
 
-input ChangeListInput {
-  listId: Int!
+enum ListFields {
+  description
+  backgroundColor
+  textColor
+  illustration
+}
+
+input CreateListInput {
+  name: String!
+  listed: Boolean
   description: String
-  publicView: Boolean
-  pictureUrl: String
+  illustration: String
   backgroundColor: String
   textColor: String
-  remove: [String!]
+}
+
+input ChangeListInput {
+  id: Int!
+  name: String
+  listed: Boolean
+  description: String
+  illustration: String
+  backgroundColor: String
+  textColor: String
+  remove: [ListFields!]
 }

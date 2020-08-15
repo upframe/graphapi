@@ -51,7 +51,7 @@ export const mentors = resolver<User>()(
           'users.id'
         )
         .whereIn('role', ['mentor', 'admin'])
-        .andWhere('listed', true)
+        .andWhere('mentors.listed', true)
 
       res.forEach(({ id, url, size, type, company, ...rest }) => {
         if (!(id in users))
@@ -72,7 +72,7 @@ export const mentors = resolver<User>()(
       await query({ join: true, include: 'mentors' })
         .select(knex.raw('LEAST(mentors.score, 1) as rank'))
         .whereIn('role', ['mentor', 'admin'])
-        .andWhere({ listed: true })
+        .andWhere({ 'mentors.listed': true })
     ).sort(
       (a: any, b: any) => b.rank + Math.random() - (a.rank + Math.random())
     )
@@ -157,7 +157,7 @@ export const tags = resolver<Tags>()(async ({ query, args: { orderBy } }) => {
 export const lists = resolver<List>()(
   async ({ query, args: { includeUnlisted } }) => {
     let q = query()
-    if (!includeUnlisted) q = q.where({ public_view: true })
+    if (!includeUnlisted) q = q.where({ listed: true })
     return await q
   }
 )

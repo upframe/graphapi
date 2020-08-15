@@ -20,3 +20,8 @@ export const textColor = resolver<string, List>()(
       : dark
   }
 )
+
+export const illustration = resolver<string, List>()(
+  ({ parent: { illustration } }) =>
+    illustration && `https://${process.env.ASSET_BUCKET}${illustration}`
+)

@@ -6,32 +6,32 @@ import {
 import { UserInputError } from 'apollo-server-lambda'
 import { List, UserLists } from '../../models'
 import resolver from '../resolver'
+import wrap, { filterKeys, mapKeys, mapValues } from '~/utils/object'
+import type { ChangeListInput } from '~/schema/gen/schema'
 
 export const createList = resolver<List>().isAdmin(
-  async ({
-    args: {
-      name,
-      description,
-      pictureUrl,
-      publicView,
-      backgroundColor,
-      textColor,
-    },
-    query,
-  }) => {
+  async ({ args: { input }, query }) => {
+    const invalidColor = Object.values(filterKeys(input, /Color$/)).find(
+      (v: string) =>
+        !/^#[0-9a-f]+$/i.test(v) || ![3, 4, 6, 8].includes(v.length - 1)
+    )
+    if (invalidColor)
+      throw new UserInputError(
+        `invalid color '${invalidColor}', Color must be in hex notation`
+      )
     try {
-      const { id } = await query.raw().insert({
-        name,
-        description,
-        picture_url: pictureUrl,
-        public_view: publicView,
-        text_color: textColor,
-        background_color: backgroundColor,
-      })
+      const { id } = await query.raw().insert(
+        mapValues(
+          mapKeys(input, k =>
+            k.replace(/([A-Z])/g, (_, v) => '_' + v.toLowerCase())
+          ),
+          (v: string, k: string) => (k.endsWith('Color') ? v.toLowerCase() : v)
+        )
+      )
       return await query().findById(id)
     } catch (e) {
       if (e instanceof UniqueViolationError)
-        throw new UserInputError(`list ${name} already exists`)
+        throw new UserInputError(`list '${input.name}' already exists`)
       throw e
     }
   }
@@ -70,25 +70,21 @@ export const removeFromList = resolver<UserLists>().isAdmin(
   }
 )
 
-export const changeListInfo = resolver<UserLists>().isAdmin(
-  async ({ args: { input }, query }) => {
-    const update: any = {}
-    if (input.description) update.description = input.description
-    else if (input.remove?.includes('description')) update.description = null
-
-    if (typeof input.publicView === 'boolean')
-      update.public_view = input.publicView
-
-    if (input.pictureUrl) update.photo_url = input.pictureUrl
-    else if (input.remove?.includes('pictureUrl')) update.photo_url = null
-
-    if (input.backgroundColor) update.background_color = input.backgroundColor
-    else if (input.remove?.includes('backgroundColor'))
-      update.background_color = null
-
-    if (input.textColor) update.text_color = input.textColor
-    else if (input.remove?.includes('backgroundColor')) update.text_color = null
-
-    return await query().patchAndFetchById(input.listId, update)
-  }
-)
+export const changeListInfo = resolver<UserLists>().isAdmin<{
+  input: ChangeListInput
+}>(async ({ args: { input }, query }) => {
+  return await query().patchAndFetchById(input.id, {
+    ...wrap(input)
+      .mapKeys(k => k.replace(/([A-Z])/g, (_, v) => '_' + v.toLowerCase()))
+      .filterKeys(/^(?!(id|remove)$)/)
+      .update('illustration', (v: string) =>
+        v.replace(/^https?:\/\//, '').replace(process.env.ASSET_BUCKET, '')
+      ),
+    ...Object.fromEntries(
+      (input.remove || []).map(k => [
+        k.replace(/([A-Z])/g, (_, v) => '_' + v.toLowerCase()),
+        null,
+      ])
+    ),
+  })
+})

@@ -44,14 +44,7 @@ type Mutation {
   connectCalendar(code: ID!, redirect: String!): Person
   disconnectCalendar: Person
 
-  createList(
-    name: String!
-    description: String
-    publicView: Boolean!
-    pictureUrl: String
-    backgroundColor: String
-    textColor: String
-  ): List
+  createList(input: CreateListInput!): List
   deleteList(listId: Int!): Int
   addToList(listId: Int!, userId: ID!): List
   removeFromList(listId: Int!, userId: ID!): List
