@@ -49,6 +49,7 @@ type Mutation {
   addToList(listId: Int!, userId: ID!): List
   removeFromList(listId: Int!, userId: ID!): List
   changeListInfo(input: ChangeListInput): List
+  setListPosition(listId: Int!, pos: Int!): Int
 
   setTagName(id: Int!, name: String!): Tag
   mergeTags(from: Int!, into: Int!): Tag

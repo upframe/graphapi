@@ -25,3 +25,7 @@ export const illustration = resolver<string, List>()(
   ({ parent: { illustration } }) =>
     illustration && `https://${process.env.ASSET_BUCKET}${illustration}`
 )
+
+export const sortPos = resolver<number, List>()(
+  ({ parent: { sort_pos } }) => sort_pos
+)

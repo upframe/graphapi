@@ -8,9 +8,10 @@ export class List extends Model {
   name!: string
   description: string
   illustration: string
-  listed!: boolean
+  public!: boolean
   background_color: string
   text_color: string
+  sort_pos: number
 
   users?: import('./user').User[]
 }

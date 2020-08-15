@@ -6,4 +6,5 @@ type List {
   backgroundColor: String
   textColor: String
   users: [Person!]
+  sortPos: Int
 }

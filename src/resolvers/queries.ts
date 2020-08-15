@@ -157,7 +157,7 @@ export const tags = resolver<Tags>()(async ({ query, args: { orderBy } }) => {
 export const lists = resolver<List>()(
   async ({ query, args: { includeUnlisted } }) => {
     let q = query()
-    if (!includeUnlisted) q = q.where({ listed: true })
+    if (!includeUnlisted) q = q.where({ public: true }).orderBy('sort_pos')
     return await q
   }
 )

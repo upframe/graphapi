@@ -41,3 +41,6 @@ export const set = (obj: object, k: string, v: any) => ({
 
 export const update = (obj: object, k: string, v: any) =>
   k in obj ? set(obj, k, v) : obj
+
+export const rename = (obj: object, kOld: string, kNew: string) =>
+  mapKeys(obj, k => (k === kOld ? kNew : k))

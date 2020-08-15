@@ -6,10 +6,10 @@ import {
 import { UserInputError } from 'apollo-server-lambda'
 import { List, UserLists } from '../../models'
 import resolver from '../resolver'
-import wrap, { filterKeys, mapKeys, mapValues } from '~/utils/object'
-import type { ChangeListInput } from '~/schema/gen/schema'
+import wrap, { filterKeys } from '~/utils/object'
+import type { ChangeListInput, CreateListInput } from '~/schema/gen/schema'
 
-export const createList = resolver<List>().isAdmin(
+export const createList = resolver<List>().isAdmin<{ input: CreateListInput }>(
   async ({ args: { input }, query }) => {
     const invalidColor = Object.values(filterKeys(input, /Color$/)).find(
       (v: string) =>
@@ -21,12 +21,12 @@ export const createList = resolver<List>().isAdmin(
       )
     try {
       const { id } = await query.raw().insert(
-        mapValues(
-          mapKeys(input, k =>
-            k.replace(/([A-Z])/g, (_, v) => '_' + v.toLowerCase())
-          ),
-          (v: string, k: string) => (k.endsWith('Color') ? v.toLowerCase() : v)
-        )
+        wrap(input)
+          .mapKeys(k => k.replace(/([A-Z])/g, (_, v) => '_' + v.toLowerCase()))
+          .rename('listed', 'public')
+          .mapValues((v: string, k: string) =>
+            k.endsWith('Color') ? v.toLowerCase() : v
+          )
       )
       return await query().findById(id)
     } catch (e) {
@@ -77,6 +77,7 @@ export const changeListInfo = resolver<UserLists>().isAdmin<{
     ...wrap(input)
       .mapKeys(k => k.replace(/([A-Z])/g, (_, v) => '_' + v.toLowerCase()))
       .filterKeys(/^(?!(id|remove)$)/)
+      .rename('listed', 'public')
       .update('illustration', (v: string) =>
         v.replace(/^https?:\/\//, '').replace(process.env.ASSET_BUCKET, '')
       ),
@@ -88,3 +89,29 @@ export const changeListInfo = resolver<UserLists>().isAdmin<{
     ),
   })
 })
+
+export const setListPosition = resolver().isAdmin(
+  async ({ args: { listId, pos }, query, knex }) => {
+    let lists = (await query
+      .raw(List)
+      .where('sort_pos', '>=', pos)
+      .orWhere({ id: listId })) as List[]
+    const list = lists.find(({ id }) => id === listId)
+    console.log({ lists, list })
+    if (!list)
+      throw new UserInputError(`list with id '${listId}' doesn't exist`)
+    await Promise.all([
+      query
+        .raw(List)
+        .patch({ sort_pos: knex.raw('sort_pos + 1') })
+        .whereIn(
+          'id',
+          lists.flatMap(({ id }) => (id !== listId ? [id] : []))
+        ),
+      query
+        .raw(List)
+        .patch({ sort_pos: knex.raw(`sort_pos + ${pos - list.sort_pos}`) })
+        .where({ id: listId }),
+    ])
+  }
+)
