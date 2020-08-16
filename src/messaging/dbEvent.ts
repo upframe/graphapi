@@ -91,9 +91,11 @@ async function newMessage(
   ])
 }
 
-async function newChannel({ pk, sk }: { pk: string; sk: string }, rdb: any) {
+async function newChannel(
+  { pk, conversation: conversationId }: { pk: string; conversation: string },
+  rdb: any
+) {
   const channelId = pk.replace(db.prefix.channel(), '')
-  const conversationId = sk.replace(db.prefix.conversation(), '')
 
   const clients: any = (
     await db.getClients('conversation', conversationId)
