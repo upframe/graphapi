@@ -6,7 +6,9 @@ export default class Conversation {
   private constructor(
     public readonly id: string,
     public readonly participants: string[],
-    public readonly channels: string[]
+    public readonly channels: string[],
+    public readonly created?: number,
+    public readonly lastUpdate?: number
   ) {}
 
   public static async create(
@@ -25,9 +27,20 @@ export default class Conversation {
   }
 
   public static async get(conversationId: string): Promise<Conversation> {
-    const { participants, channels } = await db.getConversation(conversationId)
+    const {
+      participants,
+      channels,
+      created,
+      lastUpdate,
+    } = await db.getConversation(conversationId)
     return participants
-      ? new Conversation(conversationId, participants, channels)
+      ? new Conversation(
+          conversationId,
+          participants,
+          channels,
+          created,
+          lastUpdate
+        )
       : null
   }
 
@@ -42,11 +55,13 @@ export default class Conversation {
     if (!user?.conversations?.length) return []
     const res = await db.getConversations(user.conversations)
     return res.map(
-      ({ pk, participants, channels }) =>
+      ({ pk, participants, channels, created, lastUpdate }) =>
         new Conversation(
           pk.replace(db.prefix.conversation(), ''),
           participants,
-          channels
+          channels,
+          created,
+          lastUpdate
         )
     )
   }

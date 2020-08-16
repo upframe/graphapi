@@ -10,7 +10,9 @@ export default class Channel {
 
   constructor(
     public readonly channelId: string,
-    public participants?: string[]
+    public participants?: string[],
+    public readonly created?: number,
+    public readonly lastUpdate?: number
   ) {}
 
   public static async get(id: string): Promise<Channel> {
@@ -18,7 +20,7 @@ export default class Channel {
     if (channel) return channel
     const res = await db.getChannel(id)
     if (!res) return
-    channel = new Channel(id, res.participants)
+    channel = new Channel(id, res.participants, res.created, res.lastUpdate)
     Channel.instances.push(channel)
     return channel
   }

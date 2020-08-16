@@ -71,6 +71,8 @@ export const createConversation = async ({
           key: { pk: prefix.conversation(id), sk: 'meta' },
           channels: ddb.createSet(channels),
           participants: ddb.createSet(participants),
+          created: Date.now(),
+          lastUpdate: Date.now(),
         },
         'NOT_EXISTS'
       ),
@@ -268,6 +270,8 @@ export const createChannel = async (
       },
       conversation: conversationId,
       participants: ddb.createSet(participants),
+      created: Date.now(),
+      lastUpdate: Date.now(),
     }),
     update(
       'conversations',
@@ -316,16 +320,24 @@ export const publishMessage = async ({
       key: { pk: prefix.channel(channel), sk: prefix.message(id) },
       ...rest,
     }),
-    getChannel(channel).then(({ participants }) =>
-      Promise.all(
-        participants
+    getChannel(channel).then(({ participants, conversation }) =>
+      Promise.all([
+        ...participants
           .filter(user => user !== rest.author)
           .map(user =>
             update('connections', { pk: prefix.user(user), sk: 'meta' }, [
               ['ADD', `unread_${channel}`, id],
             ])
-          )
-      )
+          ),
+        update('conversations', { pk: prefix.channel(channel), sk: 'meta' }, [
+          ['SET', 'lastUpdate', Date.now()],
+        ]),
+        update(
+          'conversations',
+          { pk: prefix.conversation(conversation), sk: 'meta' },
+          [['SET', 'lastUpdate', Date.now()]]
+        ),
+      ])
     ),
   ])
 }

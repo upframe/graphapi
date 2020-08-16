@@ -51,3 +51,23 @@ export const conversationId = resolver<string, any>()(
   async ({ parent: { conversationId, id } }) =>
     conversationId ?? (await db.getChannel(id)).conversation
 )
+
+export const created = resolver<string, any>()(
+  async ({ parent: { id, created } }) => {
+    if (!created) {
+      const ch = await Channel.get(id)
+      created = ch.created
+    }
+    return new Date(created).toISOString()
+  }
+)
+
+export const lastUpdate = resolver<string, any>()(
+  async ({ parent: { id, lastUpdate } }) => {
+    if (!lastUpdate) {
+      const ch = await Channel.get(id)
+      lastUpdate = ch.created
+    }
+    return new Date(lastUpdate).toISOString()
+  }
+)

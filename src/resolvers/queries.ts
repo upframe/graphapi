@@ -21,7 +21,6 @@ import {
 import Conversation from '~/messaging/conversation'
 import Channel from '~/messaging/channel'
 import { ddb } from '../utils/aws'
-import logger from '~/logger'
 
 export const me = resolver<User>().loggedIn(
   async ({ query, ctx: { id } }) => await query().findById(id)
@@ -291,7 +290,6 @@ export const conversation = resolver<any>().loggedIn(
 export const channel = resolver<any>().loggedIn(
   async ({ args: { channelId }, ctx: { id } }) => {
     const ch = await Channel.get(channelId)
-    logger.info({ ch })
     return ch?.participants?.includes(id) ? { ...ch, id: ch.channelId } : null
   }
 )

@@ -18,3 +18,12 @@ export const channels = resolver<any[], any>()(({ parent }) =>
     )
     ?.map(id => ({ id }))
 )
+
+export const created = resolver<string, any>()(({ parent: { created } }) =>
+  new Date(created ?? 0).toISOString()
+)
+
+export const lastUpdate = resolver<
+  string,
+  any
+>()(({ parent: { lastUpdate } }) => new Date(lastUpdate ?? 0).toISOString())

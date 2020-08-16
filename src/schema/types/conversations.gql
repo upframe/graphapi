@@ -2,11 +2,12 @@ type Conversation {
   id: ID!
   participants(includeMe: Boolean = false): [Person!]!
   channels: [Channel!]!
+  created: String
+  lastUpdate: String
 }
 
 type Channel {
   id: ID!
-  created: String
   conversationId: ID!
   messages(
     first: Int
@@ -14,6 +15,8 @@ type Channel {
     before: ID
     after: ID
   ): ChannelMessageConnection!
+  created: String
+  lastUpdate: String
 }
 
 type ChannelMessageConnection implements Connection {
