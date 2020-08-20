@@ -90,7 +90,7 @@ enum Role {
 type ProfilePicture {
   size: Int
   type: String
-  url: String
+  url: String!
 }
 
 type SocialHandle {

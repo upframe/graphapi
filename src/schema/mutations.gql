@@ -68,6 +68,11 @@ type Mutation {
     email: String!
     timestamp: String
   ): Int
+  toggleMsgEmailNotifications(
+    active: Boolean!
+    ids: [ID!]
+    allUsers: Boolean = false
+  ): Int
 
   setRedirect(from: String!, to: String!, expires: Int): Int
   deleteRedirect(path: String!): Int

@@ -152,6 +152,18 @@ export const updateNotificationPreferences = resolver<User>()(
   }
 )
 
+export const toggleMsgEmailNotifications = resolver().isAdmin(
+  async ({ args: { active, ids, allUsers }, query }) => {
+    if (!!ids === allUsers)
+      throw new UserInputError('must provide either ids or all users')
+    if (allUsers) ids = (await query.raw(User).select('id')).map(({ id }) => id)
+    await query.raw(User).patch({ msg_emails: active }).whereIn('id', ids)
+    await Promise.all(
+      ids.map(id => new MsgUser(id).wantsEmailNotifications(active))
+    )
+  }
+)
+
 export const setTimezone = resolver<User>().loggedIn(
   async ({ args: { tz: timezone }, ctx: { id }, query }) =>
     await query().upsertGraphAndFetch({ id, timezone })

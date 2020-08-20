@@ -29,6 +29,7 @@ import * as account from '../../account'
 import { s3 } from '../../utils/aws'
 import axios from 'axios'
 import logger from '../../logger'
+import MsgUser from '~/messaging/user'
 
 export const signIn = resolver<User>()(
   async ({
@@ -350,6 +351,7 @@ export const completeSignup = resolver<User>()(
         .findById(signup.token)
         .patch({ redeemed: finalUser.id })
         .asUser(system),
+      new MsgUser(finalUser.id).wantsEmailNotifications(true),
     ])
 
     ctx.setHeader('Set-Cookie', cookie('auth', signInToken(finalUser)))

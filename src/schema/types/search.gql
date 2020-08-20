@@ -1,6 +1,6 @@
 type SearchResult {
-  users: [UserSearchResult!]
-  tags: [TagSearchResult!]
+  users: [UserSearchResult!]!
+  tags: [TagSearchResult!]!
 }
 
 type UserSearchResult {
