@@ -1,0 +1,92 @@
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+input createAccountInput {
+  name: String!
+  email: String!
+  password: String!
+}
+
+input ProfileInput {
+  name: String
+  displayName: String
+  handle: String
+  location: String
+  headline: String
+  company: String
+  website: String
+  biography: String
+  social: [SocialInput]
+  tags: TagInput
+}
+
+input TagInput {
+  addedIds: [Int!]
+  addedName: [String!]
+  removedIds: [Int!]
+}
+
+input SocialInput {
+  platform: Int
+  handle: String
+}
+
+input NotificationSettingsInput {
+  receiveEmails: Boolean
+  msgEmails: Boolean
+  slotReminder: EmailInterval
+}
+
+input SlotInput {
+  start: String!
+  end: String
+}
+
+input SlotUpdateInput {
+  deleted: [ID!]
+  added: [SlotInput!]
+}
+
+input MsgExtInput {
+  to: ID!
+  message: String!
+}
+
+input RequestSlotInput {
+  slotId: ID!
+  message: String!
+}
+
+input MarkReadInput {
+  channel: ID!
+  msgs: [ID!]!
+}
+
+enum ListFields {
+  description
+  backgroundColor
+  textColor
+  illustration
+}
+
+input CreateListInput {
+  name: String!
+  listed: Boolean
+  description: String
+  illustration: String
+  backgroundColor: String
+  textColor: String
+}
+
+input ChangeListInput {
+  id: Int!
+  name: String
+  listed: Boolean
+  description: String
+  illustration: String
+  backgroundColor: String
+  textColor: String
+  remove: [ListFields!]
+}

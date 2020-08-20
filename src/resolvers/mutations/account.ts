@@ -29,6 +29,7 @@ import * as account from '../../account'
 import { s3 } from '../../utils/aws'
 import axios from 'axios'
 import logger from '../../logger'
+import MsgUser from '~/messaging/user'
 
 export const signIn = resolver<User>()(
   async ({
@@ -38,17 +39,12 @@ export const signIn = resolver<User>()(
     ctx,
     query,
   }) => {
-    const creds = await query
-      .raw(SigninUpframe)
-      .findById(email)
-      .asUser(system)
+    const creds = await query.raw(SigninUpframe).findById(email).asUser(system)
 
     if (!creds?.password || !checkPassword(password, creds.password))
       throw new UserInputError('invalid credentials')
 
-    const user = await query()
-      .findById(creds.user_id)
-      .asUser(system)
+    const user = await query().findById(creds.user_id).asUser(system)
 
     ctx.setHeader('Set-Cookie', cookie('auth', signInToken(user)))
     ctx.id = user.id
@@ -81,9 +77,7 @@ export const signInGoogle = resolver<User>()(
             access_token: tokens.access_token,
           })
           .asUser(system)
-      const user = await query()
-        .findById(signIn.user_id)
-        .asUser(system)
+      const user = await query().findById(signIn.user_id).asUser(system)
       ctx.setHeader('Set-Cookie', cookie('auth', signInToken(user)))
       ctx.id = user.id
       return user
@@ -102,18 +96,10 @@ export const signOut = resolver()(({ ctx }) => {
 
 export const signUpPassword = resolver<any>()(
   async ({ args: { token, email, password }, query, knex }) => {
-    const invite = await query
-      .raw(Invite)
-      .findById(token)
-      .asUser(system)
+    const invite = await query.raw(Invite).findById(token).asUser(system)
     if (!invite) throw new UserInputError('invalid invite token')
 
-    if (
-      await query
-        .raw(User)
-        .where({ email })
-        .first()
-    )
+    if (await query.raw(User).where({ email }).first())
       throw new UserInputError('email already in use')
 
     const validState = await validate.batch({ email, password }, knex)
@@ -147,10 +133,7 @@ export const signUpPassword = resolver<any>()(
 export const signUpGoogle = resolver<any>()(
   async ({ args: { token, code, redirect }, query, knex }) => {
     try {
-      const invite = await query
-        .raw(Invite)
-        .findById(token)
-        .asUser(system)
+      const invite = await query.raw(Invite).findById(token).asUser(system)
       if (!invite) throw new UserInputError('invalid invite token')
 
       const { info } = await account.connectGoogle(
@@ -201,17 +184,9 @@ export const connectGoogle = resolver<User>()(
 
 export const disconnectGoogle = resolver<User>()(
   async ({ ctx: { id, user }, query }) => {
-    const tokens = await query
-      .raw(ConnectGoogle)
-      .where({ user_id: id })
-      .first()
+    const tokens = await query.raw(ConnectGoogle).where({ user_id: id }).first()
     if (!tokens) throw new UserInputError('google account not connected')
-    if (
-      !(await query
-        .raw(SigninUpframe)
-        .findById(user.email)
-        .first())
-    )
+    if (!(await query.raw(SigninUpframe).findById(user.email).first()))
       throw new UserInputError('must first set account password')
     const client = createClient()
     client.setCredentials(tokens)
@@ -241,10 +216,7 @@ export const completeSignup = resolver<User>()(
     query,
     knex,
   }) => {
-    const signup = await query
-      .raw(Signup)
-      .findById(token)
-      .asUser(system)
+    const signup = await query.raw(Signup).findById(token).asUser(system)
     if (!signup) throw new UserInputError('invalid signup token')
 
     const role = (await query.raw(Invite).findById(token)).role
@@ -258,6 +230,7 @@ export const completeSignup = resolver<User>()(
       location,
       allow_emails: true,
       headline,
+      display_name: name.split(/[\s_.]/)[0],
     }
 
     if (signup.email) user.email = signup.email
@@ -265,10 +238,7 @@ export const completeSignup = resolver<User>()(
     if (signup.google_id) {
       const client = createClient()
       client.setCredentials(
-        await query
-          .raw(ConnectGoogle)
-          .findById(signup.google_id)
-          .asUser(system)
+        await query.raw(ConnectGoogle).findById(signup.google_id).asUser(system)
       )
       const { data } = await google
         .oauth2({ auth: client, version: 'v2' })
@@ -299,10 +269,7 @@ export const completeSignup = resolver<User>()(
         id: user.id,
         listed: false,
       }
-      await query
-        .raw(Mentor)
-        .insert(mentor)
-        .asUser(system)
+      await query.raw(Mentor).insert(mentor).asUser(system)
 
       if (tags.length) {
         const existing = await query
@@ -326,10 +293,7 @@ export const completeSignup = resolver<User>()(
           tag_id: id,
         }))
 
-        await query
-          .raw(UserTags)
-          .insert(userTags)
-          .asUser(system)
+        await query.raw(UserTags).insert(userTags).asUser(system)
       }
     }
 
@@ -378,20 +342,16 @@ export const completeSignup = resolver<User>()(
         .asUser(system)
     }
 
-    const finalUser = await query()
-      .findById(user.id)
-      .asUser(system)
+    const finalUser = await query().findById(user.id).asUser(system)
 
     await Promise.all([
-      query
-        .raw(Signup)
-        .deleteById(signup.token)
-        .asUser(system),
+      query.raw(Signup).deleteById(signup.token).asUser(system),
       query
         .raw(Invite)
         .findById(signup.token)
         .patch({ redeemed: finalUser.id })
         .asUser(system),
+      new MsgUser(finalUser.id).wantsEmailNotifications(true),
     ])
 
     ctx.setHeader('Set-Cookie', cookie('auth', signInToken(finalUser)))
@@ -403,12 +363,7 @@ export const completeSignup = resolver<User>()(
 
 export const requestEmailChange = resolver()(
   async ({ args: { email }, ctx: { id }, query }) => {
-    if (
-      await query
-        .raw(User)
-        .where({ email })
-        .first()
-    )
+    if (await query.raw(User).where({ email }).first())
       throw new UserInputError(`email ${email} already in use`)
 
     const token = genToken()
@@ -425,19 +380,13 @@ export const requestEmailChange = resolver()(
 
 export const changeEmail = resolver<User>()(
   async ({ args: { token: tokenId }, ctx: { id }, query }) => {
-    const token = await query
-      .raw(Tokens)
-      .findById(tokenId)
-      .asUser(system)
+    const token = await query.raw(Tokens).findById(tokenId).asUser(system)
     if (token?.scope !== 'email') throw new UserInputError('invalid token')
     if (id && id !== token.subject)
       throw new UserInputError('please first logout of your current account')
 
     await Promise.all([
-      query
-        .raw(Tokens)
-        .asUser(system)
-        .deleteById(tokenId),
+      query.raw(Tokens).asUser(system).deleteById(tokenId),
       query
         .raw(User)
         .asUser(system)
@@ -452,11 +401,7 @@ export const changeEmail = resolver<User>()(
 
 export const requestPasswordChange = resolver()(
   async ({ args: { email }, query }) => {
-    const user = await query
-      .raw(User)
-      .where({ email })
-      .first()
-      .asUser(system)
+    const user = await query.raw(User).where({ email }).first().asUser(system)
     if (!user?.email)
       return void (await new Promise(res =>
         setTimeout(res, 500 + Math.random() * 1000)
@@ -488,17 +433,11 @@ export const changePassword = resolver<User>()(
 
     let token
     if (tokenId) {
-      token = await query
-        .raw(Tokens)
-        .findById(tokenId)
-        .asUser(system)
+      token = await query.raw(Tokens).findById(tokenId).asUser(system)
       if (token?.scope !== 'password') throw new UserInputError('invalid token')
       if (ctx.id && ctx.id !== token.subject)
         throw new UserInputError('must logout of current account first')
-      await query
-        .raw(Tokens)
-        .deleteById(tokenId)
-        .asUser(system)
+      await query.raw(Tokens).deleteById(tokenId).asUser(system)
     }
 
     const email =
@@ -512,11 +451,7 @@ export const changePassword = resolver<User>()(
         ).email)
 
     const signin =
-      email &&
-      (await query
-        .raw(SigninUpframe)
-        .findById(email)
-        .asUser(system))
+      email && (await query.raw(SigninUpframe).findById(email).asUser(system))
 
     if (signin)
       await query
@@ -588,10 +523,7 @@ export const setUserRole = resolver<User>().isAdmin(
     else if (role === 'user' && ['mentor', 'admin'].includes(user.role))
       await query.raw(Mentor).deleteById(userId)
 
-    await query
-      .raw(User)
-      .findById(userId)
-      .patch({ role })
+    await query.raw(User).findById(userId).patch({ role })
 
     logger.info('user role updated', {
       actor: id,

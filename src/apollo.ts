@@ -6,15 +6,18 @@ import {
 } from 'apollo-server-lambda'
 import resolvers from './resolvers'
 import { parseCookies } from './utils/cookie'
-import { authenticate } from './auth'
-import typeDefs from './schema'
+import { decode } from './auth'
+import * as typeDefs from './schema'
 import { ValidationError } from 'objection'
 import logger from './logger'
+import crypto from 'crypto'
+import fastTrack from '~/resolvers/fastTrack'
+import { mapKeys } from '~/utils/object'
 
 export const requests = {}
 
-const schema = makeExecutableSchema({
-  typeDefs,
+export const schema = makeExecutableSchema({
+  typeDefs: Object.values(typeDefs),
   resolvers,
   inheritResolversFromInterfaces: true,
 })
@@ -22,15 +25,15 @@ const schema = makeExecutableSchema({
 export const server = new ApolloServer({
   schema,
   context: ({ event, context }): ResolverCtx => {
+    const headers = mapKeys(event.headers ?? {}, k => k.toLowerCase())
     const { id, role, sub } =
-      authenticate(
-        parseCookies(event.headers?.Cookie ?? event.headers?.cookie).auth
-      ) ?? {}
+      decode(parseCookies(headers.cookie as string).auth) ?? {}
     const roles = role?.split('.').map(v => v.trim()) ?? []
     const user = new AuthUser(id, sub)
     user.groups = roles.length ? roles : ['visitor']
     const requestId = context.awsRequestId
     logger.setUserId(id)
+
     return {
       id,
       user,
@@ -41,6 +44,13 @@ export const server = new ApolloServer({
         requests[requestId].responseHeaders[header] = value
       },
       knex: requests[requestId].knex,
+      fastTrack:
+        fastTrack[crypto.createHash('sha1').update(event.body).digest('hex')],
+      service:
+        headers['service-auth'] &&
+        headers['service-auth'] === process.env.EMAIL_SECRET
+          ? 'EMAIL'
+          : undefined,
     }
   },
   debug: !!process.env.IS_OFFLINE,
@@ -73,6 +83,8 @@ export const server = new ApolloServer({
         ? err.message.split('-').pop()
         : null
 
+    if (err.message.includes('arn:aws')) err.message = 'internal error'
+
     return err
   },
   ...(process.env.stage !== 'prod'
@@ -86,13 +98,13 @@ export const server = new ApolloServer({
         },
       }
     : { introspection: false, playground: false }),
-  ...(!process.env.IS_OFFLINE &&
-    process.env.stage === 'dev' && {
-      engine: {
-        apiKey: process.env.APOLLO_KEY,
-        schemaTag: 'beta',
-      },
-    }),
+  engine:
+    process.env.stage === 'dev'
+      ? {
+          apiKey: process.env.APOLLO_KEY,
+          schemaTag: 'beta',
+        }
+      : false,
   extensions: [
     () => ({
       requestDidStart({ request, operationName, context }) {
@@ -114,10 +126,9 @@ export const server = new ApolloServer({
 
 export const handler = server.createHandler({
   cors: {
-    origin:
-      process.env.stage !== 'prod'
-        ? 'https://beta.upframe.io'
-        : 'https://upframe.io',
+    origin: `https://${
+      { dev: 'beta.', msg: 'msg.' }[process.env.stage] ?? ''
+    }upframe.io`,
     credentials: true,
   },
 })

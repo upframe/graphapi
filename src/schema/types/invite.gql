@@ -1,0 +1,20 @@
+type Invite {
+  email: String
+  role: Role
+  status: InviteStatus
+}
+
+enum InviteStatus {
+  PENDING
+  JOINED
+}
+
+type SignUpInfo {
+  id: ID!
+  email: String
+  role: Role
+  authComplete: Boolean
+  name: String
+  picture: ProfilePicture
+  defaultPicture: ProfilePicture
+}

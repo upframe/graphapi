@@ -18,19 +18,65 @@ import {
   scopes,
   signUpInfo as googleInfo,
 } from '../google'
+import Conversation from '~/messaging/conversation'
+import Channel from '~/messaging/channel'
 import { ddb } from '../utils/aws'
 
 export const me = resolver<User>().loggedIn(
   async ({ query, ctx: { id } }) => await query().findById(id)
 )
 
-export const mentors = resolver<User>()(async ({ query, knex }) =>
-  (
-    await query({ join: true, include: 'mentors' })
-      .select(knex.raw('LEAST(mentors.score, 1) as rank'))
-      .whereIn('role', ['mentor', 'admin'])
-      .andWhere({ listed: true })
-  ).sort((a: any, b: any) => b.rank + Math.random() - (a.rank + Math.random()))
+export const mentors = resolver<User>()(
+  async ({ query, knex, ctx: { fastTrack } }) => {
+    if (fastTrack === 'mentorsDefault') {
+      const res = await knex('users')
+        .select(
+          'users.id',
+          'users.name',
+          'users.headline',
+          'users.headline',
+          'users.handle',
+          'users.role',
+          'users.biography',
+          'mentors.company',
+          'profile_pictures.*',
+          knex.raw('LEAST(mentors.score, 1) as rank')
+        )
+        .leftJoin('mentors', 'mentors.id', '=', 'users.id')
+        .leftJoin(
+          'profile_pictures',
+          'profile_pictures.user_id',
+          '=',
+          'users.id'
+        )
+        .whereIn('role', ['mentor', 'admin'])
+        .andWhere('mentors.listed', true)
+
+      res.forEach(({ id, url, size, type, company, ...rest }) => {
+        if (!(id in users))
+          users[id] = {
+            id,
+            profile_pictures: [{ url, size, type }],
+            mentors: { company },
+            ...rest,
+          }
+        else users[id].profile_pictures.push({ url, size, type })
+      })
+
+      return Object.values(users).sort(
+        (a: any, b: any) => b.rank + Math.random() - (a.rank + Math.random())
+      )
+    }
+    const res = (
+      await query({ join: true, include: 'mentors' })
+        .select(knex.raw('LEAST(mentors.score, 1) as rank'))
+        .whereIn('role', ['mentor', 'admin'])
+        .andWhere({ 'mentors.listed': true })
+    ).sort(
+      (a: any, b: any) => b.rank + Math.random() - (a.rank + Math.random())
+    )
+    return res
+  }
 )
 
 export const user = resolver<User>()(
@@ -107,18 +153,25 @@ export const tags = resolver<Tags>()(async ({ query, args: { orderBy } }) => {
   return tags
 })
 
-export const lists = resolver<List>()(async ({ query }) => await query())
+export const lists = resolver<List>()(
+  async ({ query, args: { includeUnlisted } }) => {
+    let q = query()
+    if (!includeUnlisted) q = q.where({ public: true }).orderBy('sort_pos')
+    return await q
+  }
+)
 
 export const list = resolver<List>()(async ({ query, args: { name } }) => {
   const res = await query({ join: true, include: 'users.mentors' })
-    .where({ 'lists.name': name })
+    .where('lists.name', 'ILIKE', name.toLowerCase())
     .first()
-  res.users = res.users.sort(
-    (a, b) =>
-      Math.min(b.mentors?.score ?? 0, 1) +
-      Math.random() -
-      (Math.min(a.mentors?.score ?? 0, 1) + Math.random())
-  )
+  if (res.users)
+    res.users = res.users.sort(
+      (a, b) =>
+        Math.min(b.mentors?.score ?? 0, 1) +
+        Math.random() -
+        (Math.min(a.mentors?.score ?? 0, 1) + Math.random())
+    )
   return res
 })
 
@@ -145,7 +198,7 @@ export const search = resolver<any>()(
             .select('id')
             .whereRaw(
               `name ILIKE ANY (ARRAY[${withTagNames
-                .map((v) => `'${v}'`)
+                .map(v => `'${v}'`)
                 .join(',')}])`
             )
         ).map(({ id }) => id),
@@ -159,20 +212,20 @@ export const search = resolver<any>()(
     if (
       users &&
       Object.keys((fields.users as Fields).user).some(
-        (k) =>
+        k =>
           !['id', 'name', 'handle', 'profilePictures', '__typename'].includes(k)
       )
     ) {
+      const ids = users.map(({ user }) => user.id)
       users = ((await query({
         section: 'users.user',
         entryName: 'Person',
-      }).whereIn(
-        'id',
-        users.map(({ user }) => user.id)
-      )) as User[]).map((user) => ({
-        user,
-        markup: users.find(({ user: { id } }) => id === user.id).markup,
-      }))
+      }).whereIn('id', ids)) as User[])
+        .sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id))
+        .map(user => ({
+          user,
+          markup: users.find(({ user: { id } }) => id === user.id).markup,
+        }))
     }
     return { users, tags }
   }
@@ -202,7 +255,7 @@ export const signUpInfo = resolver<any>()(
         .replace(/[^a-zA-Z]+/g, ' ')
         .toLowerCase()
         .trim()
-        .replace(/(\s|^)[a-z]/g, (v) => v.toUpperCase())
+        .replace(/(\s|^)[a-z]/g, v => v.toUpperCase())
     }
 
     return {
@@ -225,6 +278,20 @@ export const signUpInfo = resolver<any>()(
 
 export const checkValidity = resolver<any>()(
   async ({ args, knex }) => await validate.batch(args, knex)
+)
+
+export const conversation = resolver<any>().loggedIn(
+  async ({ args: { conversationId }, ctx: { id } }) => {
+    const con = await Conversation.get(conversationId)
+    return con?.participants?.includes(id) ? con : null
+  }
+)
+
+export const channel = resolver<any>().loggedIn(
+  async ({ args: { channelId }, ctx: { id } }) => {
+    const ch = await Channel.get(channelId)
+    return ch?.participants?.includes(id) ? { ...ch, id: ch.channelId } : null
+  }
 )
 
 export const redirects = resolver<any[]>().isAdmin(async () => {

@@ -11,7 +11,7 @@ export default class AuthUser {
 
   constructor(
     public readonly id: string,
-    public readonly email: string,
+    public readonly email?: string,
     ...groups: string[]
   ) {
     this.groups = groups

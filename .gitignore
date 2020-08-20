@@ -1,6 +1,7 @@
 node_modules
 .webpack
 .serverless
+.dynamodb
 .env*
 *.key
 .DS_STORE
@@ -11,3 +12,7 @@ Dockerfile
 db/seeds/data
 report.*
 /*.txt
+tmp
+queries
+test/*
+src/schema/gen

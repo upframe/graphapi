@@ -17,12 +17,8 @@ export const connectGoogle = async (
       .userinfo.get()
 
     const [emailGone, accountGone] = await Promise.all([
-      knex('users')
-        .where({ email: data.email })
-        .first(),
-      knex('connect_google')
-        .where({ google_id: data.id })
-        .first(),
+      knex('users').where({ email: data.email }).first(),
+      knex('connect_google').where({ google_id: data.id }).first(),
     ])
     if (emailGone)
       if (!user_id || user_id !== emailGone.id)

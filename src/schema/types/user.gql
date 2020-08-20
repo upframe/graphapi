@@ -1,0 +1,101 @@
+interface Person {
+  id: ID!
+  handle: String!
+  name: String!
+  displayName: String!
+  email: String!
+  headline: String
+  location: String
+  profilePictures: [ProfilePicture!]!
+  social(includeEmpty: Boolean = false): [SocialHandle!]
+  notificationPrefs: NotificationPreferences
+  biography: String
+  tags: [Tag!]
+  website: String
+  categories: [String!]
+  role: Role
+  invites: [Invite]
+  google: Google
+  searchable: Boolean
+  timezone: Timezone
+  inferTz: Boolean
+  conversations: [Conversation!]
+  msgToken: ID
+  unread: [Unread!]
+}
+
+type User implements Person {
+  id: ID!
+  handle: String!
+  name: String!
+  displayName: String!
+  email: String!
+  headline: String
+  location: String
+  profilePictures: [ProfilePicture!]!
+  social(includeEmpty: Boolean = false): [SocialHandle!]
+  notificationPrefs: UserNotificationPreferences
+  biography: String
+  tags: [Tag!]
+  website: String
+  categories: [String!]
+  role: Role
+  invites: [Invite]
+  google: Google
+  searchable: Boolean
+  timezone: Timezone
+  inferTz: Boolean
+  conversations: [Conversation!]
+  msgToken: ID
+  unread: [Unread!]
+}
+
+type Mentor implements Person {
+  id: ID!
+  handle: String!
+  name: String!
+  displayName: String!
+  email: String!
+  headline: String
+  company: String
+  location: String
+  website: String
+  biography: String
+  profilePictures: [ProfilePicture!]!
+  social(includeEmpty: Boolean = false): [SocialHandle!]
+  tags: [Tag!]
+  visibility: Visibility
+  notificationPrefs: MentorNotificationPreferences
+  slots(after: String, before: String, includeBooked: Boolean = false): [Slot!]!
+  calendars(ids: [ID!]): [Calendar!]
+  calendarConnected: Boolean
+  categories: [String!]
+  role: Role
+  invites: [Invite]
+  google: Google
+  searchable: Boolean
+  timezone: Timezone
+  inferTz: Boolean
+  conversations: [Conversation!]
+  msgToken: ID
+  unread: [Unread!]
+}
+
+enum Role {
+  USER
+  MENTOR
+  ADMIN
+}
+
+type ProfilePicture {
+  size: Int
+  type: String
+  url: String!
+}
+
+type SocialHandle {
+  id: Int!
+  name: String
+  url: String
+  handle: String
+}

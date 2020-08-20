@@ -5,7 +5,7 @@ type Query {
   users(handles: [String], ids: [ID]): [Person!]!
   tag(id: Int, name: String): Tag
   tags(orderBy: TagOrder = alpha): [Tag!]!
-  lists: [List!]!
+  lists(includeUnlisted: Boolean = false): [List!]!
   list(name: String!): List
   isTokenValid(token: String!): Boolean
   search(
@@ -26,5 +26,7 @@ type Query {
     location: String
     headline: String
   ): [Validity!]!
+  conversation(conversationId: ID!): Conversation
+  channel(channelId: ID!): Channel
   redirects: [Redirect!]!
 }

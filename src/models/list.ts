@@ -6,6 +6,12 @@ export class List extends Model {
 
   id!: number
   name!: string
+  description: string
+  illustration: string
+  public!: boolean
+  background_color: string
+  text_color: string
+  sort_pos: number
 
   users?: import('./user').User[]
 }

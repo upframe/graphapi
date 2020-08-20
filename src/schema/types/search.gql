@@ -1,0 +1,25 @@
+type SearchResult {
+  users: [UserSearchResult!]!
+  tags: [TagSearchResult!]!
+}
+
+type UserSearchResult {
+  user: Person!
+  markup: String
+}
+
+type TagSearchResult {
+  tag: Tag!
+  markup: String
+}
+
+type Tag {
+  id: Int!
+  name: String!
+  users: [Person!]
+}
+
+enum TagOrder {
+  alpha
+  users
+}

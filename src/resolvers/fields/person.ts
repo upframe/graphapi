@@ -1,7 +1,10 @@
 import resolver from '../resolver'
-import { SocialMedia, User } from '../../models'
-import { createClient } from '../../google'
+import { SocialMedia, User } from '~/models'
+import { createClient } from '~/google'
 import { google as gapi } from 'googleapis'
+import Conversation from '~/messaging/conversation'
+import { msgToken as createMsgToken } from '~/auth'
+import * as db from '~/messaging/db'
 
 export const __resolveType = resolver<string, any>()(({ parent: { role } }) => {
   if (role !== 'user') return 'Mentor'
@@ -24,8 +27,9 @@ export const tags = resolver<any[], User>()(({ parent: { role, tags = [] } }) =>
 )
 
 export const notificationPrefs = resolver<any, User>()(
-  ({ parent: { allow_emails, ...parent } }) => ({
+  ({ parent: { allow_emails, msg_emails, ...parent } }) => ({
     receiveEmails: allow_emails,
+    msgEmails: msg_emails,
     ...parent,
   })
 )
@@ -46,8 +50,11 @@ export const categories = resolver<
   User
 >()(({ parent: { lists = [] } }) => lists.map(({ name }) => name))
 
-export const role = resolver<string, User>()(({ parent: { role } }) =>
-  role.toUpperCase()
+export const role = resolver<string, User>()(
+  ({ parent: { role }, ctx: { roles } }) => {
+    if (role === 'admin' && !roles.includes('admin')) role = 'mentor'
+    return role.toUpperCase()
+  }
 )
 
 export const invites = resolver<any[], User>()(({ parent: { invites } }) =>
@@ -80,4 +87,27 @@ export const timezone = resolver<any, User>()(({ parent }) =>
 
 export const inferTz = resolver<boolean, User>()(
   ({ parent }) => parent.tz_infer
+)
+
+export const conversations = resolver<
+  any,
+  User
+>()(async ({ parent: { id }, ctx }) =>
+  id === ctx.id ? await Conversation.getUserConversations(id) : null
+)
+
+export const msgToken = resolver<string, User>()(({ parent, ctx: { id } }) =>
+  id === parent.id ? createMsgToken(parent as User) : null
+)
+
+export const unread = resolver<any, User>()(async ({ parent, ctx: { id } }) => {
+  if (parent.id !== id) return null
+  const user = await db.getUser(parent.id)
+  return Object.entries(user)
+    .filter(([k]) => k.startsWith('unread_'))
+    .map(([k, v]) => ({ channelId: k.replace(/^unread_/, ''), unread: v }))
+})
+
+export const displayName = resolver<string, User>()(
+  ({ parent }) => parent.display_name ?? parent.name.split(/[\s_.]/)[0]
 )

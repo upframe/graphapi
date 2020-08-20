@@ -1,31 +1,25 @@
-export const filterKeys = <T extends object>(
-  obj: T,
-  filter: ((k: string) => boolean) | (keyof T)[]
-) =>
-  typeof obj === 'object'
-    ? Object.fromEntries(
-        Object.entries(obj).filter(([k]) =>
-          Array.isArray(filter) ? filter.includes(k as keyof T) : filter(k)
-        )
-      )
-    : obj
+import * as funcs from './objMethods'
+export * from './objMethods'
 
-export const map = (
-  obj: object,
-  func: ([string, unknown]) => [string, unknown]
-) => Object.fromEntries(Object.entries(obj).map(func))
+type RemoveFirst<T extends any[]> = T['length'] extends 0
+  ? undefined
+  : ((...b: T) => void) extends (a, ...b: infer I) => void
+  ? I
+  : []
 
-export const mapKeys = (
-  obj: object,
-  func: (k: string, v?: unknown) => string
-) => map(obj, ([k, v]) => [func(k, v), v])
+type Wrapped<T> = T &
+  {
+    [k in keyof typeof funcs]: (
+      ...args: RemoveFirst<Parameters<typeof funcs[k]>>
+    ) => Wrapped<T>
+  }
 
-export const mapValues = <T extends object, K extends keyof T>(
-  obj: T,
-  func: (v: T[K], k: K) => unknown
-) => map(obj, ([k, v]) => [k, func(v, k)])
-
-export const replace = (
-  obj: object,
-  rep: { [k: string]: (v: unknown) => unknown }
-) => map(obj, ([k, v]) => [k, k in rep ? rep[k](v) : v])
+export default function wrap<T>(obj: T): Wrapped<T> {
+  return {
+    ...obj,
+    ...funcs.mapValues(
+      funcs,
+      (f: (...args: any[]) => any) => (...args: any[]) => wrap(f(obj, ...args))
+    ),
+  } as Wrapped<T>
+}

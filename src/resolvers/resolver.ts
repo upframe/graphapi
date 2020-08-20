@@ -4,7 +4,7 @@ import { Model, QueryBuilder } from '../models'
 import getQueryFields from '../utils/queryFields'
 import logger from '../logger'
 
-export default function<M = void, P extends Model = null>() {
+export default function <M = void, P extends Model = null>() {
   type Assertions<M, P> = {
     [key in keyof typeof assertions]: ResolverBuilder<M, P> & Assertions<M, P>
   }
@@ -40,8 +40,8 @@ export default function<M = void, P extends Model = null>() {
   }
 
   return Object.defineProperties(
-    (handler: Resolver<M, P>) => (
-      ...[parent, args, ctx, info]: Parameters<ApolloResolver>
+    (handler: Resolver<M, P>) => <A>(
+      ...[parent, args, ctx, info]: Parameters<ApolloResolver<A>>
     ) => {
       asserts.forEach(assert => {
         try {
@@ -79,11 +79,11 @@ export default function<M = void, P extends Model = null>() {
     Assertions<M, P extends Model ? ModelContent<P> : P>
 }
 
-type Resolver<M = void, P = null> = (args: {
+type Resolver<M = void, P = null, A = any> = (args: {
   query: Query<M extends Model ? M : Model>
   knex: ResolverCtx['knex']
   parent: P
-  args: any
+  args: A
   ctx: ResolverCtx
   fields: Fields
 }) => Promise<M | M[] | Error> | M | M[] | Error
@@ -97,7 +97,12 @@ type Query<M extends Model> = ((
   raw<R extends Model = M>(model?: new () => R): QueryBuilder<R, R[]>
 }
 
-type ApolloResolver = (parent: any, args: any, ctx: any, info: any) => any
-type ResolverBuilder<M = void, P = null> = (
-  handler: Resolver<M, P>
-) => (...args: Parameters<ApolloResolver>) => any
+type ApolloResolver<A extends any> = (
+  parent: any,
+  args: A,
+  ctx: any,
+  info: any
+) => any
+type ResolverBuilder<M = void, P = null> = <A = any>(
+  handler: Resolver<M, P, A>
+) => (...args: Parameters<ApolloResolver<A>>) => any

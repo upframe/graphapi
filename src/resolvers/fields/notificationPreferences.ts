@@ -5,7 +5,3 @@ export const __resolveType = resolver<string, any>()(({ parent: { role } }) =>
     ? 'UserNotificationPreferences'
     : 'MentorNotificationPreferences'
 )
-
-export const receiveEmails = resolver<boolean, any>()(
-  ({ parent: { receiveEmails } }) => receiveEmails
-)

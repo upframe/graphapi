@@ -1,0 +1,19 @@
+type Validity {
+  field: String
+  valid: Boolean!
+  reason: String
+}
+
+type Google {
+  connected: Boolean
+  email: String
+  canDisconnect: Boolean
+}
+
+type Redirect {
+  from: String!
+  to: String!
+  expires: Int
+}
+
+scalar Upload

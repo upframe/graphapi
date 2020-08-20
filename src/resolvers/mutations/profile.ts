@@ -4,6 +4,7 @@ import _ from 'lodash'
 import AuthUser from 'src/authorization/user'
 import resolver from '../resolver'
 import { UserInputError } from 'apollo-server-lambda'
+import MsgUser from '~/messaging/user'
 
 const updateSocial = async (
   user: AuthUser,
@@ -91,14 +92,18 @@ export const updateProfile = resolver<User>()(
 
     return await query().upsertGraphAndFetch({
       id: user.id,
-      ...obj.filterKeys(input, [
-        'name',
-        'handle',
-        'location',
-        'website',
-        'biography',
-        'headline',
-      ]),
+      ...obj.mapKeys(
+        obj.filterKeys(input, [
+          'name',
+          'displayName',
+          'handle',
+          'location',
+          'website',
+          'biography',
+          'headline',
+        ]),
+        k => (k === 'displayName' ? 'display_name' : k)
+      ),
       ...(user.groups.includes('mentor') && {
         mentors: {
           id: user.id,
@@ -124,18 +129,38 @@ export const setProfileSearchability = resolver<User>().loggedIn(
 
 export const updateNotificationPreferences = resolver<User>()(
   async ({ args: { input }, ctx: { id }, query }) => {
-    return query().upsertGraphAndFetch({
-      id,
-      ...(typeof input.receiveEmails === 'boolean' && {
-        allow_emails: input.receiveEmails,
+    const [res] = await Promise.allSettled([
+      query().upsertGraphAndFetch({
+        id,
+        ...(typeof input.receiveEmails === 'boolean' && {
+          allow_emails: input.receiveEmails,
+        }),
+        ...(typeof input.msgEmails === 'boolean' && {
+          msg_emails: input.msgEmails,
+        }),
+        ...(input.slotReminder && {
+          mentors: {
+            id,
+            slot_reminder_email: input.slotReminder.toLowerCase(),
+          },
+        }),
       }),
-      ...(input.slotReminder && {
-        mentors: {
-          id,
-          slot_reminder_email: input.slotReminder.toLowerCase(),
-        },
-      }),
-    })
+      typeof input.msgEmails === 'boolean' &&
+        new MsgUser(id).wantsEmailNotifications(input.msgEmails),
+    ])
+    if (res.status === 'fulfilled') return res.value
+  }
+)
+
+export const toggleMsgEmailNotifications = resolver().isAdmin(
+  async ({ args: { active, ids, allUsers }, query }) => {
+    if (!!ids === allUsers)
+      throw new UserInputError('must provide either ids or all users')
+    if (allUsers) ids = (await query.raw(User).select('id')).map(({ id }) => id)
+    await query.raw(User).patch({ msg_emails: active }).whereIn('id', ids)
+    await Promise.all(
+      ids.map(id => new MsgUser(id).wantsEmailNotifications(active))
+    )
   }
 )
 
