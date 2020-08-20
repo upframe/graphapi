@@ -92,7 +92,6 @@ functions:
             origins:
               - https://beta.upframe.io
               - https://upframe.io
-              - https://msg.upframe.io
             allowCredentials: true
       - http:
           path: /
@@ -101,7 +100,6 @@ functions:
             origins:
               - https://beta.upframe.io
               - https://upframe.io
-              - https://msg.upframe.io
             allowCredentials: true
 
   wsConnect:

@@ -31,14 +31,7 @@ const config = {
     DD_SERVICE: 'graphapi-prod-graphapi',
     DOMAIN: 'graphapi.upframe.io',
     PROVISIONED: 1,
-  },
-
-  msg: {
-    DD_ENV: 'msg',
-    DD_SERVICE: 'graphapi-msg-graphapi',
-    DOMAIN: 'msg.graphapi.upframe.io',
-    PROVISIONED: 0,
-    GATEWAY: 'https://stzj06gng1.execute-api.eu-west-1.amazonaws.com/msg/',
+    GATEWAY: 'https://2d9pap2m70.execute-api.eu-west-1.amazonaws.com/prod/',
   },
 }
 
