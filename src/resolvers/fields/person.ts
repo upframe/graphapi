@@ -111,3 +111,5 @@ export const unread = resolver<any, User>()(async ({ parent, ctx: { id } }) => {
 export const displayName = resolver<string, User>()(
   ({ parent }) => parent.display_name ?? parent.name.split(/[\s_.]/)[0]
 )
+
+export const sortScore = resolver<number, any>()(({ parent }) => parent.rank)
