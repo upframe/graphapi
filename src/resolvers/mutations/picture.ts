@@ -1,11 +1,14 @@
 import resolver from '../resolver'
-import { s3 } from '../../utils/aws'
-import { User, ProfilePicture } from '../../models'
+import { s3 } from '~/utils/aws'
+import { User, ProfilePicture } from '~/models'
+import * as cache from '~/utils/cache'
 
 export const uploadProfilePicture = resolver<User>()(
-  async ({ args: { file }, ctx: { id }, query }) => {
+  async ({ args: { file }, ctx: { id }, query, knex }) => {
     const user = await query({ include: 'profile_pictures' }).findById(id)
     const urls = user.profile_pictures?.map(({ url }) => url)
+
+    await cache.userUpdated(user, knex)
 
     if (urls?.length) {
       const Objects = [
@@ -42,6 +45,7 @@ export const uploadProfilePicture = resolver<User>()(
         url: `${process.env.BUCKET_URL}${id}.png`,
       } as ProfilePicture,
     ]
+
     return user
   }
 )

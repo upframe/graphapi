@@ -10,8 +10,6 @@ import { decode } from './auth'
 import * as typeDefs from './schema'
 import { ValidationError } from 'objection'
 import logger from './logger'
-import crypto from 'crypto'
-import fastTrack from '~/resolvers/fastTrack'
 import { mapKeys } from '~/utils/object'
 
 export const requests = {}
@@ -44,8 +42,6 @@ export const server = new ApolloServer({
         requests[requestId].responseHeaders[header] = value
       },
       knex: requests[requestId].knex,
-      fastTrack:
-        fastTrack[crypto.createHash('sha1').update(event.body).digest('hex')],
       service:
         headers['service-auth'] &&
         headers['service-auth'] === process.env.EMAIL_SECRET

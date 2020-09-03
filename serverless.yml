@@ -20,6 +20,7 @@ provider:
         - 'sns:Publish'
       Resource:
         - ${ssm:/email/SNS/arn}
+        - ${ssm:/SNS/cache_query/arn}
     - Effect: Allow
       Action:
         - dynamodb:*
@@ -61,6 +62,7 @@ provider:
     MSG_EMAIL_SF_ARN: ${ssm:/email/msgSF/arn}
     EMAIL_SECRET: ${ssm:/email/secret~true}
     ASSET_BUCKET: ${ssm:/S3/assets/bucketUrl}
+    CACHE_SNS_ARN: ${ssm:/SNS/cache_query/arn}
 
     DB_HOST: ${ssm:/DB/Host}
     DB_PROXY_HOST: ${ssm:/DB/Proxy/Host}
@@ -90,16 +92,16 @@ functions:
           method: post
           cors:
             origins:
-              - https://beta.upframe.io
               - https://upframe.io
+              - https://beta.upframe.io
             allowCredentials: true
       - http:
           path: /
           method: get
           cors:
             origins:
-              - https://beta.upframe.io
               - https://upframe.io
+              - https://beta.upframe.io
             allowCredentials: true
 
   wsConnect:

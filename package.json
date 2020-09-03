@@ -21,7 +21,7 @@
     "@babel/runtime": "^7.10.3",
     "apollo-server-lambda": "^2.15.0",
     "axios": "^0.19.2",
-    "bcrypt": "^3.0.8",
+    "bcrypt": "^5.0.0",
     "fast-levenshtein": "^2.0.6",
     "googleapis": "^47.0.0",
     "graphql-subscriptions": "^1.1.0",
