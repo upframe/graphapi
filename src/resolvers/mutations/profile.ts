@@ -5,6 +5,7 @@ import AuthUser from 'src/authorization/user'
 import resolver from '../resolver'
 import { UserInputError } from 'apollo-server-lambda'
 import MsgUser from '~/messaging/user'
+import * as cache from '~/utils/cache'
 
 const updateSocial = async (
   user: AuthUser,
@@ -90,36 +91,58 @@ export const updateProfile = resolver<User>()(
       updateTags(user, input.tags),
     ])
 
-    return await query().upsertGraphAndFetch({
-      id: user.id,
-      ...obj.mapKeys(
-        obj.filterKeys(input, [
-          'name',
-          'displayName',
-          'handle',
-          'location',
-          'website',
-          'biography',
-          'headline',
-        ]),
-        k => (k === 'displayName' ? 'display_name' : k)
-      ),
-      ...(user.groups.includes('mentor') && {
-        mentors: {
-          id: user.id,
-          ...obj.filterKeys(input, ['company']),
-        },
+    const [data] = await Promise.all([
+      query().upsertGraphAndFetch({
+        id: user.id,
+        ...obj.mapKeys(
+          obj.filterKeys(input, [
+            'name',
+            'displayName',
+            'handle',
+            'location',
+            'website',
+            'biography',
+            'headline',
+          ]),
+          k => (k === 'displayName' ? 'display_name' : k)
+        ),
+        ...(user.groups.includes('mentor') && {
+          mentors: {
+            id: user.id,
+            ...obj.filterKeys(input, ['company']),
+          },
+        }),
       }),
-    })
+      ...((['name', 'handle', 'biography', 'headline', 'tags'].some(
+        k => k in input
+      )
+        ? [
+            cache.userUpdated(
+              {
+                ...user,
+                role: user.groups.includes('mentor') ? 'mentor' : 'user',
+              },
+              knex
+            ),
+          ]
+        : []) as Promise<any>[]),
+    ])
+
+    return data
   }
 )
 
-export const setProfileVisibility = resolver<User>()(
-  async ({ args: { visibility }, ctx: { id }, query }) =>
-    await query().upsertGraphAndFetch({
-      id,
-      mentors: { id, listed: visibility === 'LISTED' },
-    })
+export const setProfileVisibility = resolver<User>().isMentor(
+  async ({ args: { visibility }, ctx: { id }, query, knex }) => {
+    const [user] = await Promise.all([
+      query().upsertGraphAndFetch({
+        id,
+        mentors: { id, listed: visibility === 'LISTED' },
+      }),
+      cache.userUpdated({ id }, knex, true),
+    ])
+    return user
+  }
 )
 
 export const setProfileSearchability = resolver<User>().loggedIn(

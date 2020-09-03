@@ -8,6 +8,7 @@ import { List, UserLists } from '../../models'
 import resolver from '../resolver'
 import wrap, { filterKeys } from '~/utils/object'
 import type { ChangeListInput, CreateListInput } from '~/schema/gen/schema'
+import * as cache from '~/utils/cache'
 
 export const createList = resolver<List>().isAdmin<{ input: CreateListInput }>(
   async ({ args: { input }, query }) => {
@@ -48,7 +49,9 @@ export const addToList = resolver<List>().isAdmin(
   async ({ args: { listId, userId }, query }) => {
     try {
       await query.raw(UserLists).insert({ user_id: userId, list_id: listId })
-      return await query().findById(listId)
+      const list = await query().findById(listId)
+      await cache.listUpdated(list.name)
+      return list
     } catch (e) {
       if (e instanceof UniqueViolationError)
         throw new UserInputError(`user ${userId} is already part of ${listId}`)
@@ -62,18 +65,20 @@ export const addToList = resolver<List>().isAdmin(
   }
 )
 
-export const removeFromList = resolver<UserLists>().isAdmin(
+export const removeFromList = resolver<List>().isAdmin(
   async ({ args: { listId, userId }, query }) => {
     if ((await query.raw(UserLists).findById([userId, listId]).delete()) === 0)
       throw new UserInputError(`user ${userId} is not part of list ${listId}`)
-    return await query().findById(listId)
+    const list = await query().findById(listId)
+    await cache.listUpdated(list.name)
+    return list
   }
 )
 
-export const changeListInfo = resolver<UserLists>().isAdmin<{
+export const changeListInfo = resolver<List>().isAdmin<{
   input: ChangeListInput
 }>(async ({ args: { input }, query }) => {
-  return await query().patchAndFetchById(input.id, {
+  const list = await query().patchAndFetchById(input.id, {
     ...wrap(input)
       .mapKeys(k => k.replace(/([A-Z])/g, (_, v) => '_' + v.toLowerCase()))
       .filterKeys(/^(?!(id|remove)$)/)
@@ -88,6 +93,8 @@ export const changeListInfo = resolver<UserLists>().isAdmin<{
       ])
     ),
   })
+  await cache.listUpdated(list.name)
+  return list
 })
 
 export const setListPosition = resolver().isAdmin(
@@ -97,7 +104,6 @@ export const setListPosition = resolver().isAdmin(
       .where('sort_pos', '>=', pos)
       .orWhere({ id: listId })) as List[]
     const list = lists.find(({ id }) => id === listId)
-    console.log({ lists, list })
     if (!list)
       throw new UserInputError(`list with id '${listId}' doesn't exist`)
     await Promise.all([
