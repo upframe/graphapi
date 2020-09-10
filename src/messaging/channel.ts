@@ -4,6 +4,7 @@ import assert from 'assert'
 import crypto from 'crypto'
 import logger from '~/logger'
 import * as db from './db'
+import { render } from './markdown'
 
 export default class Channel {
   private static readonly instances: Channel[] = []
@@ -57,6 +58,7 @@ export default class Channel {
       channel: this.channelId,
       author,
       content,
+      markup: render(content),
     }
 
     await db.publishMessage(msg)
