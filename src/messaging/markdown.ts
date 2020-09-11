@@ -61,10 +61,12 @@ const autoLink = async (input: string) => {
 
   let offset = 0
   for (const { 0: url, index } of valid) {
-    input = `${input.slice(0, index + offset)}[${url}](${url})${input.slice(
-      index + url.length + offset
-    )}`
-    offset += url.length + 4
+    const prefix = /^https?:\/\//.test(url) ? '' : 'https://'
+    input = `${input.slice(
+      0,
+      index + offset
+    )}[${url}](${prefix}${url})${input.slice(index + url.length + offset)}`
+    offset += url.length + prefix.length + 4
   }
 
   return input
