@@ -183,6 +183,13 @@ export const search = resolver<any>()(
           markup: users.find(({ user: { id } }) => id === user.id).markup,
         }))
     }
+
+    users = users.sort((a, b) => {
+      if (a.user.name.startsWith(term)) return -1
+      else if (b.user.name.startsWith(term)) return 1
+      else return 0
+    })
+
     return { users, tags }
   }
 )
