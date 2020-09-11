@@ -58,7 +58,7 @@ export default class Channel {
       channel: this.channelId,
       author,
       content,
-      markup: render(content),
+      markup: await render(content),
     }
 
     await db.publishMessage(msg)
