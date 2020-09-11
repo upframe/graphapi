@@ -51,7 +51,11 @@ const autoLink = async (input: string) => {
     )
   )
 
-  const urlStatus = await batchLookup(linkCandidates.map(([url]) => url))
+  const domains = linkCandidates.map(([url]) =>
+    url.replace(/^https?:\/\//, '').replace(/[/?].*/, '')
+  )
+
+  const urlStatus = await batchLookup(domains)
 
   const valid = urlStatus.flatMap((v, i) => (v ? [linkCandidates[i]] : []))
 
