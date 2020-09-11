@@ -33,8 +33,8 @@ const batchLookup = async (
     }, timeout)
 
     urls.forEach((url, i) =>
-      isRegistered(url).then(() => {
-        resolved[i] = true
+      isRegistered(url).then(v => {
+        resolved[i] = v
         if (resolved.filter(v => typeof v === 'boolean').length < urls.length)
           return
         clearTimeout(toId)
