@@ -184,12 +184,6 @@ export const search = resolver<any>()(
         }))
     }
 
-    users = users.sort((a, b) => {
-      if (a.user.name.startsWith(term)) return -1
-      else if (b.user.name.startsWith(term)) return 1
-      else return 0
-    })
-
     return { users, tags }
   }
 )

@@ -105,6 +105,11 @@ export async function searchUsers(
 
   return users
     .slice(0, limit)
+    .sort((a, b) => {
+      if (a.name.toLowerCase().startsWith(term.toLowerCase())) return -1
+      else if (b.name.toLowerCase().startsWith(term.toLowerCase())) return 1
+      else return 0
+    })
     .map(user => ({ user, markup: markup(user.name, term) }))
 }
 
