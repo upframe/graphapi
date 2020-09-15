@@ -1,10 +1,11 @@
 import { ddb } from '~/utils/aws'
 import type { Optional } from '~/utils/types'
-import assert from 'assert'
 import crypto from 'crypto'
 import logger from '~/logger'
 import * as db from './db'
 import { render } from './markdown'
+import type { PaginationArgs } from '~/utils/pagination'
+import { validate, flatten } from '~/utils/pagination'
 
 export default class Channel {
   private static readonly instances: Channel[] = []
@@ -67,28 +68,10 @@ export default class Channel {
   }
 
   public async read(
-    opts: ForwardPageOpt | BackwardPageOpt
+    opts: PaginationArgs
   ): Promise<{ messages: Message[]; hasNextPage: boolean }> {
-    const dir = 'first' in opts || 'after' in opts ? 'forward' : 'backward'
-
-    assert(
-      Object.keys(opts).every(k =>
-        (dir === 'forward' ? ['first', 'after'] : ['last', 'before']).includes(
-          k
-        )
-      ),
-      "can't mix forward & backward pagination otions"
-    )
-
-    const limit =
-      (dir === 'forward'
-        ? (<ForwardPageOpt>opts).first
-        : (<BackwardPageOpt>opts).last) ?? Infinity
-
-    const cursor =
-      dir === 'forward'
-        ? (<ForwardPageOpt>opts).after
-        : (<BackwardPageOpt>opts).before
+    validate(opts)
+    const { limit, cursor, direction } = flatten(opts)
 
     const res = await ddb
       .query({
@@ -98,7 +81,7 @@ export default class Channel {
           ':pk': db.prefix.channel(this.channelId),
           ':sk': db.prefix.message(),
         },
-        ScanIndexForward: dir === 'forward',
+        ScanIndexForward: direction === 'forward',
         Limit: limit + 1,
         ...(cursor && {
           ExclusiveStartKey: {
@@ -116,20 +99,12 @@ export default class Channel {
     }))
 
     return {
-      messages: (dir === 'forward' ? items : items.reverse()) as Message[],
+      messages: (direction === 'forward'
+        ? items
+        : items.reverse()) as Message[],
       hasNextPage: res.Items.length > limit,
     }
   }
-}
-
-type ForwardPageOpt = {
-  first: number
-  after: string
-}
-
-type BackwardPageOpt = {
-  last: number
-  before: string
 }
 
 export type Message = {
