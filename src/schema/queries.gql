@@ -32,9 +32,7 @@ type Query {
   userList(
     sortByField: String = "name"
     order: SortOrder = ASC
-    first: Int
-    last: Int
-    after: ID
-    before: ID
+    limit: Int = 25
+    offset: Int = 0
   ): UserConnection!
 }

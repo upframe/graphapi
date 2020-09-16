@@ -21,7 +21,6 @@ import {
 import Conversation from '~/messaging/conversation'
 import Channel from '~/messaging/channel'
 import { ddb } from '../utils/aws'
-import * as page from '~/utils/pagination'
 
 export const me = resolver<User>().loggedIn(
   async ({ query, ctx: { id } }) => await query().findById(id)
@@ -258,7 +257,7 @@ export const redirects = resolver<any[]>().isAdmin(async () => {
 })
 
 export const userList = resolver<Connection<User>>().isAdmin(
-  async ({ query, knex, args: { sortByField, order, ...pagination } }) => {
+  async ({ query, args: { sortByField, order, limit, offset } }) => {
     const sortFields = ['id', 'name']
     if (!sortFields.includes(sortByField))
       throw new UserInputError(
@@ -266,24 +265,13 @@ export const userList = resolver<Connection<User>>().isAdmin(
           .map(v => `'${v}'`)
           .join(', ')}`
       )
-    page.validate(pagination)
-    const { limit = 50, cursor, direction } = page.flatten(pagination)
-    let q = query
+
+    const users = await query
       .raw(User)
-      .orderBy(
-        sortByField,
-        direction === 'forward' ? order : order === 'ASC' ? 'DESC' : 'ASC'
-      )
+      .orderBy(sortByField, order)
       .limit(limit)
-    if (cursor) {
-      q = q.where(
-        sortByField,
-        direction === 'forward' ? '>' : '<',
-        knex('users').select(sortByField).where({ id: cursor })
-      )
-    }
-    const users = await q
-    if (direction === 'backward') users.reverse()
+      .offset(offset)
+
     return {
       edges: users.map(node => ({ node, cursor: node.id })),
       pageInfo: {
