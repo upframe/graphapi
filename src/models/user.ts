@@ -148,7 +148,7 @@ export class User extends Model {
       },
       role: {
         type: 'string',
-        enum: ['user', 'mentor', 'nologin'],
+        enum: ['user', 'mentor', 'admin'],
       },
       location: {
         type: 'string',
