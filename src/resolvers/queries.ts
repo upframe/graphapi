@@ -21,6 +21,7 @@ import {
 import Conversation from '~/messaging/conversation'
 import Channel from '~/messaging/channel'
 import { ddb } from '../utils/aws'
+import * as page from '~/utils/pagination'
 
 export const me = resolver<User>().loggedIn(
   async ({ query, ctx: { id } }) => await query().findById(id)
@@ -255,3 +256,40 @@ export const redirects = resolver<any[]>().isAdmin(async () => {
   const { Items } = await ddb.scan({ TableName: 'redirects' }).promise()
   return Items.map(({ path, ...rest }) => ({ from: path, ...rest }))
 })
+
+export const userList = resolver<Connection<User>>().isAdmin(
+  async ({ query, knex, args: { sortByField, order, ...pagination } }) => {
+    const sortFields = ['id', 'name']
+    if (!sortFields.includes(sortByField))
+      throw new UserInputError(
+        `can't sort by '${sortByField}', valid fields are ${sortFields
+          .map(v => `'${v}'`)
+          .join(', ')}`
+      )
+    page.validate(pagination)
+    const { limit = 50, cursor, direction } = page.flatten(pagination)
+    let q = query
+      .raw(User)
+      .orderBy(
+        sortByField,
+        direction === 'forward' ? order : order === 'ASC' ? 'DESC' : 'ASC'
+      )
+      .limit(limit)
+    if (cursor) {
+      q = q.where(
+        sortByField,
+        direction === 'forward' ? '>' : '<',
+        knex('users').select(sortByField).where({ id: cursor })
+      )
+    }
+    const users = await q
+    if (direction === 'backward') users.reverse()
+    return {
+      edges: users.map(node => ({ node, cursor: node.id })),
+      pageInfo: {
+        hasNextPage: false,
+        hasPreviousPage: false,
+      },
+    }
+  }
+)

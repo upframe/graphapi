@@ -18,3 +18,8 @@ type PageInfo {
 interface Node {
   id: ID!
 }
+
+enum SortOrder {
+  ASC
+  DESC
+}

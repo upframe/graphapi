@@ -14,6 +14,7 @@ import { Connection, Edge, Node } from './fields/connections'
 import * as Timezone from './fields/timezone'
 import * as Conversation from './fields/conversation'
 import * as List from './fields/list'
+import * as UserConnection from './fields/userList'
 
 export default {
   Query,
@@ -34,4 +35,5 @@ export default {
   Timezone,
   Conversation,
   List,
+  UserConnection,
 }

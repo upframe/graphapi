@@ -25,7 +25,7 @@ interface Person {
   sortScore: Int
 }
 
-type User implements Person {
+type User implements Node & Person {
   id: ID!
   handle: String!
   name: String!
@@ -52,7 +52,7 @@ type User implements Person {
   sortScore: Int
 }
 
-type Mentor implements Person {
+type Mentor implements Node & Person {
   id: ID!
   handle: String!
   name: String!
@@ -101,4 +101,15 @@ type SocialHandle {
   name: String
   url: String
   handle: String
+}
+
+type UserConnection {
+  edges: [UserEdge!]!
+  pageInfo: PageInfo!
+  total: Int
+}
+
+type UserEdge {
+  node: Person
+  cursor: ID!
 }
