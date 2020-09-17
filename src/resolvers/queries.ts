@@ -256,28 +256,35 @@ export const redirects = resolver<any[]>().isAdmin(async () => {
   return Items.map(({ path, ...rest }) => ({ from: path, ...rest }))
 })
 
-export const userList = resolver<Connection<User>>().isAdmin(
-  async ({ query, args: { sortByField, order, limit, offset } }) => {
-    const sortFields = ['id', 'name']
-    if (!sortFields.includes(sortByField))
-      throw new UserInputError(
-        `can't sort by '${sortByField}', valid fields are ${sortFields
-          .map(v => `'${v}'`)
-          .join(', ')}`
-      )
+export const userList = resolver<any>().isAdmin(
+  async ({ args: { sortBy, order, limit, offset, search }, query, knex }) => {
+    let users: User[]
 
-    const users = await query
-      .raw(User)
-      .orderBy(sortByField, order)
-      .limit(limit)
-      .offset(offset)
+    let total: number = undefined
+
+    if (!search)
+      users = await query
+        .raw(User)
+        .orderBy(sortBy, order)
+        .limit(limit)
+        .offset(offset)
+    else {
+      const ids = (await searchUsers(search, Infinity, [], knex)).map(
+        ({ user }) => user.id
+      )
+      total = ids.length
+      if (offset >= ids.length) users = []
+      else {
+        users = await query
+          .raw(User)
+          .whereIn('id', ids.slice(offset, offset + limit))
+        users.sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id))
+      }
+    }
 
     return {
       edges: users.map(node => ({ node, cursor: node.id })),
-      pageInfo: {
-        hasNextPage: false,
-        hasPreviousPage: false,
-      },
+      total,
     }
   }
 )

@@ -113,3 +113,7 @@ export const displayName = resolver<string, User>()(
 )
 
 export const sortScore = resolver<number, any>()(({ parent }) => parent.rank)
+
+export const joined = resolver<string, User>()(({ parent }) =>
+  new Date(parent.joined).toISOString()
+)

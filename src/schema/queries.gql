@@ -30,9 +30,10 @@ type Query {
   channel(channelId: ID!): Channel
   redirects: [Redirect!]!
   userList(
-    sortByField: String = "name"
+    sortBy: String = "name"
     order: SortOrder = ASC
     limit: Int = 25
     offset: Int = 0
+    search: String
   ): UserConnection!
 }

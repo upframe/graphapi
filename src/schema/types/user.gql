@@ -23,6 +23,7 @@ interface Person {
   msgToken: ID
   unread: [Unread!]
   sortScore: Int
+  joined: String
 }
 
 type User implements Node & Person {
@@ -50,6 +51,7 @@ type User implements Node & Person {
   msgToken: ID
   unread: [Unread!]
   sortScore: Int
+  joined: String
 }
 
 type Mentor implements Node & Person {
@@ -82,6 +84,7 @@ type Mentor implements Node & Person {
   msgToken: ID
   unread: [Unread!]
   sortScore: Int
+  joined: String
 }
 
 enum Role {
@@ -105,7 +108,6 @@ type SocialHandle {
 
 type UserConnection {
   edges: [UserEdge!]!
-  pageInfo: PageInfo!
   total: Int
 }
 

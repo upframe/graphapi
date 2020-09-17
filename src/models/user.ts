@@ -30,6 +30,7 @@ export class User extends Model {
   timezone: string
   tz_infer: boolean
   display_name: string
+  joined: string
 
   mentors?: Mentor
   socialmedia?: SocialMedia[]
