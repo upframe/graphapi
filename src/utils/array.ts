@@ -37,3 +37,18 @@ export const diff = <T extends any = unknown>(
     deleted: oldArray.filter(vOld => !newArray.find(vNew => comp(vOld, vNew))),
   }),
 })
+
+export interface genericUser {
+  name: string
+}
+
+export const sortForStartingTerm = <T extends genericUser>(
+  array: T[],
+  term: string
+): T[] => {
+  return array.sort((a, b) => {
+    if (a.name.toLowerCase().startsWith(term.toLowerCase())) return -1
+    else if (b.name.toLowerCase().startsWith(term.toLowerCase())) return 1
+    return 0
+  })
+}

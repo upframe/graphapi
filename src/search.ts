@@ -1,6 +1,7 @@
 import levenshtein from 'fast-levenshtein'
 import _ from 'lodash'
 import { filterKeys } from './utils/object'
+import { sortForStartingTerm, genericUser } from './utils/array'
 
 const markup = (value: string, term: string) => {
   if (!term) return `<span>${value}</span>`
@@ -101,15 +102,13 @@ export async function searchUsers(
     .map(set => set.sort((a: any, b: any) => b.score - a.score))
     .flat()
 
-  users = [mentors, users].flat()
+  users = [
+    sortForStartingTerm(mentors, term),
+    sortForStartingTerm(users, term),
+  ].flat()
 
   return users
     .slice(0, limit)
-    .sort((a, b) => {
-      if (a.name.toLowerCase().startsWith(term.toLowerCase())) return -1
-      else if (b.name.toLowerCase().startsWith(term.toLowerCase())) return 1
-      else return 0
-    })
     .map(user => ({ user, markup: markup(user.name, term) }))
 }
 
