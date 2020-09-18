@@ -110,9 +110,12 @@ export const requestSlot = resolver().loggedIn(
       'Content-Type': 'application/json',
     }
 
+    const endTimeObj = new Date(slot.end)
+    endTimeObj.setHours(endTimeObj.getHours() + 2)
+
     const body = {
       startDate: slot.start,
-      endDate: slot.end,
+      endDate: endTimeObj.toString(),
       fields: ['hostRoomUrl'],
     }
 
