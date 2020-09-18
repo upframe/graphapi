@@ -58,6 +58,7 @@ provider:
     BUCKET_NAME: ${ssm:/API/ProfilePictures/BucketName}
     BUCKET_URL: ${ssm:/API/ProfilePictures/BucketUrl}
     DEV_PASSWORD: ${ssm:/API/DevPassword~true}
+    WHEREBY_API_TOKEN: ${ssm:/API/WherebyToken~true}
     EMAIL_SNS: ${ssm:/email/SNS/arn}
     MSG_EMAIL_SF_ARN: ${ssm:/email/msgSF/arn}
     EMAIL_SECRET: ${ssm:/email/secret~true}
