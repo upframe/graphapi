@@ -35,5 +35,6 @@ type Query {
     limit: Int = 25
     offset: Int = 0
     search: String
+    filter: String
   ): UserConnection!
 }

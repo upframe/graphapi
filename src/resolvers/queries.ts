@@ -21,6 +21,7 @@ import {
 import Conversation from '~/messaging/conversation'
 import Channel from '~/messaging/channel'
 import { ddb } from '../utils/aws'
+import * as filterExpr from '~/utils/filter'
 
 export const me = resolver<User>().loggedIn(
   async ({ query, ctx: { id } }) => await query().findById(id)
@@ -257,29 +258,36 @@ export const redirects = resolver<any[]>().isAdmin(async () => {
 })
 
 export const userList = resolver<any>().isAdmin(
-  async ({ args: { sortBy, order, limit, offset, search }, query, knex }) => {
-    let users: User[]
+  async ({
+    args: { sortBy, order, limit, offset, search, filter },
+    query,
+    knex,
+  }) => {
+    let filters: filterExpr.FilterExpression[] = []
+    if (filter)
+      filters = filterExpr.parse(filter, { allowedFields: ['name', 'email'] })
 
+    let users: User[]
     let total: number = undefined
+    let ids: string[]
+
+    let q: ReturnType<typeof query>
 
     if (!search)
-      users = await query
-        .raw(User)
-        .orderBy(sortBy, order)
-        .limit(limit)
-        .offset(offset)
+      q = query.raw(User).orderBy(sortBy, order).limit(limit).offset(offset)
     else {
-      const ids = (await searchUsers(search, Infinity, [], knex)).map(
+      ids = (await searchUsers(search, Infinity, [], knex)).map(
         ({ user }) => user.id
       )
       total = ids.length
       if (offset >= ids.length) users = []
-      else {
-        users = await query
-          .raw(User)
-          .whereIn('id', ids.slice(offset, offset + limit))
-        users.sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id))
-      }
+      else q = query.raw(User).whereIn('id', ids.slice(offset, offset + limit))
+    }
+
+    if (!users) {
+      if (filters.length) q = filterExpr.buildQuery(q, filters)
+      users = (await q) as User[]
+      if (search) users.sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id))
     }
 
     return {
