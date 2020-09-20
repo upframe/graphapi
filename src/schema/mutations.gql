@@ -76,4 +76,6 @@ type Mutation {
 
   setRedirect(from: String!, to: String!, expires: Int): Int
   deleteRedirect(path: String!): Int
+
+  editUserInfo(userId: ID!, info: EditUserInfoInput!): Int
 }

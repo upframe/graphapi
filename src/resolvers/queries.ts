@@ -272,6 +272,7 @@ export const userList = resolver<any>().isAdmin(
     let ids: string[]
 
     let q: ReturnType<typeof query>
+    let totalQuery: typeof q
 
     if (!search)
       q = query.raw(User).orderBy(sortBy, order).limit(limit).offset(offset)
@@ -285,13 +286,18 @@ export const userList = resolver<any>().isAdmin(
     }
 
     if (!users) {
-      if (filters.length) q = filterExpr.buildQuery(q, filters)
+      if (filters.length) {
+        totalQuery = filterExpr.buildQuery(query.raw(User), filters)
+        q = filterExpr.buildQuery(q, filters)
+      }
+
       users = (await q) as User[]
       if (search) users.sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id))
     }
 
     return {
       edges: users.map(node => ({ node, cursor: node.id })),
+      totalQuery,
       total,
     }
   }
