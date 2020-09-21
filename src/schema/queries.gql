@@ -37,4 +37,5 @@ type Query {
     search: String
     filter: String
   ): UserConnection!
+  audit(trails: [ID!]!): [Audit!]!
 }

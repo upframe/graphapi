@@ -306,3 +306,26 @@ export const userList = resolver<any>().isAdmin(
     }
   }
 )
+
+export const audit = resolver<any>().isAdmin(
+  async ({ args: { trails = [] } }) => {
+    const res = await Promise.all(
+      trails.map((trailId: string) =>
+        ddb
+          .query({
+            TableName: 'audit_trail',
+            KeyConditionExpression: 'trail_id = :trail',
+            ExpressionAttributeValues: { ':trail': trailId },
+          })
+          .promise()
+      )
+    )
+    return res.flatMap(({ Items }) =>
+      Items.map(({ trail_id, time, ...rest }) => ({
+        trailId: trail_id,
+        date: new Date(time).toISOString(),
+        payload: JSON.stringify(rest),
+      }))
+    )
+  }
+)
