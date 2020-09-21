@@ -265,7 +265,9 @@ export const userList = resolver<any>().isAdmin(
   }) => {
     let filters: filterExpr.FilterExpression[] = []
     if (filter)
-      filters = filterExpr.parse(filter, { allowedFields: ['name', 'email'] })
+      filters = filterExpr.parse(filter, {
+        allowedFields: ['name', 'email', 'role'],
+      })
 
     let users: User[]
     let total: number = undefined
@@ -287,6 +289,8 @@ export const userList = resolver<any>().isAdmin(
 
     if (!users) {
       if (filters.length) {
+        for (const filter of filters)
+          if (filter.field === 'role') filter.value = filter.value.toLowerCase()
         totalQuery = filterExpr.buildQuery(query.raw(User), filters)
         q = filterExpr.buildQuery(q, filters)
       }

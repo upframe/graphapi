@@ -2,7 +2,8 @@ import { UserInputError } from '~/error'
 import type { QueryBuilder } from 'objection'
 
 const stringActions = ['begins_with', 'ends_with', 'includes'] as const
-const actions = [...stringActions] as const
+const enumActions = ['equal'] as const
+const actions = [...stringActions, ...enumActions] as const
 type Action = typeof actions[number]
 
 export type FilterExpression = {
@@ -57,7 +58,10 @@ export const parse = (
     if (!actions.includes(action as Action))
       throw new UserInputError(`unknown filter action '${action}'`)
 
-    if (stringActions.includes(action as Action) && !/^'[^']+'$/.test(value))
+    if (
+      stringActions.includes(action as typeof stringActions[number]) &&
+      !/^'[^']+'$/.test(value)
+    )
       throw new UserInputError(
         `invalid value ${value} for action '${action}', value must be string`
       )
@@ -82,6 +86,9 @@ export const buildQuery = <T extends QueryBuilder<any, any[] | Model[]>>(
         break
       case 'includes':
         query = query.andWhere(field, 'ILIKE', `%${value.slice(1, -1)}%`)
+        break
+      case 'equal':
+        query = query.andWhere(field, '=', value)
         break
       default:
         throw Error(`unhandled filter action '${action}'`)
