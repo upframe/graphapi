@@ -103,8 +103,7 @@ export default Object.assign(
                 ? { [f as string]: true }
                 : [Model.HasOneRelation, Model.BelongsToOneRelation].includes(
                     model.relationMappings[
-                      (m as typeof Model)?.tableName ??
-                        (console.log({ m }), m as string)
+                      (m as typeof Model)?.tableName ?? (m as string)
                     ].relation
                   )
                 ? { [f as string]: v }

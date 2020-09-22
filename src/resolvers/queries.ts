@@ -277,21 +277,31 @@ export const userList = resolver<any>().isAdmin(
     let totalQuery: typeof q
 
     if (!search)
-      q = query.raw(User).orderBy(sortBy, order).limit(limit).offset(offset)
+      q = query({ entryName: 'Person', section: 'edges.node', join: false })
+        .orderBy(sortBy, order)
+        .limit(limit)
+        .offset(offset)
     else {
       ids = (await searchUsers(search, Infinity, [], knex)).map(
         ({ user }) => user.id
       )
       total = ids.length
       if (offset >= ids.length) users = []
-      else q = query.raw(User).whereIn('id', ids.slice(offset, offset + limit))
+      else
+        q = query({ entryName: 'Person', section: 'edges.node' }).whereIn(
+          'id',
+          ids.slice(offset, offset + limit)
+        )
     }
 
     if (!users) {
       if (filters.length) {
         for (const filter of filters)
           if (filter.field === 'role') filter.value = filter.value.toLowerCase()
-        totalQuery = filterExpr.buildQuery(query.raw(User), filters)
+        totalQuery = filterExpr.buildQuery(
+          query({ entryName: 'Person' }),
+          filters
+        )
         q = filterExpr.buildQuery(q, filters)
       }
 
