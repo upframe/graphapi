@@ -1,5 +1,5 @@
 import resolver from '../resolver'
-import { SocialMedia, User } from '~/models'
+import { SocialMedia, User, Tags } from '~/models'
 import { createClient } from '~/google'
 import { google as gapi } from 'googleapis'
 import Conversation from '~/messaging/conversation'
@@ -22,8 +22,16 @@ export const social = resolver<any[], User>()(
   }
 )
 
-export const tags = resolver<any[], User>()(({ parent: { role, tags = [] } }) =>
-  role === 'user' ? null : tags
+export const tags = resolver<
+  any,
+  User
+>()(async ({ query, knex, parent: { id, role, tags = [] } }) =>
+  role === 'user'
+    ? null
+    : tags ??
+      (await query
+        .raw(Tags)
+        .whereIn('id', knex('user_tags').where({ user_id: id })))
 )
 
 export const notificationPrefs = resolver<any, User>()(

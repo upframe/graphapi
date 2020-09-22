@@ -321,8 +321,9 @@ export const audit = resolver<any>().isAdmin(
       )
     )
     return res.flatMap(({ Items }) =>
-      Items.map(({ trail_id, time, ...rest }) => ({
+      Items.map(({ trail_id, event_id, time, ...rest }) => ({
         trailId: trail_id,
+        id: event_id,
         date: new Date(time).toISOString(),
         payload: JSON.stringify(rest),
       }))

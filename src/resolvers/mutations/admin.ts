@@ -23,6 +23,7 @@ export const editUserInfo = resolver().isAdmin(
           field,
           old: user[field],
           new: v,
+          user: userId,
         })
       )
     )

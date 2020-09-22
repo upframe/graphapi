@@ -24,6 +24,7 @@ interface Person {
   unread: [Unread!]
   sortScore: Int
   joined: String
+  invitedBy: Person
 }
 
 type User implements Node & Person {
@@ -52,6 +53,7 @@ type User implements Node & Person {
   unread: [Unread!]
   sortScore: Int
   joined: String
+  invitedBy: Person
 }
 
 type Mentor implements Node & Person {
@@ -85,6 +87,7 @@ type Mentor implements Node & Person {
   unread: [Unread!]
   sortScore: Int
   joined: String
+  invitedBy: Person
 }
 
 enum Role {

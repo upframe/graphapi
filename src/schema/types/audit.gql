@@ -1,5 +1,6 @@
 type Audit {
   trailId: ID!
+  id: ID!
   date: String!
   payload: String!
 }

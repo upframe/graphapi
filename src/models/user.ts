@@ -103,6 +103,18 @@ export class User extends Model {
         to: 'invites.issuer',
       },
     },
+    invitedBy: {
+      relation: Model.HasOneThroughRelation,
+      modelClass: User,
+      join: {
+        from: 'users.id',
+        through: {
+          from: 'invites.redeemed',
+          to: 'invites.issuer',
+        },
+        to: 'users.id',
+      },
+    },
     connect_google: {
       relation: Model.HasOneRelation,
       modelClass: ConnectGoogle,
