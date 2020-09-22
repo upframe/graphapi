@@ -266,7 +266,7 @@ export const userList = resolver<any>().isAdmin(
     let filters: filterExpr.FilterExpression[] = []
     if (filter)
       filters = filterExpr.parse(filter, {
-        allowedFields: ['name', 'email', 'role'],
+        allowedFields: ['name', 'email', 'role', 'invitedBy.name'],
       })
 
     let users: User[]
@@ -277,7 +277,7 @@ export const userList = resolver<any>().isAdmin(
     let totalQuery: typeof q
 
     if (!search)
-      q = query({ entryName: 'Person', section: 'edges.node', join: false })
+      q = query({ entryName: 'Person', section: 'edges.node', join: true })
         .orderBy(sortBy, order)
         .limit(limit)
         .offset(offset)
@@ -296,8 +296,11 @@ export const userList = resolver<any>().isAdmin(
 
     if (!users) {
       if (filters.length) {
-        for (const filter of filters)
+        for (const filter of filters) {
+          if (!filter.field.includes('.'))
+            filter.field = `users.${filter.field}`
           if (filter.field === 'role') filter.value = filter.value.toLowerCase()
+        }
         totalQuery = filterExpr.buildQuery(
           query({ entryName: 'Person' }),
           filters
