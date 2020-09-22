@@ -302,7 +302,11 @@ export const userList = resolver<any>().isAdmin(
           if (filter.field === 'role') filter.value = filter.value.toLowerCase()
         }
         totalQuery = filterExpr.buildQuery(
-          query({ entryName: 'Person' }),
+          query({
+            entryName: 'Person',
+            section: 'edges.node',
+            join: true,
+          }),
           filters
         )
         q = filterExpr.buildQuery(q, filters)

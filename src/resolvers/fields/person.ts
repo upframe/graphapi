@@ -53,11 +53,6 @@ export const profilePictures = resolver<any[], User>()(
         ]
 )
 
-export const categories = resolver<
-  any[],
-  User
->()(({ parent: { lists = [] } }) => lists.map(({ name }) => name))
-
 export const role = resolver<string, User>()(
   ({ parent: { role }, ctx: { roles } }) => {
     if (role === 'admin' && !roles.includes('admin')) role = 'mentor'
