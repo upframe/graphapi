@@ -1,6 +1,6 @@
 type Model = import('./models').Model
 
-type Fields = { [k: string]: Fields | boolean }
+type Fields = { [k: string]: Fields | true }
 
 interface Policy {
   effect: 'allow' | 'disallow'

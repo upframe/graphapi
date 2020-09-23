@@ -46,7 +46,7 @@ type Mutation {
 
   createList(input: CreateListInput!): List
   deleteList(listId: Int!): Int
-  addToList(listId: Int!, userId: ID!): List
+  addToList(listId: Int!, userIds: [ID!]!): List
   removeFromList(listId: Int!, userId: ID!): List
   changeListInfo(input: ChangeListInput): List
   setListPosition(listId: Int!, pos: Int!): Int

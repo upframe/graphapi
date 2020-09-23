@@ -262,11 +262,19 @@ export const userList = resolver<any>().isAdmin(
     args: { sortBy, order, limit, offset, search, filter },
     query,
     knex,
+    fields,
   }) => {
     let filters: filterExpr.FilterExpression[] = []
     if (filter)
       filters = filterExpr.parse(filter, {
-        allowedFields: ['name', 'email', 'role', 'invitedBy.name'],
+        allowedFields: [
+          'name',
+          'email',
+          'role',
+          'invitedBy.id',
+          'invitedBy.name',
+          'invitedBy.handle',
+        ],
       })
 
     let users: User[]
@@ -274,7 +282,7 @@ export const userList = resolver<any>().isAdmin(
     let ids: string[]
 
     let q: ReturnType<typeof query>
-    let totalQuery: typeof q
+    let totalQuery: typeof q = query.raw(User)
 
     if (!search)
       q = query({ entryName: 'Person', section: 'edges.node', join: true })
@@ -301,6 +309,7 @@ export const userList = resolver<any>().isAdmin(
             filter.field = `users.${filter.field}`
           if (filter.field === 'role') filter.value = filter.value.toLowerCase()
         }
+
         totalQuery = filterExpr.buildQuery(
           query({
             entryName: 'Person',
@@ -310,6 +319,14 @@ export const userList = resolver<any>().isAdmin(
           filters
         )
         q = filterExpr.buildQuery(q, filters)
+
+        totalQuery = totalQuery.groupBy(
+          ...[
+            'users.id',
+            // @ts-ignore
+            fields.edges?.node?.invitedBy && 'invitedBy.id',
+          ].filter(Boolean)
+        )
       }
 
       users = (await q) as User[]

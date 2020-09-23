@@ -1,7 +1,12 @@
 import { UserInputError } from '~/error'
 import type { QueryBuilder } from 'objection'
 
-const stringActions = ['begins_with', 'ends_with', 'includes'] as const
+const stringActions = [
+  'equals',
+  'begins_with',
+  'ends_with',
+  'includes',
+] as const
 const enumActions = ['equal'] as const
 const actions = [...stringActions, ...enumActions] as const
 type Action = typeof actions[number]
@@ -86,6 +91,9 @@ export const buildQuery = <T extends QueryBuilder<any, any[] | Model[]>>(
         break
       case 'includes':
         query = query.andWhere(field, 'ILIKE', `%${value.slice(1, -1)}%`)
+        break
+      case 'equals':
+        query = query.andWhere(field, 'ILIKE', value.slice(1, -1))
         break
       case 'equal':
         query = query.andWhere(field, '=', value)
