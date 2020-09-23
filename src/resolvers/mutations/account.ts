@@ -385,12 +385,17 @@ export const changeEmail = resolver<User>()(
     if (id && id !== token.subject)
       throw new UserInputError('please first logout of your current account')
 
-    await Promise.all([
+    await Promise.allSettled([
       query.raw(Tokens).asUser(system).deleteById(tokenId),
       query
         .raw(User)
         .asUser(system)
         .findById(token.subject)
+        .patch({ email: token.payload }),
+      query
+        .raw(SigninUpframe)
+        .asUser(system)
+        .where({ user_id: token.subject })
         .patch({ email: token.payload }),
     ])
 
