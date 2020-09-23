@@ -277,6 +277,10 @@ export const userList = resolver<any>().isAdmin(
         ],
       })
 
+    const filterByInvitedBy = !!filters.find(({ field }) =>
+      field.startsWith('invitedBy')
+    )
+
     let users: User[]
     let total: number = undefined
     let ids: string[]
@@ -284,11 +288,17 @@ export const userList = resolver<any>().isAdmin(
     let q: ReturnType<typeof query>
     let totalQuery: typeof q = query.raw(User)
 
+    const queryOpts = {
+      entryName: 'Person',
+      section: 'edges.node',
+      join: true,
+      ...(filterByInvitedBy && {
+        include: { invitedBy: true },
+      }),
+    }
+
     if (!search)
-      q = query({ entryName: 'Person', section: 'edges.node', join: true })
-        .orderBy(sortBy, order)
-        .limit(limit)
-        .offset(offset)
+      q = query(queryOpts).orderBy(sortBy, order).limit(limit).offset(offset)
     else {
       ids = (await searchUsers(search, Infinity, [], knex)).map(
         ({ user }) => user.id
@@ -310,21 +320,17 @@ export const userList = resolver<any>().isAdmin(
           if (filter.field === 'role') filter.value = filter.value.toLowerCase()
         }
 
-        totalQuery = filterExpr.buildQuery(
-          query({
-            entryName: 'Person',
-            section: 'edges.node',
-            join: true,
-          }),
-          filters
-        )
+        totalQuery = filterExpr.buildQuery(query(queryOpts), filters)
         q = filterExpr.buildQuery(q, filters)
+
+        // @ts-ignore
+        const node = fields.edges?.node ?? {}
 
         totalQuery = totalQuery.groupBy(
           ...[
             'users.id',
-            // @ts-ignore
-            fields.edges?.node?.invitedBy && 'invitedBy.id',
+            (node.invitedBy || filterByInvitedBy) && 'invitedBy.id',
+            node.lists && 'lists.id',
           ].filter(Boolean)
         )
       }
