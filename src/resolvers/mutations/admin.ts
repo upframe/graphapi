@@ -112,9 +112,27 @@ export const addToList = resolver<List>().isAdmin(
 )
 
 export const removeFromList = resolver<List>().isAdmin(
-  async ({ args: { listId, userId }, query }) => {
-    if ((await query.raw(UserLists).findById([userId, listId]).delete()) === 0)
-      throw new UserInputError(`user ${userId} is not part of list ${listId}`)
+  async ({ args: { listId, userIds }, query, ctx: { id: editor } }) => {
+    const removed = await query
+      .raw(UserLists)
+      .whereInComposite(
+        ['user_id', 'list_id'],
+        userIds.map((v: number) => [v, listId])
+      )
+      .delete()
+      .returning('user_id')
+
+    await Promise.all(
+      removed.map(({ user_id }) =>
+        logEvent('admin_edits', {
+          editor,
+          eventType: 'remove_from_list',
+          list: listId,
+          user: user_id,
+        })
+      )
+    )
+
     const list = await query().findById(listId)
     await cache.listUpdated(list.name)
     return list
