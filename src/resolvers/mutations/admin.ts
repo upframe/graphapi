@@ -8,6 +8,8 @@ import { List, UserLists } from '../../models'
 import wrap, { filterKeys } from '~/utils/object'
 import type { ChangeListInput, CreateListInput } from '~/schema/gen/schema'
 import * as cache from '~/utils/cache'
+import * as account from '~/account'
+import logger from '~/logger'
 
 async function logEvent(trailId: string, event: any) {
   event.time = Date.now()
@@ -183,5 +185,31 @@ export const setListPosition = resolver().isAdmin(
         .patch({ sort_pos: knex.raw(`sort_pos + ${pos - list.sort_pos}`) })
         .where({ id: listId }),
     ])
+  }
+)
+
+export const removeAccounts = resolver().isAdmin(
+  async ({ args: { users }, ctx: { id: editor }, query }) => {
+    if (users.includes(editor))
+      throw new UserInputError(
+        `Can't delete own account in admin tools. If you want to perform this action, you can delete this account in your account settings.`
+      )
+
+    const remove = async (user: string) => {
+      try {
+        const userName = await account.remove(user, query)
+        await logEvent('admin_edits', {
+          editor,
+          eventType: 'remove_account',
+          user,
+          userName,
+        })
+      } catch (e) {
+        logger.warn(`couldn't delete account ${user}`)
+        logger.error(e)
+      }
+    }
+
+    await Promise.allSettled(users.map(remove))
   }
 )

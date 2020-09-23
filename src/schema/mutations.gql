@@ -25,6 +25,7 @@ type Mutation {
   requestPasswordChange(email: String!): Int
   changePassword(password: String!, token: String): Person
   setUserRole(userId: ID!, role: Role!): Person
+  removeAccounts(users: [ID!]!): Int
 
   updateProfile(input: ProfileInput!): Person
   setProfileVisibility(visibility: Visibility!): Person
