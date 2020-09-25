@@ -11,9 +11,6 @@ provider:
       - ${ssm:/API/SecurityGroup}
     subnetIds:
       - ${ssm:/API/Subnet}
-  tracing:
-    apiGateway: true
-    lambda: true
   iamRoleStatements:
     - Effect: 'Allow'
       Action:
@@ -145,7 +142,6 @@ custom:
       forceExclude:
         - aws-sdk
         - datadog-lambda-js
-        - dd-trace
         - chalk
         - mssql
         - mysql
