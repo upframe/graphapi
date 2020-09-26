@@ -4,7 +4,7 @@ import { ddb } from '~/utils/aws'
 import { User, UserTags } from '~/models'
 import { UniqueViolationError, ForeignKeyViolationError } from 'objection'
 import { UserInputError } from 'apollo-server-lambda'
-import { List, UserLists } from '../../models'
+import { List, UserLists, Mentor } from '../../models'
 import wrap, { filterKeys } from '~/utils/object'
 import type { ChangeListInput, CreateListInput } from '~/schema/gen/schema'
 import * as cache from '~/utils/cache'
@@ -258,5 +258,35 @@ export const removeUserTags = resolver().isAdmin(
         })
       )
     )
+  }
+)
+
+export const setUserRole = resolver<User>().isAdmin(
+  async ({ args: { userId, role }, query, ctx: { id: editor } }) => {
+    const user = await query.raw(User).findById(userId)
+    if (!user) throw new UserInputError(`unknown user ${userId}`)
+    role = role.toLowerCase()
+    if (user.role === role)
+      throw new UserInputError(`user ${user.name} already has role ${role}`)
+
+    if (
+      ['mentor', 'admin'].includes(role) &&
+      !['mentor', 'admin'].includes(user.role)
+    )
+      await query.raw(Mentor).insert({ id: userId, listed: false })
+    else if (role === 'user' && ['mentor', 'admin'].includes(user.role))
+      await query.raw(Mentor).deleteById(userId)
+
+    await query.raw(User).findById(userId).patch({ role })
+
+    await logEvent('admin_edits', {
+      editor,
+      eventType: 'set_role',
+      user: userId,
+      old: user.role,
+      new: role,
+    })
+
+    return query().findById(userId)
   }
 )
