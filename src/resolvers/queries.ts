@@ -101,14 +101,20 @@ export const tag = resolver<Tags>()(async ({ query, args: { id, name } }) => {
   } as Tags
 })
 
-export const tags = resolver<Tags>()(async ({ query, args: { orderBy } }) => {
-  let tags = await query({ ...(orderBy === 'users' && { include: 'users' }) })
-  if (orderBy === 'alpha')
-    tags = tags.sort((a, b) => a.name.localeCompare(b.name))
-  else if (orderBy === 'users')
-    tags = tags.sort((a, b) => (b.users?.length ?? 0) - (a.users?.length ?? 0))
-  return tags
-})
+export const tags = resolver<Tags>()(
+  async ({ query, args: { ids, orderBy } }) => {
+    let q = query({ ...(orderBy === 'users' && { include: 'users' }) })
+    if (Array.isArray(ids)) q = q.whereIn('tags.id', ids)
+    let tags = await q
+    if (orderBy === 'alpha')
+      tags = tags.sort((a, b) => a.name.localeCompare(b.name))
+    else if (orderBy === 'users')
+      tags = tags.sort(
+        (a, b) => (b.users?.length ?? 0) - (a.users?.length ?? 0)
+      )
+    return tags
+  }
+)
 
 export const lists = resolver<List>()(
   async ({ query, args: { includeUnlisted } }) => {
@@ -274,12 +280,13 @@ export const userList = resolver<any>().isAdmin(
           'invitedBy.id',
           'invitedBy.name',
           'invitedBy.handle',
+          'lists.id',
+          'lists.name',
         ],
       })
 
-    const filterByInvitedBy = !!filters.find(({ field }) =>
-      field.startsWith('invitedBy')
-    )
+    const filtersBy = (prefix: string) =>
+      filters.find(({ field }) => field.split('.')[0] === prefix)
 
     let users: User[]
     let total: number = undefined
@@ -292,9 +299,11 @@ export const userList = resolver<any>().isAdmin(
       entryName: 'Person',
       section: 'edges.node',
       join: true,
-      ...(filterByInvitedBy && {
-        include: { invitedBy: true },
-      }),
+      include: {
+        ...(filtersBy('invitedBy') && { invitedBy: true }),
+        ...(filtersBy('lists') && { lists: true }),
+        ...(filtersBy('tags') && { tags: true }),
+      },
     }
 
     if (!search)
@@ -317,7 +326,8 @@ export const userList = resolver<any>().isAdmin(
         for (const filter of filters) {
           if (!filter.field.includes('.'))
             filter.field = `users.${filter.field}`
-          if (filter.field === 'role') filter.value = filter.value.toLowerCase()
+          if (filter.field === 'users.role')
+            filter.value = filter.value.toLowerCase()
         }
 
         totalQuery = filterExpr.buildQuery(query(queryOpts), filters)
@@ -329,8 +339,9 @@ export const userList = resolver<any>().isAdmin(
         totalQuery = totalQuery.groupBy(
           ...[
             'users.id',
-            (node.invitedBy || filterByInvitedBy) && 'invitedBy.id',
-            node.lists && 'lists.id',
+            (node.invitedBy || filtersBy('invitedBy')) && 'invitedBy.id',
+            (node.lists || filtersBy('lists')) && 'lists.id',
+            (node.tags || filtersBy('tags')) && 'tags.id',
           ].filter(Boolean)
         )
       }

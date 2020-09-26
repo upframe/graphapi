@@ -1,7 +1,7 @@
 import resolver from '../resolver'
 import token from '~/utils/token'
 import { ddb } from '~/utils/aws'
-import { User } from '~/models'
+import { User, UserTags } from '~/models'
 import { UniqueViolationError, ForeignKeyViolationError } from 'objection'
 import { UserInputError } from 'apollo-server-lambda'
 import { List, UserLists } from '../../models'
@@ -211,5 +211,52 @@ export const removeAccounts = resolver().isAdmin(
     }
 
     await Promise.allSettled(users.map(remove))
+  }
+)
+
+export const addUserTags = resolver().isAdmin(
+  async ({ args: { users, tags }, ctx: { id: editor }, knex }) => {
+    const { rows } = await knex.raw(
+      `${knex('user_tags')
+        .insert(
+          users.flatMap(user_id => tags.map(tag_id => ({ user_id, tag_id })))
+        )
+        .toString()} ON CONFLICT DO NOTHING RETURNING *`
+    )
+
+    await Promise.all(
+      rows.map(({ user_id, tag_id }) =>
+        logEvent('admin_edits', {
+          editor,
+          eventType: 'add_tag',
+          user: user_id,
+          tag: tag_id,
+        })
+      )
+    )
+  }
+)
+
+export const removeUserTags = resolver().isAdmin(
+  async ({ args: { users, tags }, ctx: { id: editor }, query }) => {
+    const queryArgs = users.flatMap((user_id: string) =>
+      tags.map((tag_id: number) => [user_id, tag_id])
+    )
+    const removed = await query
+      .raw(UserTags)
+      .whereInComposite(['user_id', 'tag_id'], queryArgs)
+      .delete()
+      .returning('*')
+
+    await Promise.all(
+      removed.map(({ user_id, tag_id }) =>
+        logEvent('admin_edits', {
+          editor,
+          eventType: 'remove_tag',
+          user: user_id,
+          tag: tag_id,
+        })
+      )
+    )
   }
 )
