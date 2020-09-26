@@ -92,6 +92,9 @@ input ChangeListInput {
 }
 
 input EditUserInfoInput {
-  name: String
+  handle: String
   email: String
+  headline: String
+  location: String
+  name: String
 }
