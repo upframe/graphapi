@@ -274,14 +274,18 @@ export const userList = resolver<any>().isAdmin(
     if (filter)
       filters = filterExpr.parse(filter, {
         allowedFields: [
-          'name',
           'email',
-          'role',
+          'headline',
+          'invitedBy.handle',
           'invitedBy.id',
           'invitedBy.name',
-          'invitedBy.handle',
           'lists.id',
           'lists.name',
+          'location',
+          'name',
+          'role',
+          'tags.id',
+          'tags.name',
         ],
       })
 

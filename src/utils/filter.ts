@@ -8,7 +8,8 @@ const stringActions = [
   'includes',
 ] as const
 const enumActions = ['equal'] as const
-const actions = [...stringActions, ...enumActions] as const
+const numberActions = ['=', '<', '>', '<=', '>='] as const
+const actions = [...stringActions, ...enumActions, ...numberActions] as const
 type Action = typeof actions[number]
 
 export type FilterExpression = {
@@ -97,6 +98,13 @@ export const buildQuery = <T extends QueryBuilder<any, any[] | Model[]>>(
         break
       case 'equal':
         query = query.andWhere(field, '=', value)
+        break
+      case '=':
+      case '<':
+      case '>':
+      case '<=':
+      case '>=':
+        query = query.andWhere(field, action, value)
         break
       default:
         throw Error(`unhandled filter action '${action}'`)
