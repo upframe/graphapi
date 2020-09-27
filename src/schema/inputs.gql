@@ -90,3 +90,11 @@ input ChangeListInput {
   textColor: String
   remove: [ListFields!]
 }
+
+input EditUserInfoInput {
+  handle: String
+  email: String
+  headline: String
+  location: String
+  name: String
+}

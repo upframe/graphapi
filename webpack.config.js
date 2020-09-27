@@ -27,7 +27,6 @@ module.exports = {
     : [
         'aws-sdk',
         'datadog-lambda-js',
-        'dd-trace',
         'chalk',
         'knex',
         'bcrypt',

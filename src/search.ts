@@ -34,7 +34,6 @@ const baseQuery = (knex: ResolverCtx['knex']) =>
     )
     .leftJoin('mentors', { 'users.id': 'mentors.id' })
     .leftJoin('profile_pictures', { 'users.id': 'profile_pictures.user_id' })
-    .whereNot('role', 'nologin')
     .andWhere('size', '<=', 128)
     .andWhere('searchable', true)
 

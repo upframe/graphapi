@@ -1,4 +1,3 @@
-import tracer from './tracer'
 import { datadog } from 'datadog-lambda-js'
 import logger from './logger'
 import { handler as apolloHandler, requests } from './apollo'
@@ -16,27 +15,15 @@ const handler = async (event: APIGatewayEvent, context: Context) => {
   Model.knex(knex)
   requests[context.awsRequestId].knex = knex
 
-  const span = tracer.startSpan('web.request')
-  let res: [any, any]
-  try {
-    res = await tracer.scope().activate(
-      span,
-      () =>
-        new Promise(res => {
-          apolloHandler(event, context, (error, body) => {
-            body.headers = {
-              ...body.headers,
-              ...requests[context.awsRequestId].responseHeaders,
-            }
-            res([error, body])
-          })
-        })
-    )
-  } finally {
-    span.addTags({ opName: requests[context.awsRequestId].opName })
-    span.finish()
-  }
-  const [error, data] = res
+  const [error, data] = await new Promise(res =>
+    apolloHandler(event, context, (error, body) => {
+      body.headers = {
+        ...body.headers,
+        ...requests[context.awsRequestId].responseHeaders,
+      }
+      res([error, body])
+    })
+  )
 
   knex.removeAllListeners()
   await knex.destroy()
@@ -46,6 +33,5 @@ const handler = async (event: APIGatewayEvent, context: Context) => {
 }
 
 export const graphapi = datadog(handler, {
-  mergeDatadogXrayTraces: !process.env.IS_OFFLINE,
   logger,
 })

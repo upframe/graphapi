@@ -88,7 +88,7 @@ type Resolver<M = void, P = null, A = any> = (args: {
   fields: Fields
 }) => Promise<M | M[] | Error> | M | M[] | Error
 
-type Query<M extends Model> = ((
+export type Query<M extends Model> = ((
   options?: any
 ) => QueryBuilder<
   M extends Model ? M : Model,
