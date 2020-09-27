@@ -25,6 +25,7 @@ provider:
         - ${ssm:/dynamodb/redirects/arn}
         - ${ssm:/dynamodb/conversations/arn}
         - ${ssm:/dynamodb/connections/arn}
+        - ${ssm:/dynamodb/audit/arn}
     - Effect: Allow
       Action:
         - execute-api:Invoke
