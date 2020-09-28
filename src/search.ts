@@ -1,7 +1,21 @@
 import levenshtein from 'fast-levenshtein'
 import _ from 'lodash'
 import { filterKeys } from './utils/object'
-import { sortForStartingTerm, genericUser } from './utils/array'
+
+export interface GenericUser {
+  name: string
+}
+
+export const sortForStartingTerm = <T extends GenericUser>(
+  array: T[],
+  term: string
+): T[] => {
+  return array.sort((a, b) => {
+    if (a.name.toLowerCase().startsWith(term.toLowerCase())) return -1
+    if (b.name.toLowerCase().startsWith(term.toLowerCase())) return 1
+    return 0
+  })
+}
 
 const markup = (value: string, term: string) => {
   if (!term) return `<span>${value}</span>`
