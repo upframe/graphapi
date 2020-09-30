@@ -59,7 +59,11 @@ export const remove = async (id: string, query: Query<Model>) => {
         logger.warn(`couldn't delete calendar ${gTokens.calendar_id}`)
       }
     }
-    await client.revokeToken(gTokens.refresh_token)
+    try {
+      await client.revokeToken(gTokens.refresh_token)
+    } catch (error) {
+      logger.warn(`couldn't revoke refresh token`, { error })
+    }
   }
   const { name } = ((await query
     .raw(User)
