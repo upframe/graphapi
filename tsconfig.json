@@ -24,6 +24,7 @@
     "prettier.config.js",
     "sls.conf.js",
     "webpack.config.js",
-    "scripts"
+    "scripts",
+    "commitlint.config.js"
   ]
 }
