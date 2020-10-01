@@ -12,8 +12,7 @@
     "format": "npm run eslint:write && npm run prettier:write",
     "column-info": "node scripts/columnInfo && prettier --write ./db/meta/columns.json",
     "publish:local": "npm run gql:types && npx apollo service:push -v=local-$(whoami)",
-    "gql:types": "node scripts/bundleSchema && npx graphql-codegen",
-    "postinstall": "husky install"
+    "gql:types": "node scripts/bundleSchema && npx graphql-codegen"
   },
   "keywords": [],
   "author": "",
