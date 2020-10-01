@@ -123,7 +123,7 @@ export const requestSlot = resolver().loggedIn(
 
     try {
       const response = await axios({
-        method: 'post',
+        method: 'POST',
         url: 'https://api.whereby.dev/v1/meetings',
         data: body,
         headers,
@@ -132,7 +132,8 @@ export const requestSlot = resolver().loggedIn(
       if (response.status === 201) {
         const { data } = response
         roomUrl = data.roomUrl
-        throw new Error('Unable to accept meetup. Please try again.')
+      } else {
+        throw new Error('Unable to accept meetup. Please try again.') 
       }
     } catch (error) {
       logger.error(
