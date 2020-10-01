@@ -8,6 +8,7 @@ import { UserInputError, ForbiddenError } from '../../error'
 import { UniqueViolationError } from 'objection'
 import { userClient } from '../../google'
 import logger from '../../logger'
+import axios from 'axios'
 
 export const updateSlots = resolver<User>().loggedIn(
   async ({
@@ -103,12 +104,50 @@ export const requestSlot = resolver().loggedIn(
       query.raw(User).findById(id),
     ])
 
+    const BEARER_TOKEN = process.env.WHEREBY_API_TOKEN
+    const headers = {
+      Authorization: `Bearer ${BEARER_TOKEN}`,
+      'Content-Type': 'application/json',
+    }
+
+    const endTimeObj = new Date(slot.end)
+    endTimeObj.setHours(endTimeObj.getHours() + 2)
+
+    const body = {
+      startDate: slot.start,
+      endDate: endTimeObj.toString(),
+      fields: ['hostRoomUrl'],
+    }
+
+    let roomUrl
+
+    try {
+      const response = await axios({
+        method: 'post',
+        url: 'https://api.whereby.dev/v1/meetings',
+        data: body,
+        headers,
+      })
+
+      if (response.status === 201) {
+        const { data } = response
+        roomUrl = data.roomUrl
+        throw new Error('Unable to accept meetup. Please try again.')
+      }
+    } catch (error) {
+      logger.error(
+        `Could not create whereby room for slot id: ${slot.id}. Either the request has failed or Status Code other than 201 has been received.`,
+        { error }
+      )
+      throw new Error('Unable to accept meetup. Please try again.')
+    }
+
     const meetup = {
       slot_id: slot.id,
       status: 'pending',
       mentee_id: mentee.id,
       message: input.message,
-      location: `https://talky.io/${mentor.handle}`,
+      location: roomUrl,
     }
 
     try {
