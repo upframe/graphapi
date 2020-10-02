@@ -21,6 +21,7 @@ import {
 import Conversation from '~/messaging/conversation'
 import Channel from '~/messaging/channel'
 import { ddb } from '../utils/aws'
+import * as filterExpr from '~/utils/filter'
 
 export const me = resolver<User>().loggedIn(
   async ({ query, ctx: { id } }) => await query().findById(id)
@@ -100,14 +101,20 @@ export const tag = resolver<Tags>()(async ({ query, args: { id, name } }) => {
   } as Tags
 })
 
-export const tags = resolver<Tags>()(async ({ query, args: { orderBy } }) => {
-  let tags = await query({ ...(orderBy === 'users' && { include: 'users' }) })
-  if (orderBy === 'alpha')
-    tags = tags.sort((a, b) => a.name.localeCompare(b.name))
-  else if (orderBy === 'users')
-    tags = tags.sort((a, b) => (b.users?.length ?? 0) - (a.users?.length ?? 0))
-  return tags
-})
+export const tags = resolver<Tags>()(
+  async ({ query, args: { ids, orderBy } }) => {
+    let q = query({ ...(orderBy === 'users' && { include: 'users' }) })
+    if (Array.isArray(ids)) q = q.whereIn('tags.id', ids)
+    let tags = await q
+    if (orderBy === 'alpha')
+      tags = tags.sort((a, b) => a.name.localeCompare(b.name))
+    else if (orderBy === 'users')
+      tags = tags.sort(
+        (a, b) => (b.users?.length ?? 0) - (a.users?.length ?? 0)
+      )
+    return tags
+  }
+)
 
 export const lists = resolver<List>()(
   async ({ query, args: { includeUnlisted } }) => {
@@ -183,6 +190,7 @@ export const search = resolver<any>()(
           markup: users.find(({ user: { id } }) => id === user.id).markup,
         }))
     }
+
     return { users, tags }
   }
 )
@@ -254,3 +262,126 @@ export const redirects = resolver<any[]>().isAdmin(async () => {
   const { Items } = await ddb.scan({ TableName: 'redirects' }).promise()
   return Items.map(({ path, ...rest }) => ({ from: path, ...rest }))
 })
+
+export const userList = resolver<any>().isAdmin(
+  async ({
+    args: { sortBy, order, limit, offset, search, filter },
+    query,
+    knex,
+    fields,
+  }) => {
+    let filters: filterExpr.FilterExpression[] = []
+    if (filter)
+      filters = filterExpr.parse(filter, {
+        allowedFields: [
+          'email',
+          'headline',
+          'invitedBy.handle',
+          'invitedBy.id',
+          'invitedBy.name',
+          'lists.id',
+          'lists.name',
+          'location',
+          'name',
+          'role',
+          'tags.id',
+          'tags.name',
+        ],
+      })
+
+    const filtersBy = (prefix: string) =>
+      filters.find(({ field }) => field.split('.')[0] === prefix)
+
+    let users: User[]
+    let total: number = undefined
+    let ids: string[]
+
+    let q: ReturnType<typeof query>
+    let totalQuery: typeof q = query.raw(User)
+
+    const queryOpts = {
+      entryName: 'Person',
+      section: 'edges.node',
+      join: true,
+      include: {
+        ...(filtersBy('invitedBy') && { invitedBy: true }),
+        ...(filtersBy('lists') && { lists: true }),
+        ...(filtersBy('tags') && { tags: true }),
+      },
+    }
+
+    if (!search)
+      q = query(queryOpts).orderBy(sortBy, order).limit(limit).offset(offset)
+    else {
+      ids = (await searchUsers(search, Infinity, [], knex)).map(
+        ({ user }) => user.id
+      )
+      total = ids.length
+      if (offset >= ids.length) users = []
+      else
+        q = query({ entryName: 'Person', section: 'edges.node' }).whereIn(
+          'id',
+          ids.slice(offset, offset + limit)
+        )
+    }
+
+    if (!users) {
+      if (filters.length) {
+        for (const filter of filters) {
+          if (!filter.field.includes('.'))
+            filter.field = `users.${filter.field}`
+          if (filter.field === 'users.role')
+            filter.value = filter.value.toLowerCase()
+        }
+
+        totalQuery = filterExpr.buildQuery(query(queryOpts), filters)
+        q = filterExpr.buildQuery(q, filters)
+
+        // @ts-ignore
+        const node = fields.edges?.node ?? {}
+
+        totalQuery = totalQuery.groupBy(
+          ...[
+            'users.id',
+            (node.invitedBy || filtersBy('invitedBy')) && 'invitedBy.id',
+            (node.lists || filtersBy('lists')) && 'lists.id',
+            (node.tags || filtersBy('tags')) && 'tags.id',
+          ].filter(Boolean)
+        )
+      }
+
+      users = (await q) as User[]
+      if (search) users.sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id))
+    }
+
+    return {
+      edges: users.map(node => ({ node, cursor: node.id })),
+      totalQuery,
+      total,
+    }
+  }
+)
+
+export const audit = resolver<any>().isAdmin(
+  async ({ args: { trails = [] } }) => {
+    const res = await Promise.all(
+      trails.map((trailId: string) =>
+        ddb
+          .query({
+            TableName: 'audit_trail',
+            KeyConditionExpression: 'trail_id = :trail',
+            ExpressionAttributeValues: { ':trail': trailId },
+          })
+          .promise()
+      )
+    )
+    return res.flatMap(({ Items }) =>
+      Items.map(({ trail_id, event_id, time, ...rest }) => ({
+        trailId: trail_id,
+        id: event_id,
+        date: new Date(time).toISOString(),
+        payload: JSON.stringify(rest),
+      }))
+    )
+  }
+)

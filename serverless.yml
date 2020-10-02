@@ -11,9 +11,6 @@ provider:
       - ${ssm:/API/SecurityGroup}
     subnetIds:
       - ${ssm:/API/Subnet}
-  tracing:
-    apiGateway: true
-    lambda: true
   iamRoleStatements:
     - Effect: 'Allow'
       Action:
@@ -28,6 +25,7 @@ provider:
         - ${ssm:/dynamodb/redirects/arn}
         - ${ssm:/dynamodb/conversations/arn}
         - ${ssm:/dynamodb/connections/arn}
+        - ${ssm:/dynamodb/audit/arn}
     - Effect: Allow
       Action:
         - execute-api:Invoke
@@ -58,6 +56,7 @@ provider:
     BUCKET_NAME: ${ssm:/API/ProfilePictures/BucketName}
     BUCKET_URL: ${ssm:/API/ProfilePictures/BucketUrl}
     DEV_PASSWORD: ${ssm:/API/DevPassword~true}
+    WHEREBY_API_TOKEN: ${ssm:/API/WherebyToken~true}
     EMAIL_SNS: ${ssm:/email/SNS/arn}
     MSG_EMAIL_SF_ARN: ${ssm:/email/msgSF/arn}
     EMAIL_SECRET: ${ssm:/email/secret~true}
@@ -145,7 +144,6 @@ custom:
       forceExclude:
         - aws-sdk
         - datadog-lambda-js
-        - dd-trace
         - chalk
         - mssql
         - mysql

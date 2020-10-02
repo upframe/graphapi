@@ -16,3 +16,4 @@ tmp
 queries
 test/*
 src/schema/gen
+.eslintcache

@@ -1,39 +1,15 @@
 import resolver from '../resolver'
 import Channel from '~/messaging/channel'
 import type { Message } from '~/messaging/channel'
-import { UserInputError } from 'apollo-server-lambda'
 import * as db from '~/messaging/db'
+import { validate, flatten } from '~/utils/pagination'
 
 export const messages = resolver<Connection<Message>, any>()(
-  async ({ parent, args: { first, last, after, before } }) => {
-    const dir =
-      last !== undefined || before !== undefined ? 'backward' : 'forward'
+  async ({ parent, args }) => {
+    validate(args)
+    const { cursor } = flatten(args)
 
-    if (
-      dir === 'forward'
-        ? last !== undefined || before !== undefined
-        : first !== undefined || after !== undefined
-    )
-      throw new UserInputError(
-        `${dir} pagination only expects expects arguments ${(dir === 'forward'
-          ? ['first', 'after']
-          : ['last', 'before']
-        )
-          .map(v => `'${v}'`)
-          .join(' and ')}`
-      )
-
-    const { messages, hasNextPage } = await new Channel(parent.id).read(
-      dir === 'forward'
-        ? {
-            first,
-            after,
-          }
-        : {
-            last,
-            before,
-          }
-    )
+    const { messages, hasNextPage } = await new Channel(parent.id).read(args)
     return {
       edges: messages.map(node => ({
         cursor: node.id,
@@ -41,7 +17,7 @@ export const messages = resolver<Connection<Message>, any>()(
       })),
       pageInfo: {
         hasNextPage,
-        hasPreviousPage: after !== undefined || before !== undefined,
+        hasPreviousPage: cursor !== undefined,
       },
     }
   }

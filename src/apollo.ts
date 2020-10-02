@@ -32,6 +32,9 @@ export const server = new ApolloServer({
     const requestId = context.awsRequestId
     logger.setUserId(id)
 
+    if (process.env.IS_OFFLINE && event.body)
+      logger.info(JSON.parse(event.body))
+
     return {
       id,
       user,

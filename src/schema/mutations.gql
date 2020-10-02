@@ -25,6 +25,7 @@ type Mutation {
   requestPasswordChange(email: String!): Int
   changePassword(password: String!, token: String): Person
   setUserRole(userId: ID!, role: Role!): Person
+  removeAccounts(users: [ID!]!): Int
 
   updateProfile(input: ProfileInput!): Person
   setProfileVisibility(visibility: Visibility!): Person
@@ -46,14 +47,16 @@ type Mutation {
 
   createList(input: CreateListInput!): List
   deleteList(listId: Int!): Int
-  addToList(listId: Int!, userId: ID!): List
-  removeFromList(listId: Int!, userId: ID!): List
+  addToList(listId: Int!, userIds: [ID!]!): List
+  removeFromList(listId: Int!, userIds: [ID]!): List
   changeListInfo(input: ChangeListInput): List
   setListPosition(listId: Int!, pos: Int!): Int
 
   setTagName(id: Int!, name: String!): Tag
   mergeTags(from: Int!, into: Int!): Tag
   deleteTag(id: Int!): Int
+  addUserTags(users: [ID!]!, tags: [Int!]!): Int
+  removeUserTags(users: [ID!]!, tags: [Int!]!): Int
 
   invite(emails: [String!]!, role: Role = USER): Person
 
@@ -76,4 +79,6 @@ type Mutation {
 
   setRedirect(from: String!, to: String!, expires: Int): Int
   deleteRedirect(path: String!): Int
+
+  editUserInfo(userId: ID!, info: EditUserInfoInput!): Int
 }

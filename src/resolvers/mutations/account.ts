@@ -385,12 +385,17 @@ export const changeEmail = resolver<User>()(
     if (id && id !== token.subject)
       throw new UserInputError('please first logout of your current account')
 
-    await Promise.all([
+    await Promise.allSettled([
       query.raw(Tokens).asUser(system).deleteById(tokenId),
       query
         .raw(User)
         .asUser(system)
         .findById(token.subject)
+        .patch({ email: token.payload }),
+      query
+        .raw(SigninUpframe)
+        .asUser(system)
+        .where({ user_id: token.subject })
         .patch({ email: token.payload }),
     ])
 
@@ -481,57 +486,7 @@ export const deleteAccount = resolver().loggedIn(
   async ({ args: { handle }, ctx: { id, setHeader }, query }) => {
     const user = await query.raw(User).findById(id)
     if (user.handle !== handle) throw new ForbiddenError('wrong username')
-    const gTokens = await query
-      .raw(ConnectGoogle)
-      .where({ user_id: id })
-      .first()
-    if (gTokens) {
-      const client = createClient()
-      client.setCredentials(gTokens)
-      if (gTokens.calendar_id) {
-        try {
-          const calendar = google.calendar({ version: 'v3', auth: client })
-          await calendar.calendars.delete({
-            calendarId: gTokens.calendar_id,
-          })
-        } catch (e) {
-          console.warn(`couldn't delete calendar ${gTokens.calendar_id}`)
-        }
-      }
-      await client.revokeToken(gTokens.refresh_token)
-    }
-    await query.raw(User).deleteById(id)
+    await account.remove(id, query)
     setHeader('Set-Cookie', cookie('auth', 'deleted', -1))
-  }
-)
-
-export const setUserRole = resolver<User>().isAdmin(
-  async ({ args: { userId, role }, query, ctx: { id } }) => {
-    const user = await query.raw(User).findById(userId)
-    if (!user) throw new UserInputError(`unknown user ${userId}`)
-    role = role.toLowerCase()
-    if (user.role === role)
-      throw new UserInputError(`user ${user.name} already has role ${role}`)
-    if (role === 'nologin')
-      throw new UserInputError("can't set role to NOLOGIN")
-
-    if (
-      ['mentor', 'admin'].includes(role) &&
-      !['mentor', 'admin'].includes(user.role)
-    )
-      await query.raw(Mentor).insert({ id: userId, listed: false })
-    else if (role === 'user' && ['mentor', 'admin'].includes(user.role))
-      await query.raw(Mentor).deleteById(userId)
-
-    await query.raw(User).findById(userId).patch({ role })
-
-    logger.info('user role updated', {
-      actor: id,
-      subject: userId,
-      oldRole: user.role,
-      newRole: role,
-    })
-
-    return query().findById(userId)
   }
 )

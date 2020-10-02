@@ -30,6 +30,7 @@ export class User extends Model {
   timezone: string
   tz_infer: boolean
   display_name: string
+  joined: string
 
   mentors?: Mentor
   socialmedia?: SocialMedia[]
@@ -102,6 +103,18 @@ export class User extends Model {
         to: 'invites.issuer',
       },
     },
+    invitedBy: {
+      relation: Model.HasOneThroughRelation,
+      modelClass: User,
+      join: {
+        from: 'users.id',
+        through: {
+          from: 'invites.redeemed',
+          to: 'invites.issuer',
+        },
+        to: 'users.id',
+      },
+    },
     connect_google: {
       relation: Model.HasOneRelation,
       modelClass: ConnectGoogle,
@@ -148,7 +161,7 @@ export class User extends Model {
       },
       role: {
         type: 'string',
-        enum: ['user', 'mentor', 'nologin'],
+        enum: ['user', 'mentor', 'admin'],
       },
       location: {
         type: 'string',

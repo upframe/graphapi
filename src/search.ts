@@ -2,6 +2,21 @@ import levenshtein from 'fast-levenshtein'
 import _ from 'lodash'
 import { filterKeys } from './utils/object'
 
+export interface GenericUser {
+  name: string
+}
+
+export const sortForStartingTerm = <T extends GenericUser>(
+  array: T[],
+  term: string
+): T[] => {
+  return array.sort((a, b) => {
+    if (a.name.toLowerCase().startsWith(term.toLowerCase())) return -1
+    if (b.name.toLowerCase().startsWith(term.toLowerCase())) return 1
+    return 0
+  })
+}
+
 const markup = (value: string, term: string) => {
   if (!term) return `<span>${value}</span>`
   const i = value
@@ -34,7 +49,6 @@ const baseQuery = (knex: ResolverCtx['knex']) =>
     )
     .leftJoin('mentors', { 'users.id': 'mentors.id' })
     .leftJoin('profile_pictures', { 'users.id': 'profile_pictures.user_id' })
-    .whereNot('role', 'nologin')
     .andWhere('size', '<=', 128)
     .andWhere('searchable', true)
 
@@ -101,7 +115,10 @@ export async function searchUsers(
     .map(set => set.sort((a: any, b: any) => b.score - a.score))
     .flat()
 
-  users = [mentors, users].flat()
+  users = [
+    sortForStartingTerm(mentors, term),
+    sortForStartingTerm(users, term),
+  ].flat()
 
   return users
     .slice(0, limit)

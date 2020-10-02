@@ -1,6 +1,9 @@
 import { createClient, google, UserInfo } from './google'
 import { UserInputError, InvalidGrantError } from './error'
 import { ConnectGoogle } from './models'
+import type { Query } from '~/resolvers/resolver'
+import logger from '~/logger'
+import { User, Model } from '~/models'
 
 export const connectGoogle = async (
   code: string,
@@ -39,4 +42,32 @@ export const connectGoogle = async (
     if (e.message === 'invalid_grant') throw InvalidGrantError()
     throw e
   }
+}
+
+export const remove = async (id: string, query: Query<Model>) => {
+  const gTokens = await query.raw(ConnectGoogle).where({ user_id: id }).first()
+  if (gTokens) {
+    const client = createClient()
+    client.setCredentials(gTokens)
+    if (gTokens.calendar_id) {
+      try {
+        const calendar = google.calendar({ version: 'v3', auth: client })
+        await calendar.calendars.delete({
+          calendarId: gTokens.calendar_id,
+        })
+      } catch (e) {
+        logger.warn(`couldn't delete calendar ${gTokens.calendar_id}`)
+      }
+    }
+    try {
+      await client.revokeToken(gTokens.refresh_token)
+    } catch (error) {
+      logger.warn(`couldn't revoke refresh token`, { error })
+    }
+  }
+  const { name } = ((await query
+    .raw(User)
+    .deleteById(id)
+    .returning('name')) as unknown) as User
+  return name
 }

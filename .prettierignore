@@ -4,3 +4,4 @@ node_modules
 .dynamodb
 db/seeds/data
 .dyanmodb
+src/schema/gen

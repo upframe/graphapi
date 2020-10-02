@@ -26,7 +26,7 @@ export async function addMeetup(
         : mentee.name
     }
 
-    You can join the call on <a href="${slot.meetups.location}">talky.io</a>.
+    You can join the call on <a href="${slot.meetups.location}">whereby.com</a>.
     <blockquote>${slot.meetups.message}</blockquote>
     `,
     start: {
