@@ -133,7 +133,7 @@ export const requestSlot = resolver().loggedIn(
         const { data } = response
         roomUrl = data.roomUrl
       } else {
-        throw new Error('Unable to accept meetup. Please try again.') 
+        throw new Error('Unable to accept meetup. Please try again.')
       }
     } catch (error) {
       logger.error(
@@ -172,7 +172,7 @@ export const requestSlot = resolver().loggedIn(
     if (!mentor.connect_google?.calendar_id) return
     try {
       const client = await userClient(knex, mentor.connect_google)
-      client.calendar.events.patch({
+      await client.calendar.events.patch({
         calendarId: mentor.connect_google.calendar_id,
         eventId: slot.id.replace(/[^\w]/g, ''),
         requestBody: {
