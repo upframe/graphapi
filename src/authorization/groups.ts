@@ -196,5 +196,6 @@ export const admin: Group = {
     { effect: 'allow', action: '*', resource: 'signup' },
     { effect: 'allow', action: '*', resource: 'signin_upframe' },
     { effect: 'allow', action: '*', resource: 'invites' },
+    { effect: 'allow', action: '*', resource: 'spaces' },
   ],
 }

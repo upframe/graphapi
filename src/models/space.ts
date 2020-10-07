@@ -4,7 +4,7 @@ export class Space extends Model {
   static tableName = 'spaces'
   static idColumn = 'id'
 
-  id!: number
+  id!: string
   name!: string
   handle: string
   description: string

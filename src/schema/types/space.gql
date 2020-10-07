@@ -1,5 +1,5 @@
 type Space {
-  id: Int!
+  id: ID!
   name: String!
   handle: String!
   description: String
