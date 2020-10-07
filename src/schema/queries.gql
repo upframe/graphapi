@@ -38,4 +38,5 @@ type Query {
     filter: String
   ): UserConnection!
   audit(trails: [ID!]!): [Audit!]!
+  spaces: [Space!]!
 }

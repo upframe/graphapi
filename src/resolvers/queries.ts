@@ -6,6 +6,7 @@ import {
   Invite,
   Signup,
   ConnectGoogle,
+  Space,
 } from '../models'
 import { handleError, UserInputError } from '../error'
 import resolver from './resolver'
@@ -384,4 +385,8 @@ export const audit = resolver<any>().isAdmin(
       }))
     )
   }
+)
+
+export const spaces = resolver<Space>().isAdmin(
+  async ({ query }) => await query()
 )

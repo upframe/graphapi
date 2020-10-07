@@ -88,7 +88,8 @@ export const disconnectCalendar = resolver<User>().loggedIn(
       query
         .raw(ConnectGoogle)
         .findById(user.connect_google.google_id)
-        .patch({ calendar_id: null }),
+        .patch({ calendar_id: null })
+        .asUser(system),
     ])
 
     logger.info('google calendar disconnected', { user: id })

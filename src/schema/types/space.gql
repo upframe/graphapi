@@ -1,0 +1,8 @@
+type Space {
+  id: Int!
+  name: String!
+  handle: String!
+  description: String
+  sidebar: String
+  users: [Person!]
+}
