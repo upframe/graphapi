@@ -390,3 +390,13 @@ export const audit = resolver<any>().isAdmin(
 export const spaces = resolver<Space>().isAdmin(
   async ({ query }) => await query()
 )
+
+export const space = resolver<Space>()(
+  async ({ query, args: { id, handle }, knex }) => {
+    if (!id && !handle) throw new UserInputError('must provide id or handle')
+    if (id) return await query().findById(id)
+    return await query()
+      .where(knex.raw('LOWER(handle)'), '=', handle.toLowerCase())
+      .first()
+  }
+)

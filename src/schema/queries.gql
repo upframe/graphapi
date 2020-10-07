@@ -39,4 +39,5 @@ type Query {
   ): UserConnection!
   audit(trails: [ID!]!): [Audit!]!
   spaces: [Space!]!
+  space(id: ID, handle: String): Space
 }
