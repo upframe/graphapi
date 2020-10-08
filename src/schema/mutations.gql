@@ -82,4 +82,10 @@ type Mutation {
 
   editUserInfo(userId: ID!, info: EditUserInfoInput!): Int
   createSpace(name: String!, handle: String): Space
+  addToSpace(
+    spaceId: ID!
+    userIds: [ID!]!
+    mentor: Boolean = false
+    owner: Boolean = false
+  ): Space
 }
