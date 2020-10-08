@@ -10,23 +10,8 @@ export class Space extends Model {
   description: string
   sidebar: string
 
-  users?: import('./user').User[]
+  members?: import('./user').User[]
+  mentors?: import('./user').User[]
+  owners?: import('./user').User[]
+  isMember?: boolean
 }
-
-import('./user').then(
-  ({ User }) =>
-    (Space.relationMappings = {
-      users: {
-        relation: Model.ManyToManyRelation,
-        modelClass: User,
-        join: {
-          from: 'spaces.id',
-          through: {
-            from: 'user_spaces.list_id',
-            to: 'user_spaces.user_id',
-          },
-          to: 'users.id',
-        },
-      },
-    })
-)

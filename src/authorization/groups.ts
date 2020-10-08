@@ -78,6 +78,11 @@ export const visitor: Group = {
       action: 'read',
       resource: 'invites',
     },
+    {
+      effect: 'allow',
+      action: 'read',
+      resource: 'spaces',
+    },
   ],
 }
 

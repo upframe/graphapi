@@ -392,11 +392,26 @@ export const spaces = resolver<Space>().isAdmin(
 )
 
 export const space = resolver<Space>()(
-  async ({ query, args: { id, handle }, knex }) => {
+  async ({ query, args: { id, handle }, ctx, knex }) => {
     if (!id && !handle) throw new UserInputError('must provide id or handle')
-    if (id) return await query().findById(id)
-    return await query()
+
+    const queryMember = async space_id => {
+      const _members = await knex('user_spaces').where({ space_id })
+      return {
+        _members,
+        isMember: !!_members.find(({ user_id }) => user_id === ctx.id),
+      }
+    }
+
+    if (id) {
+      const [a, b] = await Promise.all([query().findById(id), queryMember(id)])
+      return ({ ...a, ...b } as unknown) as Space
+    }
+
+    const space = await query()
       .where(knex.raw('LOWER(handle)'), '=', handle.toLowerCase())
       .first()
+
+    return ({ ...space, ...(await queryMember(space.id)) } as unknown) as Space
   }
 )

@@ -15,6 +15,7 @@ import * as Timezone from './fields/timezone'
 import * as Conversation from './fields/conversation'
 import * as List from './fields/list'
 import * as UserConnection from './fields/userList'
+import * as Space from './fields/space'
 
 export default {
   Query,
@@ -36,4 +37,5 @@ export default {
   Conversation,
   List,
   UserConnection,
+  Space,
 }

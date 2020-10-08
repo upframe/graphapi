@@ -4,5 +4,8 @@ type Space {
   handle: String!
   description: String
   sidebar: String
-  users: [Person!]
+  mentors(includeOwners: Boolean = true): [Person!]
+  members: [Person!]
+  owners: [Person!]
+  isMember: Boolean
 }
