@@ -19,8 +19,25 @@ const group = (filter: Filter) =>
   })
 
 export const members = group(({ is_mentor }) => !is_mentor)
-export const mentors = group(
-  ({ is_mentor, is_owner }, { includeOwners }) =>
-    is_mentor && (includeOwners || !is_owner)
-)
 export const owners = group(({ is_owner }) => is_owner)
+
+export const mentors = resolver<User, Space>()(
+  async ({ query, ctx: { user }, parent, knex, args: { includeOwners } }) => {
+    if (!(parent as any).isMember && !user.groups.includes('admin')) return null
+    return await query({
+      entryName: 'Person',
+      include: 'mentors',
+      join: true,
+    })
+      .select(knex.raw('LEAST(mentors.score, 1) as rank'))
+      .orderBy('rank', 'DESC')
+      .findByIds(
+        (parent as any)._members
+          .filter(
+            ({ is_mentor, is_owner }) =>
+              is_mentor && (includeOwners || !is_owner)
+          )
+          .map(({ user_id }) => user_id)
+      )
+  }
+)
