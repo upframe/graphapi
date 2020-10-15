@@ -66,3 +66,21 @@ export const addToSpace = resolver<Space>()(
     return await query().findById(spaceId)
   }
 )
+
+export const changeSpaceInfo = resolver<Space>()(
+  async ({ args: { input }, ctx, query, knex }) => {
+    if (
+      !ctx.user.groups.includes('admin') &&
+      !(
+        ctx.id &&
+        (await knex('user_spaces')
+          .where({ user_id: ctx.id, space_id: input.id })
+          .first())
+      )
+    )
+      throw new ForbiddenError('you are not allowed to modify this space')
+
+    const { id, ...fields } = input
+    return await query().patchAndFetchById(id, fields)
+  }
+)

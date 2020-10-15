@@ -91,6 +91,14 @@ input ChangeListInput {
   remove: [ListFields!]
 }
 
+input SpaceInfoInput {
+  id: ID!
+  name: String
+  description: String
+  handle: String
+  sidebar: String
+}
+
 input EditUserInfoInput {
   handle: String
   email: String

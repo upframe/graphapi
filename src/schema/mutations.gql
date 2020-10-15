@@ -88,4 +88,5 @@ type Mutation {
     mentor: Boolean = false
     owner: Boolean = false
   ): Space
+  changeSpaceInfo(input: SpaceInfoInput!): Space
 }
