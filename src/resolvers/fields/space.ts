@@ -41,3 +41,10 @@ export const mentors = resolver<User, Space>()(
       )
   }
 )
+
+export const inviteLinks = resolver<any, Space>()(({ parent }) => {
+  if (!(parent as any).isOwner) return
+  return Object.fromEntries(
+    ['founder', 'mentor', 'owner'].map(v => [v, (parent as any)[`${v}_invite`]])
+  )
+})

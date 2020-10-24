@@ -89,4 +89,5 @@ type Mutation {
     owner: Boolean = false
   ): Space
   changeSpaceInfo(input: SpaceInfoInput!): Space
+  createSpaceInvite(space: ID!, role: SpaceInviteRole!): ID!
 }

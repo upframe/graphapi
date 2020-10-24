@@ -8,4 +8,17 @@ type Space {
   members: [Person!]
   owners: [Person!]
   isMember: Boolean
+  inviteLinks: SpaceInviteLinks
+}
+
+type SpaceInviteLinks {
+  founder: ID
+  mentor: ID
+  owner: ID
+}
+
+enum SpaceInviteRole {
+  FOUNDER
+  MENTOR
+  OWNER
 }

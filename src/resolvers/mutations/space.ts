@@ -4,6 +4,8 @@ import type { Space } from '~/models'
 import { UniqueViolationError } from 'objection'
 import { ForbiddenError, UserInputError } from '~/error'
 import wrap from '~/utils/object'
+import logger from '~/logger'
+import genToken from '~/utils/token'
 
 export const createSpace = resolver<Space>().isAdmin(
   async ({ query, args: { name, handle = name } }) => {
@@ -101,10 +103,44 @@ export const changeSpaceInfo = resolver<Space>()<{
         `space ${k} must have a minimum length of 2 characters`
       )
     })
-  if ('handle' in input && !/^[a-z0-9_-.]+$/i.test(input.handle))
+  if ('handle' in input && !/^[a-z0-9_\-.]+$/i.test(input.handle))
     throw new UserInputError("handle can't include special characters")
 
   const { id, ...fields } = input.mapValues((v: string) => v || null)
 
   return await query().patchAndFetchById(id, fields)
+})
+
+export const createSpaceInvite = resolver<string>()<{
+  space: string
+  role: 'FOUNDER' | 'MENTOR' | 'OWNER'
+}>(async ({ knex, args: { space, role }, ctx: { id } }) => {
+  const user =
+    id &&
+    (await knex('user_spaces')
+      .where({
+        space_id: space,
+        user_id: id,
+      })
+      .first())
+  if (!user?.is_owner)
+    throw new ForbiddenError(
+      'you are not allowed tor create invite links in this space'
+    )
+
+  const invite = {
+    id: `s-${genToken()}`,
+    space,
+    mentor: role !== 'FOUNDER',
+    owner: role === 'OWNER',
+  }
+
+  await Promise.all([
+    knex('space_invites').insert(invite),
+    knex('spaces')
+      .update({ [`${role.toLowerCase()}_invite`]: invite.id })
+      .where({ id: space }),
+  ])
+
+  return invite.id
 })
