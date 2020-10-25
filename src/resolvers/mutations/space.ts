@@ -4,8 +4,9 @@ import type { Space } from '~/models'
 import { UniqueViolationError } from 'objection'
 import { ForbiddenError, UserInputError } from '~/error'
 import wrap from '~/utils/object'
-import logger from '~/logger'
 import genToken from '~/utils/token'
+import type AuthUser from '~/authorization/user'
+import type Knex from 'knex'
 
 export const createSpace = resolver<Space>().isAdmin(
   async ({ query, args: { name, handle = name } }) => {
@@ -19,25 +20,32 @@ export const createSpace = resolver<Space>().isAdmin(
   }
 )
 
+const checkSpaceAdmin = async (
+  spaceId: string,
+  user: AuthUser,
+  knex: Knex,
+  action = 'modify'
+) => {
+  if (
+    !user ||
+    (!user.groups.includes('admin') &&
+      !(
+        await knex('user_spaces')
+          .where({ user_id: user.id, space_id: spaceId })
+          .first()
+      ).is_owner)
+  )
+    throw new ForbiddenError(`you are not allowed to ${action} this space`)
+}
+
 export const addToSpace = resolver<Space>()(
   async ({
     query,
     args: { spaceId, userIds, mentor, owner },
-    ctx: { id, user },
+    ctx: { user },
     knex,
   }) => {
-    if (
-      !user.groups.includes('admin') &&
-      !(
-        id &&
-        (await knex('user_spaces')
-          .where({ user_id: id, space_id: spaceId })
-          .first())
-      )
-    )
-      throw new ForbiddenError(
-        'you are not allowed to add members to this space'
-      )
+    await checkSpaceAdmin(spaceId, user, knex, 'add users to')
 
     if (!userIds?.length)
       throw new UserInputError('must provide at least one user')
@@ -80,19 +88,10 @@ type InfoInput = {
 
 export const changeSpaceInfo = resolver<Space>()<{
   input: InfoInput
-}>(async ({ args, ctx, query, knex }) => {
+}>(async ({ args, ctx: { user }, query, knex }) => {
   let input = wrap(args.input)
 
-  if (
-    !ctx.user.groups.includes('admin') &&
-    !(
-      ctx.id &&
-      (await knex('user_spaces')
-        .where({ user_id: ctx.id, space_id: input.id })
-        .first())
-    )
-  )
-    throw new ForbiddenError('you are not allowed to modify this space')
+  await checkSpaceAdmin(input.id, user, knex)
 
   input = input.mapValues((v: string) => v.trim())
   input
@@ -114,19 +113,8 @@ export const changeSpaceInfo = resolver<Space>()<{
 export const createSpaceInvite = resolver<string>()<{
   space: string
   role: 'FOUNDER' | 'MENTOR' | 'OWNER'
-}>(async ({ knex, args: { space, role }, ctx: { id } }) => {
-  const user =
-    id &&
-    (await knex('user_spaces')
-      .where({
-        space_id: space,
-        user_id: id,
-      })
-      .first())
-  if (!user?.is_owner)
-    throw new ForbiddenError(
-      'you are not allowed tor create invite links in this space'
-    )
+}>(async ({ knex, args: { space, role }, ctx: { user } }) => {
+  await checkSpaceAdmin(space, user, knex, 'create invites links for')
 
   const invite = {
     id: `s-${genToken()}`,
@@ -143,4 +131,21 @@ export const createSpaceInvite = resolver<string>()<{
   ])
 
   return invite.id
+})
+
+export const revokeSpaceInvite = resolver()<{
+  space: string
+  role: 'FOUNDER' | 'MENTOR' | 'OWNER'
+}>(async ({ args: { space: spaceId, role }, ctx: { user }, knex }) => {
+  await checkSpaceAdmin(spaceId, user, knex, 'remove invites links for')
+
+  const space = await knex('spaces').where({ id: spaceId }).first()
+
+  const field = `${role.toLowerCase()}_invite`
+  const link = space[field]
+
+  if (!link) return
+  await knex('spaces')
+    .update({ [field]: null })
+    .where({ id: spaceId })
 })

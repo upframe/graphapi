@@ -90,4 +90,5 @@ type Mutation {
   ): Space
   changeSpaceInfo(input: SpaceInfoInput!): Space
   createSpaceInvite(space: ID!, role: SpaceInviteRole!): ID!
+  revokeSpaceInvite(space: ID!, role: SpaceInviteRole): Int
 }
