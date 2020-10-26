@@ -21,8 +21,9 @@ import {
 } from '../google'
 import Conversation from '~/messaging/conversation'
 import Channel from '~/messaging/channel'
-import { ddb } from '../utils/aws'
+import { ddb, s3 } from '../utils/aws'
 import * as filterExpr from '~/utils/filter'
+import o from '~/utils/object'
 
 export const me = resolver<User>().loggedIn(
   async ({ query, ctx: { id } }) => await query().findById(id)
@@ -397,9 +398,11 @@ export const space = resolver<Space>()(
 
     const queryMember = async space_id => {
       const _members = await knex('user_spaces').where({ space_id })
+      const user = _members.find(({ user_id }) => user_id === ctx.id)
       return {
         _members,
-        isMember: !!_members.find(({ user_id }) => user_id === ctx.id),
+        isMember: !!user,
+        isOwner: user?.is_owner ?? false,
       }
     }
 
@@ -413,5 +416,39 @@ export const space = resolver<Space>()(
       .first()
 
     return ({ ...space, ...(await queryMember(space.id)) } as unknown) as Space
+  }
+)
+
+export const uploadSpaceBannerImgUrl = resolver<string>()(async () => {
+  return await s3.getSignedUrlPromise('putObject', {
+    Bucket: process.env.USER_MEDIA_BUCKET,
+  })
+})
+
+export const spaceInvite = resolver<Space>()(
+  async ({ knex, args: { token }, ctx: { id } }) => {
+    const [space] = await knex('space_invites')
+      .select(
+        'spaces.*',
+        knex.raw(
+          `EXISTS(${knex('user_spaces').where({
+            user_id: id,
+            space_id: knex.raw('spaces.id'),
+          })}) as is_member`
+        )
+      )
+      .leftJoin('spaces', { 'spaces.id': 'space_invites.space' })
+      .where({ 'space_invites.id': token })
+
+    if (!space) return null
+
+    space.isMember = space.is_member
+    return o(space).filterKeys([
+      'id',
+      'name',
+      'handle',
+      'description',
+      'isMember',
+    ])
   }
 )

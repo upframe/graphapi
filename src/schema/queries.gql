@@ -40,4 +40,6 @@ type Query {
   audit(trails: [ID!]!): [Audit!]!
   spaces: [Space!]!
   space(id: ID, handle: String): Space
+  uploadSpaceBannerImgUrl(spaceId: ID!): String!
+  spaceInvite(token: ID!): Space
 }

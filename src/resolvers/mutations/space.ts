@@ -27,7 +27,7 @@ const checkSpaceAdmin = async (
   action = 'modify'
 ) => {
   if (
-    !user ||
+    !user?.id ||
     (!user.groups.includes('admin') &&
       !(
         await knex('user_spaces')
