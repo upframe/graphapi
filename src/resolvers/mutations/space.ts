@@ -149,3 +149,19 @@ export const revokeSpaceInvite = resolver()<{
     .update({ [field]: null })
     .where({ id: spaceId })
 })
+
+export const joinSpace = resolver<Space>().loggedIn<{ token: string }>(
+  async ({ args: { token }, knex, ctx: { id: user_id } }) => {
+    const invite = await knex('space_invites').where({ id: token }).first()
+    if (!invite) throw new UserInputError('invalid token')
+
+    await knex('user_spaces').insert({
+      space_id: invite.space,
+      user_id,
+      is_mentor: invite.mentor,
+      is_owner: invite.owner,
+    })
+
+    return await knex('spaces').where({ id: invite.space }).first()
+  }
+)

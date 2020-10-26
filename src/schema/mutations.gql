@@ -91,4 +91,5 @@ type Mutation {
   changeSpaceInfo(input: SpaceInfoInput!): Space
   createSpaceInvite(space: ID!, role: SpaceInviteRole!): ID!
   revokeSpaceInvite(space: ID!, role: SpaceInviteRole): Int
+  joinSpace(token: ID!): Space!
 }

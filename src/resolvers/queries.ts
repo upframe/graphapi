@@ -430,12 +430,16 @@ export const spaceInvite = resolver<Space>()(
     const [space] = await knex('space_invites')
       .select(
         'spaces.*',
-        knex.raw(
-          `EXISTS(${knex('user_spaces').where({
-            user_id: id,
-            space_id: knex.raw('spaces.id'),
-          })}) as is_member`
-        )
+        ...(id
+          ? [
+              knex.raw(
+                `EXISTS(${knex('user_spaces').where({
+                  user_id: id,
+                  space_id: knex.raw('spaces.id'),
+                })}) as is_member`
+              ),
+            ]
+          : [])
       )
       .leftJoin('spaces', { 'spaces.id': 'space_invites.space' })
       .where({ 'space_invites.id': token })
