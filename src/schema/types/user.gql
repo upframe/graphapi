@@ -25,6 +25,7 @@ interface Person {
   joined: String
   invitedBy: Person
   lists: [List!]
+  spaces: [Space!]
 }
 
 type User implements Node & Person {
@@ -54,6 +55,7 @@ type User implements Node & Person {
   joined: String
   invitedBy: Person
   lists: [List!]
+  spaces: [Space!]
 }
 
 type Mentor implements Node & Person {
@@ -88,6 +90,7 @@ type Mentor implements Node & Person {
   joined: String
   invitedBy: Person
   lists: [List!]
+  spaces: [Space!]
 }
 
 enum Role {
