@@ -2,11 +2,10 @@ import resolver from '../resolver'
 import uuid from 'uuid/v4'
 import type { Space } from '~/models'
 import { UniqueViolationError } from 'objection'
-import { ForbiddenError, UserInputError } from '~/error'
+import { UserInputError } from '~/error'
 import wrap from '~/utils/object'
 import genToken from '~/utils/token'
-import type AuthUser from '~/authorization/user'
-import type Knex from 'knex'
+import { checkSpaceAdmin } from '~/utils/space'
 
 export const createSpace = resolver<Space>().isAdmin(
   async ({ query, args: { name, handle = name } }) => {
@@ -19,24 +18,6 @@ export const createSpace = resolver<Space>().isAdmin(
     }
   }
 )
-
-const checkSpaceAdmin = async (
-  spaceId: string,
-  user: AuthUser,
-  knex: Knex,
-  action = 'modify'
-) => {
-  if (
-    !user?.id ||
-    (!user.groups.includes('admin') &&
-      !(
-        await knex('user_spaces')
-          .where({ user_id: user.id, space_id: spaceId })
-          .first()
-      ).is_owner)
-  )
-    throw new ForbiddenError(`you are not allowed to ${action} this space`)
-}
 
 export const addToSpace = resolver<Space>()(
   async ({
