@@ -9,6 +9,8 @@ export class Space extends Model {
   handle: string
   description: string
   sidebar: string
+  space_imgs: string[]
+  cover_imgs: string[]
 
   members?: import('./user').User[]
   mentors?: import('./user').User[]

@@ -17,3 +17,21 @@ type Redirect {
 }
 
 scalar Upload
+
+type Image {
+  base: String
+  sizes: [ImageSize]!
+  types: [ImageType]!
+}
+
+enum ImageType {
+  PNG
+  JPEG
+  WEBP
+}
+
+type ImageSize {
+  width: Int
+  height: Int
+  key: String!
+}

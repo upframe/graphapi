@@ -10,6 +10,8 @@ type Space {
   isMember: Boolean
   isOwner: Boolean
   inviteLinks: SpaceInviteLinks
+  photo: Image
+  cover: Image
 }
 
 type SpaceInviteLinks {

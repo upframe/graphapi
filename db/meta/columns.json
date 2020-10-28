@@ -69,7 +69,19 @@
     "columns": ["id", "name", "url"]
   },
   "spaces": {
-    "columns": ["id", "name", "handle", "created", "description", "sidebar"]
+    "columns": [
+      "id",
+      "name",
+      "handle",
+      "created",
+      "description",
+      "sidebar",
+      "founder_invite",
+      "mentor_invite",
+      "owner_invite",
+      "space_imgs",
+      "cover_imgs"
+    ]
   },
   "tags": {
     "columns": ["id", "name"]
