@@ -11,7 +11,7 @@ export const visitor: Group = {
       effect: 'disallow',
       action: 'read',
       resource:
-        'users.[email, allow_emails, tz_infer, joined, invitedBy, lists, spaces]',
+        'users.[email, allow_emails, tz_infer, joined, invitedBy, lists]',
     },
     {
       effect: 'allow',
@@ -101,12 +101,6 @@ export const user: Group = {
       action: 'update, delete',
       resource: 'users',
       where: 'users.id = current.id',
-    },
-    {
-      effect: 'allow',
-      action: 'delete',
-      resource: 'user_handles',
-      where: 'user_handles.user_id = current.id',
     },
     {
       effect: 'allow',

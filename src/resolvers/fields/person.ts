@@ -1,10 +1,11 @@
 import resolver from '../resolver'
-import { SocialMedia, User, Tags } from '~/models'
+import { SocialMedia, User, Tags, Space } from '~/models'
 import { createClient } from '~/google'
 import { google as gapi } from 'googleapis'
 import Conversation from '~/messaging/conversation'
 import { msgToken as createMsgToken } from '~/auth'
 import * as db from '~/messaging/db'
+import logger from '~/logger'
 
 export const __resolveType = resolver<string, any>()(({ parent: { role } }) => {
   if (role !== 'user') return 'Mentor'
@@ -99,9 +100,10 @@ export const conversations = resolver<
   id === ctx.id ? await Conversation.getUserConversations(id) : null
 )
 
-export const msgToken = resolver<string, User>()(({ parent, ctx: { id } }) =>
-  id === parent.id ? createMsgToken(parent as User) : null
-)
+export const msgToken = resolver<string, User>()(({ parent, ctx: { id } }) => {
+  logger.info('issue token')
+  return id === parent.id ? createMsgToken(parent as User) : null
+})
 
 export const unread = resolver<any, User>()(async ({ parent, ctx: { id } }) => {
   if (parent.id !== id) return null
@@ -119,4 +121,8 @@ export const sortScore = resolver<number, any>()(({ parent }) => parent.rank)
 
 export const joined = resolver<string, User>()(({ parent }) =>
   new Date(parent.joined).toISOString()
+)
+
+export const spaces = resolver<Space[], User>()(({ parent, ctx: { user } }) =>
+  user.id === parent.id || user.groups.includes('admin') ? parent.spaces : null
 )
