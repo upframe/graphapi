@@ -204,3 +204,30 @@ export const removeFromSpace = resolver()<{ space: string; user: string }>(
       .delete()
   }
 )
+
+export const changeMemberRole = resolver()<{
+  space: string
+  user: string
+  mentor: boolean
+  owner: boolean
+}>(async ({ args: { space, user: userId, ...role }, ctx, knex }) => {
+  await checkSpaceAdmin(space, ctx.user, knex, 'change user roles in')
+
+  const user = await knex('user_spaces')
+    .where({ space_id: space, user_id: userId })
+    .first()
+
+  if (!user) throw new UserInputError('user not member of space')
+  if ('mentor' in role && role.mentor === user.is_mentor)
+    throw new UserInputError(
+      `user already is${role.mentor ? '' : "n't"} a mentor`
+    )
+  if ('owner' in role && role.owner === user.is_owner)
+    throw new UserInputError(
+      `user already is${role.owner ? '' : "n't"} an owner`
+    )
+
+  await knex('user_spaces')
+    .update({ is_mentor: role.mentor, is_owner: role.owner })
+    .where({ space_id: space, user_id: userId })
+})
