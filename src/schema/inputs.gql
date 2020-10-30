@@ -106,3 +106,10 @@ input EditUserInfoInput {
   location: String
   name: String
 }
+
+input CropInput {
+  left: Float!
+  top: Float!
+  width: Float!
+  ratio: Float!
+}

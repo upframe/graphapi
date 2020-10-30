@@ -6,6 +6,7 @@ import { UserInputError } from '~/error'
 import wrap from '~/utils/object'
 import genToken from '~/utils/token'
 import { checkSpaceAdmin } from '~/utils/space'
+import { sns } from '~/utils/aws'
 
 export const createSpace = resolver<Space>().isAdmin(
   async ({ query, args: { name, handle = name } }) => {
@@ -144,5 +145,40 @@ export const joinSpace = resolver<Space>().loggedIn<{ token: string }>(
     })
 
     return await knex('spaces').where({ id: invite.space }).first()
+  }
+)
+
+export const processSpaceImage = resolver()<{ signedUrl: string; crop: any }>(
+  async ({ args: { signedUrl, crop }, ctx: { user }, knex }) => {
+    const [spaceId, file] = signedUrl
+      .split('?')[0]
+      .split('spaces/')[1]
+      .split('/')
+    const type = file.split('-')[0]
+    const space = await knex('spaces').where({ id: spaceId }).first()
+
+    if (!['space', 'cover'].includes(type) || !space)
+      throw new UserInputError('invalid url')
+    await checkSpaceAdmin(spaceId, user, knex)
+
+    await sns
+      .publish({
+        Message: JSON.stringify({
+          input: signedUrl.split('?')[0],
+          outputs: [
+            {
+              bucket: 'upframe-user-media',
+              key: `spaces/${spaceId}/${
+                file.split('-raw')[0]
+              }-\${width}x\${height}.\${format}`,
+            },
+          ],
+          crop,
+          resize: [{ width: 880 }, { width: 1760 }],
+          formats: ['jpeg', 'webp'],
+        }),
+        TopicArn: process.env.IMG_SNS,
+      })
+      .promise()
   }
 )

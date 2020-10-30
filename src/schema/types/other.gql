@@ -20,18 +20,18 @@ scalar Upload
 
 type Image {
   base: String
-  sizes: [ImageSize]!
-  types: [ImageType]!
+  versions: [ImgVersion!]!
 }
 
 enum ImageType {
-  PNG
-  JPEG
-  WEBP
+  png
+  jpeg
+  webp
 }
 
-type ImageSize {
+type ImgVersion {
   width: Int
   height: Int
+  type: ImageType
   key: String!
 }

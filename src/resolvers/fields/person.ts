@@ -5,7 +5,6 @@ import { google as gapi } from 'googleapis'
 import Conversation from '~/messaging/conversation'
 import { msgToken as createMsgToken } from '~/auth'
 import * as db from '~/messaging/db'
-import logger from '~/logger'
 
 export const __resolveType = resolver<string, any>()(({ parent: { role } }) => {
   if (role !== 'user') return 'Mentor'
@@ -101,7 +100,6 @@ export const conversations = resolver<
 )
 
 export const msgToken = resolver<string, User>()(({ parent, ctx: { id } }) => {
-  logger.info('issue token')
   return id === parent.id ? createMsgToken(parent as User) : null
 })
 
