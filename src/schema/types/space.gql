@@ -8,7 +8,8 @@ type Space {
   members: [Person!]
   owners: [Person!]
   isMember: Boolean
-  isOwner: Boolean
+  isMentor(user: ID): Boolean
+  isOwner(user: ID): Boolean
   inviteLinks: SpaceInviteLinks
   photo: Image
   cover: Image

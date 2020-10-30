@@ -67,3 +67,33 @@ export const photo = resolver<any, Space>()(({ parent }) =>
 export const cover = resolver<any, Space>()(({ parent }) =>
   img(parent.cover_imgs, `${process.env.ASSET_CDN}spaces/${parent.id}/`)
 )
+
+export const isMentor = resolver<
+  boolean,
+  Space
+>()(async ({ parent, args: { user }, knex }) =>
+  !(parent as any).isMember
+    ? null
+    : !user
+    ? (parent as any).isMentor
+    : (
+        await knex('user_spaces')
+          .where({ space_id: parent.id, user_id: user })
+          .first()
+      ).is_mentor
+)
+
+export const isOwner = resolver<
+  boolean,
+  Space
+>()(async ({ parent, args: { user }, knex }) =>
+  !(parent as any).isMember
+    ? null
+    : !user
+    ? (parent as any).isOwner
+    : (
+        await knex('user_spaces')
+          .where({ space_id: parent.id, user_id: user })
+          .first()
+      ).is_owner
+)
