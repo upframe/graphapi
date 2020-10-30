@@ -93,4 +93,5 @@ type Mutation {
   revokeSpaceInvite(space: ID!, role: SpaceInviteRole): Int
   joinSpace(token: ID!): Space!
   processSpaceImage(signedUrl: String!, crop: CropInput!): Int
+  removeFromSpace(space: ID!, user: ID!): Int
 }

@@ -193,3 +193,14 @@ export const processSpaceImage = resolver()<{ signedUrl: string; crop: any }>(
         .promise()
   }
 )
+
+export const removeFromSpace = resolver()<{ space: string; user: string }>(
+  async ({ args, ctx: { user }, knex }) => {
+    if (args.user !== user.id)
+      await checkSpaceAdmin(args.space, user, knex, 'remove members from')
+
+    await knex('user_spaces')
+      .where({ space_id: args.space, user_id: args.user })
+      .delete()
+  }
+)
