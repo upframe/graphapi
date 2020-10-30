@@ -7,6 +7,7 @@ import wrap from '~/utils/object'
 import genToken from '~/utils/token'
 import { checkSpaceAdmin } from '~/utils/space'
 import { sns } from '~/utils/aws'
+import axios from 'axios'
 
 export const createSpace = resolver<Space>().isAdmin(
   async ({ query, args: { name, handle = name } }) => {
@@ -161,24 +162,31 @@ export const processSpaceImage = resolver()<{ signedUrl: string; crop: any }>(
       throw new UserInputError('invalid url')
     await checkSpaceAdmin(spaceId, user, knex)
 
-    await sns
-      .publish({
-        Message: JSON.stringify({
-          input: signedUrl.split('?')[0],
-          outputs: [
-            {
-              bucket: 'upframe-user-media',
-              key: `spaces/${spaceId}/${
-                file.split('-raw')[0]
-              }-\${width}x\${height}.\${format}`,
-            },
-          ],
-          crop,
-          resize: [{ width: 880 }, { width: 1760 }],
-          formats: ['jpeg', 'webp'],
-        }),
-        TopicArn: process.env.IMG_SNS,
+    const imgTask = {
+      input: signedUrl.split('?')[0],
+      outputs: [
+        {
+          bucket: 'upframe-user-media',
+          key: `spaces/${spaceId}/${
+            file.split('-raw')[0]
+          }-\${width}x\${height}.\${format}`,
+        },
+      ],
+      crop,
+      resize: [{ width: 880 }, { width: 1760 }],
+      formats: ['jpeg', 'webp'],
+    }
+
+    if (process.env.IS_OFFLINE)
+      await axios.post(`${process.env.IMG_ENDPOINT}/process`, [imgTask], {
+        headers: { auth: process.env.IMG_SECRET },
       })
-      .promise()
+    else
+      await sns
+        .publish({
+          TopicArn: process.env.IMG_SNS,
+          Message: JSON.stringify(imgTask),
+        })
+        .promise()
   }
 )
