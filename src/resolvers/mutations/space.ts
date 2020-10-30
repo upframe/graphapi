@@ -173,7 +173,10 @@ export const processSpaceImage = resolver()<{ signedUrl: string; crop: any }>(
         },
       ],
       crop,
-      resize: [{ width: 880 }, { width: 1760 }],
+      resize:
+        type === 'cover'
+          ? [{ width: 880 }, { width: 1760 }]
+          : [{ width: 112 }, { width: 224 }, { width: 336 }],
       formats: ['jpeg', 'webp'],
     }
 
