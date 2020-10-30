@@ -7,16 +7,26 @@ type Filter = (
 ) => boolean
 
 const group = (filter: Filter) =>
-  resolver<User, Space>()(async ({ parent, ctx: { user }, query, args }) => {
-    if (!parent.isMember && !user.groups.includes('admin')) return null
-    return await query({
-      entryName: 'Person',
-    }).findByIds(
-      (parent as any)._members
-        .filter(v => filter(v, args))
-        .map(({ user_id }) => user_id)
-    )
-  })
+  resolver<User, Space>()(
+    async ({ parent, ctx: { user }, query, args, knex }) => {
+      if (!parent.isMember && !user.groups.includes('admin')) return null
+      return await query({
+        entryName: 'Person',
+      })
+        .findByIds(
+          (parent as any)._members
+            .filter(
+              ({ is_owner }) =>
+                !('includeOwners' in (args ?? {})) ||
+                args.includeOwners ||
+                !is_owner
+            )
+            .filter(v => filter(v, args))
+            .map(({ user_id }) => user_id)
+        )
+        .orderBy(knex.raw('lower(name)'))
+    }
+  )
 
 export const members = group(({ is_mentor }) => !is_mentor)
 export const owners = group(({ is_owner }) => is_owner)

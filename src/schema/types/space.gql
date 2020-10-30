@@ -5,7 +5,7 @@ type Space {
   description: String
   sidebar: String
   mentors(includeOwners: Boolean = true): [Person!]
-  members: [Person!]
+  members(includeOwners: Boolean = true): [Person!]
   owners: [Person!]
   isMember: Boolean
   isMentor(user: ID): Boolean
