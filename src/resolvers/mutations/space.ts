@@ -8,11 +8,14 @@ import genToken from '~/utils/token'
 import { checkSpaceAdmin } from '~/utils/space'
 import { sns } from '~/utils/aws'
 import axios from 'axios'
+import audit from '~/utils/audit'
 
 export const createSpace = resolver<Space>().isAdmin(
-  async ({ query, args: { name, handle = name } }) => {
+  async ({ query, args: { name, handle = name }, ctx: { id } }) => {
     try {
-      return await query().insertAndFetch({ id: uuid(), name, handle })
+      const space = await query().insertAndFetch({ id: uuid(), name, handle })
+      await audit.space(space.id, 'create_space', { editor: id })
+      return space
     } catch (e) {
       if (e instanceof UniqueViolationError)
         throw new UserInputError(`handle '${handle}' already in use`)
@@ -21,15 +24,13 @@ export const createSpace = resolver<Space>().isAdmin(
   }
 )
 
-export const addToSpace = resolver<Space>()(
+export const addToSpace = resolver<Space>().isAdmin(
   async ({
     query,
     args: { spaceId, userIds, mentor, owner },
-    ctx: { user },
+    ctx: { id },
     knex,
   }) => {
-    await checkSpaceAdmin(spaceId, user, knex, 'add users to')
-
     if (!userIds?.length)
       throw new UserInputError('must provide at least one user')
 
@@ -52,6 +53,12 @@ export const addToSpace = resolver<Space>()(
 
     const failed = userIds.filter(
       id => !rows.find(({ user_id }) => user_id === id)
+    )
+
+    await Promise.all(
+      userIds
+        .filter(id => !failed.includes(id))
+        .map(user => audit.space(spaceId, 'add_user', { editor: id, user }))
     )
 
     if (failed.length)

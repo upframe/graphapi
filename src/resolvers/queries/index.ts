@@ -1,5 +1,5 @@
 import * as M from '~/models'
-import { handleError, UserInputError } from '~/error'
+import { ForbiddenError, handleError, UserInputError } from '~/error'
 import resolver from '../resolver'
 import { system } from '~/authorization/user'
 import { searchUsers, searchTags } from '~/search'
@@ -14,6 +14,7 @@ import Conversation from '~/messaging/conversation'
 import Channel from '~/messaging/channel'
 import { ddb } from '~/utils/aws'
 import * as filterExpr from '~/utils/filter'
+import { checkSpaceAdmin } from '~/utils/space'
 
 export * from './space'
 
@@ -356,26 +357,41 @@ export const userList = resolver<any>().isAdmin(
   }
 )
 
-export const audit = resolver<any>().isAdmin(
-  async ({ args: { trails = [] } }) => {
-    const res = await Promise.all(
-      trails.map((trailId: string) =>
-        ddb
-          .query({
-            TableName: 'audit_trail',
-            KeyConditionExpression: 'trail_id = :trail',
-            ExpressionAttributeValues: { ':trail': trailId },
-          })
-          .promise()
-      )
-    )
-    return res.flatMap(({ Items }) =>
-      Items.map(({ trail_id, event_id, time, ...rest }) => ({
-        trailId: trail_id,
-        id: event_id,
-        date: new Date(time).toISOString(),
-        payload: JSON.stringify(rest),
-      }))
-    )
+type Case = [
+  match: string | RegExp,
+  test: boolean | (() => boolean | Promise<boolean>)
+]
+
+export const audit = resolver<any>()<{ trail: string }>(
+  async ({ args: { trail }, ctx: { user }, knex }) => {
+    const access = async (tests: Case[]) => {
+      for (const [match, test] of tests)
+        if (typeof match === 'string' ? match !== trail : !match.test(trail))
+          continue
+        else if (typeof test === 'boolean' ? test : await test()) return
+      throw new ForbiddenError('your are not allowed to query this trail')
+    }
+
+    await access([
+      ['admin_edits', user.groups.includes('admin')],
+      [
+        /^SPACE\|/,
+        () => checkSpaceAdmin(trail.split('|').pop(), user, knex, false),
+      ],
+    ])
+
+    const { Items } = await ddb
+      .query({
+        TableName: 'audit_trail',
+        KeyConditionExpression: 'trail_id = :trail',
+        ExpressionAttributeValues: { ':trail': trail },
+      })
+      .promise()
+    return Items.map(({ trail_id, event_id, time, ...rest }) => ({
+      trailId: trail_id,
+      id: event_id,
+      date: new Date(time).toISOString(),
+      payload: JSON.stringify(rest),
+    }))
   }
 )

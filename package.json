@@ -73,7 +73,7 @@
     "faker": "^4.1.0",
     "fork-ts-checker-webpack-plugin": "^1.5.0",
     "husky": "^4.3.0",
-    "prettier": "^2.0.5",
+    "prettier": "^2.1.2",
     "serverless": "^1.73.1",
     "serverless-domain-manager": "^4.1.1",
     "serverless-offline": "^5.7.2",
