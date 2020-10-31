@@ -402,7 +402,11 @@ export const audit = resolver<any>()<{ trail: string }>(
             ),
             query({ entryName: 'Space', section: 'objects' }).whereIn(
               'id',
-              Items.flatMap(({ space }) => [space]).filter(Boolean)
+              Items.map(({ space }) => space).filter(Boolean)
+            ),
+            query({ entryName: 'List', section: 'objects' }).whereIn(
+              'id',
+              Items.map(({ list }) => list).filter(Boolean)
             ),
           ])
         ).flat()

@@ -17,7 +17,7 @@ export const createSpace = resolver<Space>().isAdmin(
       await Promise.all([
         audit.space(space.id, 'create_space', { editor: id }),
         audit('admin_edits', {
-          event_type: 'create_space',
+          eventType: 'create_space',
           editor: id,
           space: space.id,
         }),
