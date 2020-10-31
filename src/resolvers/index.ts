@@ -18,6 +18,8 @@ import * as UserConnection from './fields/userList'
 import * as Space from './fields/space'
 import * as Audit from './fields/audit'
 
+const AuditObject = Audit.AuditObject
+
 export default {
   Query,
   Mutation,
@@ -39,5 +41,8 @@ export default {
   List,
   UserConnection,
   Space,
-  Audit,
+  Audit: Object.fromEntries(
+    Object.entries(Audit).filter(([k]) => k !== 'AuditObject')
+  ),
+  AuditObject,
 }

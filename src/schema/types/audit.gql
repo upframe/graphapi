@@ -4,4 +4,7 @@ type Audit {
   date: String!
   editor: Person
   payload: String!
+  objects: [AuditObject!]
 }
+
+union AuditObject = User | Mentor | Space
