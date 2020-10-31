@@ -3,6 +3,7 @@ node_modules
 .serverless
 .dynamodb
 db/seeds/data
-queries
+/queries
 apollo.config.js
 .dyanmodb
+/report*.json
