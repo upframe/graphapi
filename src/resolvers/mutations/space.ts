@@ -104,7 +104,27 @@ export const changeSpaceInfo = resolver<Space>()<{
 
   const { id, ...fields } = input.mapValues((v: string) => v || null)
 
-  return await query().patchAndFetchById(id, fields)
+  const space = await query().findById(id)
+  await Promise.all(
+    Object.entries(args.input)
+      .filter(([k]) => k !== 'id')
+      .map(([k, v]) =>
+        audit.space(id, 'change_space_info', {
+          editor: user.id,
+          field: k,
+          new: v as string,
+          old: space[k],
+        })
+      )
+  )
+
+  try {
+    return await query().patchAndFetchById(id, fields)
+  } catch (e) {
+    if (e instanceof UniqueViolationError)
+      throw new UserInputError('handle already taken')
+    throw e
+  }
 })
 
 export const createSpaceInvite = resolver<string>()<{
@@ -127,6 +147,8 @@ export const createSpaceInvite = resolver<string>()<{
       .where({ id: space }),
   ])
 
+  await audit.space(space, 'create_invite_link', { editor: user.id, ...invite })
+
   return invite.id
 })
 
@@ -142,9 +164,18 @@ export const revokeSpaceInvite = resolver()<{
   const link = space[field]
 
   if (!link) return
-  await knex('spaces')
-    .update({ [field]: null })
-    .where({ id: spaceId })
+
+  const [[invite]] = await Promise.all([
+    knex('space_invites').where({ id: link }).delete().returning('*'),
+    knex('spaces')
+      .update({ [field]: null })
+      .where({ id: spaceId }),
+  ])
+
+  await audit.space(space.id, 'revoke_invite_link', {
+    editor: user.id,
+    ...invite,
+  })
 })
 
 export const joinSpace = resolver<Space>().loggedIn<{ token: string }>(
@@ -157,6 +188,11 @@ export const joinSpace = resolver<Space>().loggedIn<{ token: string }>(
       user_id,
       is_mentor: invite.mentor,
       is_owner: invite.owner,
+    })
+
+    await audit.space(invite.space, 'join_space', {
+      editor: user_id,
+      ...invite,
     })
 
     return await knex('spaces').where({ id: invite.space }).first()
@@ -205,6 +241,10 @@ export const processSpaceImage = resolver()<{ signedUrl: string; crop: any }>(
           Message: JSON.stringify(imgTask),
         })
         .promise()
+
+    await audit.space(spaceId, `upload_${type}_photo` as any, {
+      editor: user.id,
+    })
   }
 )
 
@@ -216,6 +256,11 @@ export const removeFromSpace = resolver()<{ space: string; user: string }>(
     await knex('user_spaces')
       .where({ space_id: args.space, user_id: args.user })
       .delete()
+
+    await audit.space(args.space, 'remove_member', {
+      editor: user.id,
+      user: args.user,
+    })
   }
 )
 
@@ -244,4 +289,14 @@ export const changeMemberRole = resolver()<{
   await knex('user_spaces')
     .update({ is_mentor: role.mentor, is_owner: role.owner })
     .where({ space_id: space, user_id: userId })
+
+  await Promise.all(
+    Object.keys(role).map(k =>
+      audit.space(space, 'change_member_role', {
+        editor: ctx.id,
+        user: userId,
+        [k]: role[k],
+      })
+    )
+  )
 })

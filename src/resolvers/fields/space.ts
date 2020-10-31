@@ -81,8 +81,8 @@ export const cover = resolver<any, Space>()(({ parent }) =>
 export const isMentor = resolver<
   boolean,
   Space
->()(async ({ parent, args: { user }, knex }) =>
-  !(parent as any).isMember
+>()(async ({ parent, args: { user }, ctx, knex }) =>
+  !(parent as any).isMember && !ctx.user.groups.includes('admin')
     ? null
     : !user
     ? (parent as any).isMentor
@@ -96,8 +96,8 @@ export const isMentor = resolver<
 export const isOwner = resolver<
   boolean,
   Space
->()(async ({ parent, args: { user }, knex }) =>
-  !(parent as any).isMember
+>()(async ({ parent, args: { user }, ctx, knex }) =>
+  !(parent as any).isMember && !ctx.user.groups.includes('admin')
     ? null
     : !user
     ? (parent as any).isOwner
