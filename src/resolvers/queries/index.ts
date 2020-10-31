@@ -390,21 +390,15 @@ export const audit = resolver<any>()<{ trail: string }>(
 
     const _objects: any[] = []
 
-    if ('editor' in fields)
-      _objects.push(
-        ...(await query({
-          entryName: 'Person',
-          section: 'editor',
-        }).whereIn('id', Items.map(({ editor }) => editor).filter(Boolean)))
-      )
-
     if ('objects' in fields)
       _objects.push(
         ...(
           await Promise.all([
             query({ entryName: 'Person', section: 'objects' }).whereIn(
               'id',
-              Items.flatMap(({ user }) => [user]).filter(Boolean)
+              Items.flatMap(({ user, editor }) => [user, editor]).filter(
+                Boolean
+              )
             ),
             query({ entryName: 'Space', section: 'objects' }).whereIn(
               'id',
@@ -417,10 +411,12 @@ export const audit = resolver<any>()<{ trail: string }>(
     return Items.map(({ trail_id, event_id, time, ...rest }) => ({
       trailId: trail_id,
       id: event_id,
-      date: new Date(time).toISOString(),
+      date: new Date(time),
       payload: JSON.stringify(rest),
       _editorId: rest.editor,
       _objects,
     }))
+      .sort((a, b) => b.date.getTime() - a.date.getTime())
+      .map(({ date, ...v }) => ({ date: date.toISOString(), ...v }))
   }
 )

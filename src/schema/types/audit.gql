@@ -2,7 +2,6 @@ type Audit {
   trailId: ID!
   id: ID!
   date: String!
-  editor: Person
   payload: String!
   objects: [AuditObject!]
 }
