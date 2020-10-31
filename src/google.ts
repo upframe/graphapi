@@ -6,7 +6,7 @@ import logger from './logger'
 import { filterKeys } from './utils/object'
 
 export { google }
-export type UserInfo = oauth2_v2.Schema$Userinfoplus
+export type UserInfo = oauth2_v2.Schema$Userinfo
 
 export const createClient = (redirect?: string) =>
   new google.auth.OAuth2(

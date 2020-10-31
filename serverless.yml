@@ -18,6 +18,7 @@ provider:
       Resource:
         - ${ssm:/email/SNS/arn}
         - ${ssm:/SNS/cache_query/arn}
+        - ${ssm:/resize/SNS/arn}
     - Effect: Allow
       Action:
         - dynamodb:*
@@ -41,6 +42,11 @@ provider:
         - states:StopExecution
       Resource:
         - arn:aws:states:*:*:execution:MsgBufferStateMachine:*
+    - Effect: Allow
+      Action:
+        - s3:*
+      Resource:
+        - ${ssm:/s3/user_media/arn}
   environment:
     stage: ${self:provider.stage}
     PUBLIC_KEY: ${ssm:/API/PublicKey}
@@ -62,6 +68,11 @@ provider:
     EMAIL_SECRET: ${ssm:/email/secret~true}
     ASSET_BUCKET: ${ssm:/S3/assets/bucketUrl}
     CACHE_SNS_ARN: ${ssm:/SNS/cache_query/arn}
+    USER_MEDIA_BUCKET: ${ssm:/s3/user_media/name}
+    ASSET_CDN: https://d1misjhz20pz2i.cloudfront.net/
+    IMG_SNS: ${ssm:/resize/SNS/arn}
+    IMG_ENDPOINT: ${ssm:/resize/endpoint}
+    IMG_SECRET: ${ssm:/resize/secret~true}
 
     DB_HOST: ${ssm:/DB/Host}
     DB_PROXY_HOST: ${ssm:/DB/Proxy/Host}

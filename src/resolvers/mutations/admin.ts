@@ -1,6 +1,4 @@
 import resolver from '../resolver'
-import token from '~/utils/token'
-import { ddb } from '~/utils/aws'
 import { User, UserTags } from '~/models'
 import { UniqueViolationError, ForeignKeyViolationError } from 'objection'
 import { UserInputError } from 'apollo-server-lambda'
@@ -10,21 +8,14 @@ import type { ChangeListInput, CreateListInput } from '~/schema/gen/schema'
 import * as cache from '~/utils/cache'
 import * as account from '~/account'
 import logger from '~/logger'
-
-async function logEvent(trailId: string, event: any) {
-  event.time = Date.now()
-  event.trail_id = trailId
-  event.event_id = `${(event.time / 1000) | 0}_${token()}`
-
-  await ddb.put({ TableName: 'audit_trail', Item: event }).promise()
-}
+import logEvent from '~/utils/audit'
 
 export const editUserInfo = resolver().isAdmin(
   async ({ args: { userId, info }, query, ctx: { id: editor } }) => {
     const user = await query.raw(User).findById(userId)
 
     await Promise.all(
-      Object.entries(info).map(([field, v]) =>
+      Object.entries(info).map(([field, v]: [string, string]) =>
         logEvent('admin_edits', {
           editor,
           eventType: 'edit_user_info',

@@ -78,6 +78,11 @@ export const visitor: Group = {
       action: 'read',
       resource: 'invites',
     },
+    {
+      effect: 'allow',
+      action: 'read',
+      resource: 'spaces',
+    },
   ],
 }
 
@@ -96,12 +101,6 @@ export const user: Group = {
       action: 'update, delete',
       resource: 'users',
       where: 'users.id = current.id',
-    },
-    {
-      effect: 'allow',
-      action: 'delete',
-      resource: 'user_handles',
-      where: 'user_handles.user_id = current.id',
     },
     {
       effect: 'allow',
@@ -196,5 +195,6 @@ export const admin: Group = {
     { effect: 'allow', action: '*', resource: 'signup' },
     { effect: 'allow', action: '*', resource: 'signin_upframe' },
     { effect: 'allow', action: '*', resource: 'invites' },
+    { effect: 'allow', action: '*', resource: 'spaces' },
   ],
 }

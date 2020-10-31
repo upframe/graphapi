@@ -28,7 +28,8 @@
       "public",
       "illustration",
       "background_color",
-      "text_color"
+      "text_color",
+      "sort_pos"
     ]
   },
   "meetups": {
@@ -66,6 +67,21 @@
   },
   "socialmedia": {
     "columns": ["id", "name", "url"]
+  },
+  "spaces": {
+    "columns": [
+      "id",
+      "name",
+      "handle",
+      "created",
+      "description",
+      "sidebar",
+      "founder_invite",
+      "mentor_invite",
+      "owner_invite",
+      "space_imgs",
+      "cover_imgs"
+    ]
   },
   "tags": {
     "columns": ["id", "name"]

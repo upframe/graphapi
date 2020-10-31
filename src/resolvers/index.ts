@@ -15,6 +15,10 @@ import * as Timezone from './fields/timezone'
 import * as Conversation from './fields/conversation'
 import * as List from './fields/list'
 import * as UserConnection from './fields/userList'
+import * as Space from './fields/space'
+import * as Audit from './fields/audit'
+
+const AuditObject = Audit.AuditObject
 
 export default {
   Query,
@@ -36,4 +40,9 @@ export default {
   Conversation,
   List,
   UserConnection,
+  Space,
+  Audit: Object.fromEntries(
+    Object.entries(Audit).filter(([k]) => k !== 'AuditObject')
+  ),
+  AuditObject,
 }
