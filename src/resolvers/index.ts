@@ -16,6 +16,7 @@ import * as Conversation from './fields/conversation'
 import * as List from './fields/list'
 import * as UserConnection from './fields/userList'
 import * as Space from './fields/space'
+import * as Audit from './fields/audit'
 
 export default {
   Query,
@@ -38,4 +39,5 @@ export default {
   List,
   UserConnection,
   Space,
+  Audit,
 }

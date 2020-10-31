@@ -14,7 +14,7 @@ async function logEvent(trailId: string, event: Payload) {
 type SpaceEvent = 'create_space' | 'add_user' | 'remove_user'
 
 async function space(id: string, eventType: SpaceEvent, payload: Payload) {
-  await logEvent(`SPACE|${id}`, { ...payload, eventType })
+  await logEvent(`SPACE|${id}`, { ...payload, eventType, space: id })
 }
 
 export default Object.assign(logEvent, { space })

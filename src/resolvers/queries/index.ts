@@ -363,7 +363,7 @@ type Case = [
 ]
 
 export const audit = resolver<any>()<{ trail: string }>(
-  async ({ args: { trail }, ctx: { user }, knex }) => {
+  async ({ args: { trail }, ctx: { user }, query, knex, fields }) => {
     const access = async (tests: Case[]) => {
       for (const [match, test] of tests)
         if (typeof match === 'string' ? match !== trail : !match.test(trail))
@@ -387,11 +387,21 @@ export const audit = resolver<any>()<{ trail: string }>(
         ExpressionAttributeValues: { ':trail': trail },
       })
       .promise()
+
+    let _editors = !('editor' in fields)
+      ? []
+      : await query({
+          entryName: 'Person',
+          section: 'editor',
+        }).whereIn('id', Items.map(({ editor }) => editor).filter(Boolean))
+
     return Items.map(({ trail_id, event_id, time, ...rest }) => ({
       trailId: trail_id,
       id: event_id,
       date: new Date(time).toISOString(),
       payload: JSON.stringify(rest),
+      _editorId: rest.editor,
+      _editors,
     }))
   }
 )

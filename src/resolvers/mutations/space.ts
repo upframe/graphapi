@@ -14,7 +14,14 @@ export const createSpace = resolver<Space>().isAdmin(
   async ({ query, args: { name, handle = name }, ctx: { id } }) => {
     try {
       const space = await query().insertAndFetch({ id: uuid(), name, handle })
-      await audit.space(space.id, 'create_space', { editor: id })
+      await Promise.all([
+        audit.space(space.id, 'create_space', { editor: id }),
+        audit('admin_edits', {
+          event_type: 'create_space',
+          editor: id,
+          space: space.id,
+        }),
+      ])
       return space
     } catch (e) {
       if (e instanceof UniqueViolationError)
