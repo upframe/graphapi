@@ -6,4 +6,4 @@ type Audit {
   objects: [AuditObject!]
 }
 
-union AuditObject = User | Mentor | Space | List
+union AuditObject = User | Mentor | Space | List | Tag

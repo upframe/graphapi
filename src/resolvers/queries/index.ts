@@ -408,6 +408,10 @@ export const audit = resolver<any>()<{ trail: string }>(
               'id',
               Items.map(({ list }) => list).filter(Boolean)
             ),
+            query({ entryName: 'Tag', section: 'objects' }).whereIn(
+              'id',
+              Items.map(({ tag }) => tag).filter(Boolean)
+            ),
           ])
         ).flat()
       )
