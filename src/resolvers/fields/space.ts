@@ -107,3 +107,19 @@ export const isOwner = resolver<
           .first()
       ).is_owner
 )
+
+export const invited = resolver<any[], Space>()(
+  async ({ parent, ctx, knex }) => {
+    if (!(parent as any).isOwner && !ctx.user.groups.includes('admin')) return
+
+    const invites = await knex('space_invites')
+      .where({ space: parent.id })
+      .andWhereNot({ email: null })
+
+    return invites.map(({ email, issued, mentor, owner }) => ({
+      email,
+      issued: issued?.toISOString(),
+      role: owner ? 'OWNER' : mentor ? 'MENTOR' : 'FOUNDER',
+    }))
+  }
+)

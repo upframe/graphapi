@@ -13,6 +13,7 @@ type Space {
   inviteLinks: SpaceInviteLinks
   photo: Image
   cover: Image
+  invited: [Invited!]
 }
 
 type SpaceInviteLinks {
@@ -30,4 +31,10 @@ enum SpaceInviteRole {
 enum SpacePhotoType {
   COVER
   PROFILE
+}
+
+type Invited {
+  email: String!
+  role: SpaceInviteRole!
+  issued: String
 }

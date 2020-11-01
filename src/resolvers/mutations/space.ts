@@ -10,6 +10,7 @@ import { sns } from '~/utils/aws'
 import axios from 'axios'
 import audit from '~/utils/audit'
 import * as M from '~/models'
+import * as email from '~/email'
 
 export const createSpace = resolver<Space>().isAdmin(
   async ({ query, args: { name, handle = name }, ctx: { id } }) => {
@@ -304,6 +305,57 @@ export const changeMemberRole = resolver()<{
         user: userId,
         [k]: role[k],
       })
+    )
+  )
+})
+
+export const inviteToSpace = resolver()<{
+  space: string
+  emails: string[]
+  role: 'FOUNDER' | 'MENTOR' | 'OWNER'
+}>(async ({ args: { space, emails, role }, ctx: { user }, knex }) => {
+  await checkSpaceAdmin(space, user, knex, 'issue invitations for')
+  if (!emails.length) return
+
+  emails = Array.from(new Set(emails.map(v => v.toLowerCase())))
+
+  const memberEmails = (
+    await knex('user_spaces')
+      .where({ space_id: space })
+      .leftJoin('users', { 'users.id': 'user_spaces.user_id' })
+      .select('email')
+  ).map(({ email }) => email.toLowerCase())
+
+  for (const email of emails)
+    if (memberEmails.includes(email))
+      throw new UserInputError(`'${email}' is already part of this space`)
+
+  const duplicate = await knex('space_invites')
+    .where({ space })
+    .whereIn('email', emails)
+
+  if (duplicate.length)
+    throw new UserInputError(
+      `${duplicate.map(({ email }) => email).join(', ')} ${
+        duplicate.length > 1 ? 'have' : 'has'
+      } already been invited`
+    )
+
+  const invites = await knex('space_invites')
+    .insert(
+      emails.map(email => ({
+        id: `s-${genToken()}`,
+        space,
+        email,
+        mentor: role !== 'FOUNDER',
+        owner: role === 'OWNER',
+      }))
+    )
+    .returning('id')
+
+  await Promise.all(
+    invites.map(invite =>
+      email.send({ template: 'SPACE_INVITE', ctx: { invite } })
     )
   )
 })
