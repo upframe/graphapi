@@ -2,7 +2,6 @@ import query from '../utils/buildQuery'
 import { ForbiddenError, NotLoggedInError } from '../error'
 import { Model, QueryBuilder } from '../models'
 import getQueryFields from '../utils/queryFields'
-import logger from '../logger'
 
 export default function <M = void, P extends Model = null>() {
   type Assertions<M, P> = {

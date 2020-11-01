@@ -58,3 +58,8 @@ type PageInfo = {
   hasNextPage: boolean
   hasPreviousPage: boolean
 }
+
+declare var logger: import('winston').Logger & {
+  setRequestId(v: string): void
+  setUserId(v: string): void
+}

@@ -1,5 +1,4 @@
 import { gateway } from '~/utils/aws'
-import logger from '~/logger'
 import * as db from './db'
 
 export default class Client {

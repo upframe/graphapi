@@ -7,7 +7,6 @@ import { system } from '../../authorization/user'
 import { UserInputError, ForbiddenError } from '../../error'
 import { UniqueViolationError } from 'objection'
 import { userClient } from '../../google'
-import logger from '../../logger'
 import axios from 'axios'
 
 export const updateSlots = resolver<User>().loggedIn(

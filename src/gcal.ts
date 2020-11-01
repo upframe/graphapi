@@ -1,6 +1,5 @@
 import { User, Slots, Meetup } from './models'
 import { UserClient, userClient, calendar, upframeClient } from './google'
-import logger from './logger'
 
 export async function addMeetup(
   slot: Slots,

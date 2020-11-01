@@ -1,7 +1,6 @@
 import * as db from './db'
 import { update } from './dbOps'
 import { stepFunc } from '~/utils/aws'
-import logger from '~/logger'
 
 export default class User {
   constructor(public readonly id: string) {}

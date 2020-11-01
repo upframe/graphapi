@@ -1,5 +1,4 @@
 import knex from 'knex'
-import logger from './logger'
 
 const conn_db = {
   host: process.env.DB_HOST,

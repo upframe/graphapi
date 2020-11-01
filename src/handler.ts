@@ -1,5 +1,5 @@
+import logger from '~/logger'
 import { datadog } from 'datadog-lambda-js'
-import logger from './logger'
 import { handler as apolloHandler, requests } from './apollo'
 import dbConnect from './db'
 import type { APIGatewayEvent, Context } from 'aws-lambda'

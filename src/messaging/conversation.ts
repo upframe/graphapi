@@ -1,6 +1,5 @@
 import crypto from 'crypto'
 import * as db from './db'
-import logger from '~/logger'
 
 export default class Conversation {
   private constructor(

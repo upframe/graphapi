@@ -1,5 +1,4 @@
 import resolver from '../resolver'
-import logger from '../../logger'
 import { ddb } from '../../utils/aws'
 import { UserInputError } from '../../error'
 

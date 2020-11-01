@@ -5,7 +5,6 @@ import { google } from 'googleapis'
 import { getTokens, userClient, createClient, UserClient } from '../../google'
 import { decode } from 'jsonwebtoken'
 import * as account from '../../account'
-import logger from '../../logger'
 import { system } from '../../authorization/user'
 
 export const connectCalendar = resolver<User>().loggedIn(

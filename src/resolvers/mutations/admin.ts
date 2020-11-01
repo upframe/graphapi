@@ -7,7 +7,6 @@ import wrap, { filterKeys } from '~/utils/object'
 import type { ChangeListInput, CreateListInput } from '~/schema/gen/schema'
 import * as cache from '~/utils/cache'
 import * as account from '~/account'
-import logger from '~/logger'
 import logEvent from '~/utils/audit'
 
 export const editUserInfo = resolver().isAdmin(

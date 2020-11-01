@@ -9,7 +9,6 @@ import { parseCookies } from './utils/cookie'
 import { decode } from './auth'
 import * as typeDefs from './schema'
 import { ValidationError } from 'objection'
-import logger from './logger'
 import { mapKeys } from '~/utils/object'
 
 export const requests = {}

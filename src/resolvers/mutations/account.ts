@@ -28,7 +28,6 @@ import { filterKeys } from '../../utils/object'
 import * as account from '../../account'
 import { s3 } from '../../utils/aws'
 import axios from 'axios'
-import logger from '../../logger'
 import MsgUser from '~/messaging/user'
 
 export const signIn = resolver<User>()(

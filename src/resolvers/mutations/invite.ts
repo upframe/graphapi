@@ -4,7 +4,6 @@ import { ForbiddenError, UserInputError } from 'apollo-server-lambda'
 import { send } from '../../email'
 import genToken from '../../utils/token'
 import { system } from '../../authorization/user'
-import logger from '../../logger'
 
 export const invite = resolver<User>().isMentor(
   async ({ args: { emails, role }, ctx: { id, user }, query }) => {

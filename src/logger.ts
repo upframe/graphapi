@@ -8,7 +8,7 @@ if (process.env.IS_OFFLINE) {
 let requestId: string
 let userId: string
 
-export default Object.assign(
+const logger = Object.assign(
   createLogger({
     level: 'debug',
     defaultMeta: {
@@ -50,10 +50,10 @@ export default Object.assign(
     ],
   }),
   {
-    setRequestId(id) {
+    setRequestId(id: string) {
       requestId = id
     },
-    setUserId(id) {
+    setUserId(id: string) {
       userId = id
     },
   }
@@ -159,3 +159,6 @@ const formatGQL = (v: string, indent = 0): string => {
     )
   )
 }
+
+global.logger = logger
+export default logger

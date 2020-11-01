@@ -1,7 +1,6 @@
 import { ddb } from '~/utils/aws'
 import type { Optional } from '~/utils/types'
 import crypto from 'crypto'
-import logger from '~/logger'
 import * as db from './db'
 import { render } from './markdown'
 import type { PaginationArgs } from '~/utils/pagination'

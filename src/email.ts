@@ -1,5 +1,4 @@
 import { sns } from './utils/aws'
-import logger from './logger'
 
 interface SendOptions {
   template: string

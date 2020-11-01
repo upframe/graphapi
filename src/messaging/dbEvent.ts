@@ -7,7 +7,6 @@ import User from './user'
 import AuthUser from '~/authorization/user'
 import dbConnect from '~/db'
 import { diff } from '~/utils/array'
-import logger from '~/logger'
 
 export default async function (
   event: 'INSERT' | 'MODIFY' | 'REMOVE',

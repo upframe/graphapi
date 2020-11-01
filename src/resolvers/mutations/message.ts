@@ -4,7 +4,6 @@ import Conversation from '~/messaging/conversation'
 import User from '~/messaging/user'
 import { UserInputError, AuthenticationError } from '~/error'
 import token from '~/utils/token'
-import logger from '~/logger'
 import type { User as UserModel } from '~/models'
 
 export const sendMessage = resolver<any>().loggedIn(
