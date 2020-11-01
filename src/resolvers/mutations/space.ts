@@ -9,6 +9,7 @@ import { checkSpaceAdmin } from '~/utils/space'
 import { sns } from '~/utils/aws'
 import axios from 'axios'
 import audit from '~/utils/audit'
+import * as M from '~/models'
 
 export const createSpace = resolver<Space>().isAdmin(
   async ({ query, args: { name, handle = name }, ctx: { id } }) => {
@@ -269,7 +270,7 @@ export const changeMemberRole = resolver()<{
   user: string
   mentor: boolean
   owner: boolean
-}>(async ({ args: { space, user: userId, ...role }, ctx, knex }) => {
+}>(async ({ args: { space, user: userId, ...role }, ctx, query, knex }) => {
   await checkSpaceAdmin(space, ctx.user, knex, 'change user roles in')
 
   const user = await knex('user_spaces')
@@ -285,6 +286,12 @@ export const changeMemberRole = resolver()<{
     throw new UserInputError(
       `user already is${role.owner ? '' : "n't"} an owner`
     )
+
+  if (role.mentor && !(await query.raw(M.Mentor).findById(userId).first()))
+    await Promise.all([
+      query.raw(M.Mentor).insert({ id: userId, listed: false }),
+      query.raw(M.User).patch({ role: 'mentor' }).findById(userId),
+    ])
 
   await knex('user_spaces')
     .update({ is_mentor: role.mentor, is_owner: role.owner })
