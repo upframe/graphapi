@@ -52,12 +52,17 @@ export const mentors = resolver<User, Space>()(
   }
 )
 
-export const inviteLinks = resolver<any, Space>()(({ parent }) => {
-  if (!(parent as any).isOwner) return
-  return Object.fromEntries(
-    ['founder', 'mentor', 'owner'].map(v => [v, (parent as any)[`${v}_invite`]])
-  )
-})
+export const inviteLinks = resolver<any, Space>()(
+  ({ parent, ctx: { user } }) => {
+    if (!(parent as any).isOwner && !user.groups.includes('admin')) return
+    return Object.fromEntries(
+      ['founder', 'mentor', 'owner'].map(v => [
+        v,
+        (parent as any)[`${v}_invite`],
+      ])
+    )
+  }
+)
 
 const img = (keys: string[], base: string) =>
   keys && {
