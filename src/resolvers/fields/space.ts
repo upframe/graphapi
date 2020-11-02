@@ -119,7 +119,8 @@ export const invited = resolver<any[], Space>()(
 
     const invites = await knex('space_invites')
       .where({ space: parent.id })
-      .andWhereNot({ email: null })
+      .whereNotNull('invites.email')
+      .leftJoin('invites', { 'invites.id': 'space_invites.id' })
       .orderBy('email')
 
     return invites.map(({ email, issued, mentor, owner }) => ({

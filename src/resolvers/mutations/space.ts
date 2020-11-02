@@ -11,6 +11,7 @@ import axios from 'axios'
 import audit from '~/utils/audit'
 import * as M from '~/models'
 import * as email from '~/email'
+import { system } from '~/authorization/user'
 
 export const createSpace = resolver<Space>().isAdmin(
   async ({ query, args: { name, handle = name }, ctx: { id } }) => {
@@ -132,24 +133,32 @@ export const changeSpaceInfo = resolver<Space>()<{
 export const createSpaceInvite = resolver<string>()<{
   space: string
   role: 'FOUNDER' | 'MENTOR' | 'OWNER'
-}>(async ({ knex, args: { space, role }, ctx: { user } }) => {
-  await checkSpaceAdmin(space, user, knex, 'create invites links for')
+}>(async ({ knex, query, args: { space: spaceId, role }, ctx: { user } }) => {
+  await checkSpaceAdmin(spaceId, user, knex, 'create invites links for')
 
-  const invite = {
-    id: `s-${genToken()}`,
-    space,
-    mentor: role !== 'FOUNDER',
+  const space = await query.raw(M.Space).findById(spaceId)
+
+  const inviteColumn = `${role.toLowerCase()}_invite`
+  const existing = space[inviteColumn]
+  if (existing) await knex('invites').where({ id: existing }).delete()
+
+  const invite = await query.raw(M.Invite).insertAndFetch({
+    id: genToken(),
+    issuer: user.id,
+    role: role === 'FOUNDER' ? 'user' : 'mentor',
+  })
+
+  await knex('space_invites').insert({
+    id: invite.id,
     owner: role === 'OWNER',
-  }
+    mentor: role !== 'FOUNDER',
+    space: spaceId,
+  })
 
-  await Promise.all([
-    knex('space_invites').insert(invite),
-    knex('spaces')
-      .update({ [`${role.toLowerCase()}_invite`]: invite.id })
-      .where({ id: space }),
-  ])
-
-  await audit.space(space, 'create_invite_link', { editor: user.id, ...invite })
+  await query
+    .raw(M.Space)
+    .update({ [inviteColumn]: invite.id })
+    .findById(spaceId)
 
   return invite.id
 })
@@ -157,27 +166,14 @@ export const createSpaceInvite = resolver<string>()<{
 export const revokeSpaceInvite = resolver()<{
   space: string
   role: 'FOUNDER' | 'MENTOR' | 'OWNER'
-}>(async ({ args: { space: spaceId, role }, ctx: { user }, knex }) => {
+}>(async ({ args: { space: spaceId, role }, ctx: { user }, knex, query }) => {
   await checkSpaceAdmin(spaceId, user, knex, 'remove invites links for')
 
-  const space = await knex('spaces').where({ id: spaceId }).first()
+  const space = await query.raw(M.Space).findById(spaceId)
+  const inviteColumn = `${role.toLowerCase()}_invite`
+  if (!space[inviteColumn]) return
 
-  const field = `${role.toLowerCase()}_invite`
-  const link = space[field]
-
-  if (!link) return
-
-  const [[invite]] = await Promise.all([
-    knex('space_invites').where({ id: link }).delete().returning('*'),
-    knex('spaces')
-      .update({ [field]: null })
-      .where({ id: spaceId }),
-  ])
-
-  await audit.space(space.id, 'revoke_invite_link', {
-    editor: user.id,
-    ...invite,
-  })
+  await query.raw(M.Invite).asUser(system).deleteById(space[inviteColumn])
 })
 
 export const joinSpace = resolver<Space>().loggedIn<{ token: string }>(
@@ -313,47 +309,58 @@ export const inviteToSpace = resolver()<{
   space: string
   emails: string[]
   role: 'FOUNDER' | 'MENTOR' | 'OWNER'
-}>(async ({ args: { space, emails, role }, ctx: { user }, knex }) => {
+}>(async ({ args: { space, emails, role }, ctx: { user }, knex, query }) => {
   await checkSpaceAdmin(space, user, knex, 'issue invitations for')
   if (!emails.length) return
 
   emails = Array.from(new Set(emails.map(v => v.toLowerCase())))
 
-  const memberEmails = (
-    await knex('user_spaces')
-      .where({ space_id: space })
-      .leftJoin('users', { 'users.id': 'user_spaces.user_id' })
-      .select('email')
-  ).map(({ email }) => email.toLowerCase())
-
-  for (const email of emails)
-    if (memberEmails.includes(email))
-      throw new UserInputError(`'${email}' is already part of this space`)
-
+  // check for duplicate invites
   const duplicate = await knex('space_invites')
+    .leftJoin('invites', { 'invites.id': 'space_invites.id' })
     .where({ space })
-    .whereIn('email', emails)
+    .whereIn('invites.email', emails)
+    .select('email')
 
   if (duplicate.length)
     throw new UserInputError(
-      `${duplicate.map(({ email }) => email).join(', ')} ${
-        duplicate.length > 1 ? 'have' : 'has'
-      } already been invited`
+      `${duplicate.map(({ email }) => email).join(', ')} are already invited`
     )
 
+  // check for already members
+  const members = await knex('user_spaces')
+    .leftJoin('users', { 'users.id': 'user_spaces.user_id' })
+    .where({ space_id: space })
+    .whereIn('email', emails)
+
+  if (members.length)
+    throw new UserInputError(
+      `${members.map(({ email }) => email).join(', ')} are already members`
+    )
+
+  // create upframe invites
+  const upframeInvites = await query.raw(M.Invite).insertAndFetch(
+    emails.map(email => ({
+      id: genToken(),
+      email,
+      issuer: user.id,
+      role: role === 'FOUNDER' ? 'user' : 'mentor',
+    }))
+  )
+
+  // create space invites
   const invites = await knex('space_invites')
     .insert(
-      emails.map(email => ({
-        id: `s-${genToken()}`,
+      upframeInvites.map(({ id }) => ({
+        id,
         space,
-        email,
-        mentor: role !== 'FOUNDER',
         owner: role === 'OWNER',
-        issuer: user.id,
+        mentor: role !== 'FOUNDER',
       }))
     )
     .returning('*')
 
+  // send invite emails & audit log event
   await Promise.all(
     invites.flatMap(invite => [
       email.send({ template: 'SPACE_INVITE', ctx: { invite: invite.id } }),
