@@ -341,6 +341,19 @@ export const completeSignup = resolver<User>()(
         .asUser(system)
     }
 
+    const spaceInvite = await knex('space_invites').where({ id: token }).first()
+    if (spaceInvite) {
+      await Promise.all([
+        knex('user_spaces').insert({
+          user_id: user.id,
+          space_id: spaceInvite.space,
+          is_mentor: spaceInvite.mentor,
+          is_owner: spaceInvite.owner,
+        }),
+        knex('space_invites').where({ id: token }).delete(),
+      ])
+    }
+
     const finalUser = await query().findById(user.id).asUser(system)
 
     await Promise.all([
