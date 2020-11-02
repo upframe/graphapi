@@ -22,6 +22,7 @@ type SpaceEvent =
   | 'create_invite_link'
   | 'revoke_invite_link'
   | 'change_space_info'
+  | 'invite_to_space'
 
 async function space(id: string, eventType: SpaceEvent, payload: Payload) {
   await logEvent(`SPACE|${id}`, { ...payload, eventType, space: id })

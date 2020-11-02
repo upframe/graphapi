@@ -349,13 +349,18 @@ export const inviteToSpace = resolver()<{
         email,
         mentor: role !== 'FOUNDER',
         owner: role === 'OWNER',
+        issuer: user.id,
       }))
     )
-    .returning('id')
+    .returning('*')
 
   await Promise.all(
-    invites.map(invite =>
-      email.send({ template: 'SPACE_INVITE', ctx: { invite } })
-    )
+    invites.flatMap(invite => [
+      email.send({ template: 'SPACE_INVITE', ctx: { invite: invite.id } }),
+      audit.space(space, 'invite_to_space', {
+        editor: user.id,
+        ...invite,
+      }),
+    ])
   )
 })
