@@ -49,7 +49,9 @@ export const lastUpdate = resolver<string, any>()(
 )
 
 export const slot = resolver<any, any>()(async ({ parent: { id } }) => {
-  const { slot, participants } = await Channel.get(id)
+  let channel = await Channel.get(id)
+  if (!channel.slot) channel = await Channel.get(id, true)
+  const { slot, participants } = channel
   if (!slot) return
   return {
     ...slot,

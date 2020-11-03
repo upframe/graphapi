@@ -17,8 +17,13 @@ export default class Channel {
     public readonly slot?: Slot
   ) {}
 
-  public static async get(id: string): Promise<Channel> {
-    let channel = this.instances.find(({ channelId }) => channelId === id)
+  public static async get(
+    id: string,
+    forceFetch: boolean = false
+  ): Promise<Channel> {
+    let channel: Channel | undefined = forceFetch
+      ? undefined
+      : this.instances.find(({ channelId }) => channelId === id)
     if (channel) return channel
     const res = await db.getChannel(id)
     if (!res) return
@@ -37,6 +42,10 @@ export default class Channel {
       res.lastUpdate,
       slot
     )
+    if (forceFetch) {
+      const i = Channel.instances.findIndex(({ channelId }) => channelId === id)
+      if (i !== -1) Channel.instances.splice(i, 1)
+    }
     Channel.instances.push(channel)
     return channel
   }
