@@ -1,18 +1,19 @@
 import { User, Slots, Meetup } from './models'
-import { UserClient, userClient, calendar, upframeClient } from './google'
+import { userClient, calendar, upframeClient } from './google'
 
 export async function addMeetup(
   slot: Slots,
+  meetup: Meetup,
   mentor: User,
   mentee: User,
   knex: ResolverCtx['knex']
 ): Promise<Partial<Meetup>> {
   const event = {
-    id: slot.id.replace(/[^\w]/g, ''),
+    id: meetup.id.replace(/[^\w]/g, ''),
     summary: `Upframe Meetup ${mentor.name.split(' ')[0]} & ${
       mentee.name.split(' ')[0]
     }`,
-    location: slot.meetups.location,
+    location: meetup.location,
     description: `
     Upframe Mentoring Call
     
@@ -25,8 +26,8 @@ export async function addMeetup(
         : mentee.name
     }
 
-    You can join the call on <a href="${slot.meetups.location}">whereby.com</a>.
-    <blockquote>${slot.meetups.message}</blockquote>
+    You can join the call on <a href="${meetup.location}">whereby.com</a>.
+    <blockquote>${meetup.message}</blockquote>
     `,
     start: {
       dateTime: slot.start,
@@ -83,20 +84,4 @@ export async function addMeetup(
   }
 
   return { gcal_upframe_event_id: eventId, gcal_user_event_id }
-}
-
-export async function deleteMeetup(slot: Slots, client: UserClient) {
-  await Promise.all([
-    client.calendar.events.delete({
-      calendarId: process.env.CALENDAR_ID,
-      eventId: slot.meetups.gcal_upframe_event_id,
-      sendUpdates: client.calendarId ? 'none' : 'all',
-    }),
-    client.calendarId &&
-      client.calendar.events.delete({
-        calendarId: client.calendarId,
-        eventId: slot.meetups.gcal_user_event_id,
-        sendUpdates: 'all',
-      }),
-  ])
 }

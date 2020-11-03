@@ -1,6 +1,6 @@
 import uuidv4 from 'uuid/v4'
 import { send } from '../../email'
-import { addMeetup, deleteMeetup } from '../../gcal'
+import { addMeetup } from '../../gcal'
 import { User, Slots, Meetup, ConnectGoogle } from '../../models'
 import resolver from '../resolver'
 import { system } from '../../authorization/user'
@@ -11,6 +11,7 @@ import axios from 'axios'
 import Conversation from '~/messaging/conversation'
 import Channel from '~/messaging/channel'
 import token from '~/utils/token'
+import { calendar, upframeClient } from '~/google'
 
 export const updateSlots = resolver<User>().loggedIn(
   async ({
@@ -95,6 +96,7 @@ export const updateSlots = resolver<User>().loggedIn(
 export const requestSlot = resolver().loggedIn(
   async ({ query, knex, args: { input }, ctx: { id } }) => {
     const slot = await query.raw(Slots).findById(input.slotId)
+
     if (!slot) throw new UserInputError('unknown slot')
 
     const [mentor, mentee] = await Promise.all([
@@ -146,6 +148,7 @@ export const requestSlot = resolver().loggedIn(
     }
 
     const meetup = {
+      id: uuidv4(),
       slot_id: slot.id,
       status: 'pending',
       mentee_id: mentee.id,
@@ -178,11 +181,12 @@ export const requestSlot = resolver().loggedIn(
       mentor.id
     )
 
+    logger.info({ slot })
     const channel = await new Channel(channelId).create(
       conversation.id,
       [mentee.id, mentor.id],
       {
-        id: slot.id,
+        id: meetup.id,
         time: new Date(slot.start).getTime(),
         mentor: mentor.id,
         url: meetup.location,
@@ -209,54 +213,47 @@ export const requestSlot = resolver().loggedIn(
 
 export const acceptMeetup = resolver<any>().loggedIn(
   async ({ args: { meetupId }, ctx: { id }, query, knex }) => {
-    const slot = await query
-      .raw(Slots)
+    const meetup = await query
+      .raw(Meetup)
+      .withGraphFetched('slot')
       .findById(meetupId)
-      .withGraphFetched('meetups')
-      .asUser(system)
 
-    if (!slot?.meetups) throw new UserInputError('unknown meetup')
-    if (slot.mentor_id !== id)
+    if (!meetup) throw new UserInputError('unknown meetup')
+
+    if (meetup.slot.mentor_id !== id)
       throw new ForbiddenError(
         "Can't accept meetup. Please make sure that you are logged in with the correct account."
       )
-    if (slot.meetups.status === 'confirmed')
+    if (meetup.status === 'confirmed')
       throw new UserInputError('meetup already confirmed')
 
-    const [parts] = await Promise.all([
-      query
-        .raw(User)
-        .withGraphFetched('connect_google')
-        .whereIn('id', [slot.mentor_id, slot.meetups.mentee_id])
-        .asUser(system),
-      query
-        .raw(Meetup)
-        .findById(meetupId)
-        .patch({
-          status: 'confirmed',
-        })
-        .asUser(system),
+    const [users] = await Promise.all([
+      query.raw(User).whereIn('id', [meetup.slot.mentor_id, meetup.mentee_id]),
+      query.raw(Meetup).findById(meetup.id).patch({ status: 'confirmed' }),
     ])
-    const mentor = parts.find(({ id }) => id === slot.mentor_id)
-    const mentee = parts.find(({ id }) => id === slot.meetups.mentee_id)
 
-    if (!slot.meetups.gcal_upframe_event_id)
-      await query
-        .raw(Meetup)
-        .findById(slot.id)
-        .patch(await addMeetup(slot, mentor, mentee, knex))
-        .asUser(system)
+    const mentor = users.splice(
+      users.findIndex(({ id }) => id === meetup.slot.mentor_id),
+      1
+    )[0]
+    const mentee = users[0]
 
-    await send({ template: 'SLOT_CONFIRM', ctx: { slot: slot.id } })
+    if (!meetup.gcal_upframe_event_id) {
+      const gcal = await addMeetup(meetup.slot, meetup, mentor, mentee, knex)
+      logger.info({ gcal })
+      await query.raw(Meetup).findById(meetup.id).patch(gcal).asUser(system)
+    }
+
+    await send({ template: 'SLOT_CONFIRM', ctx: { slot: meetup.slot.id } })
     logger.info('meetup accepted', {
       mentor: mentor.id,
       mentee: mentee.id,
-      slot,
+      slot: meetup.slot,
     })
 
     return {
-      start: new Date(slot.start).toISOString(),
-      location: slot.meetups.location,
+      start: new Date(meetup.slot.start).toISOString(),
+      location: meetup.location,
       mentor,
       mentee,
     }
@@ -266,29 +263,36 @@ export const acceptMeetup = resolver<any>().loggedIn(
 export const cancelMeetup = resolver().loggedIn(
   async ({ query, knex, args: { meetupId }, ctx: { id } }) => {
     const meetup = await query
-      .raw(Slots)
-      .withGraphFetched('meetups')
+      .raw(Meetup)
+      .withGraphFetched('slot')
       .findById(meetupId)
+
     if (!meetup) throw new UserInputError('unknown meetup')
-    if (!meetup.meetups) throw new UserInputError('meetup already cancelled')
-    if (id !== meetup.mentor_id && id !== meetup.meetups.mentee_id)
+
+    if (id !== meetup.slot.mentor_id && id !== meetup.mentee_id)
       throw new ForbiddenError(
         "Can't cancel meetup. Please make sure that you are logged in with the correct account."
       )
 
+    if (meetup.status === 'cancelled')
+      throw new UserInputError('meetup already cancelled')
+
     const connectGoogle = await query
       .raw(ConnectGoogle)
-      .where({ user_id: meetup.mentor_id })
+      .where({ user_id: meetup.slot.mentor_id })
       .first()
 
     let client = connectGoogle
       ? await userClient(knex, connectGoogle)
       : undefined
 
-    await Promise.all([
-      query.raw(Meetup).deleteById(meetupId).asUser(system),
+    await Promise.allSettled([
+      query
+        .raw(Meetup)
+        .findById(meetupId)
+        .patch({ status: 'cancelled', gcal_upframe_event_id: null }),
       connectGoogle &&
-        client.calendar.events.patch({
+        client?.calendar.events.patch({
           calendarId: connectGoogle.calendar_id,
           eventId: meetup.id.replace(/[^\w]/g, ''),
           requestBody: {
@@ -297,14 +301,21 @@ export const cancelMeetup = resolver().loggedIn(
             attendees: [],
           },
         }),
-      deleteMeetup(meetup, client).catch(() =>
-        console.warn("couldn't delete gcal meetup")
-      ),
+      calendar(upframeClient).events.delete({
+        calendarId: process.env.CALENDAR_ID,
+        eventId: meetup.gcal_upframe_event_id,
+        sendUpdates: client?.calendarId ? 'none' : 'all',
+      }),
+      client?.calendar?.events?.delete({
+        calendarId: client.calendarId,
+        eventId: meetup.gcal_user_event_id,
+        sendUpdates: 'all',
+      }),
     ])
 
     logger.info('meetup rejected', {
-      mentor: meetup.mentor_id,
-      mentee: meetup.meetups.mentee_id,
+      mentor: meetup.slot.mentor_id,
+      mentee: meetup.mentee_id,
       slot: meetup,
     })
   }

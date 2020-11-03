@@ -6,7 +6,7 @@ export class Slots extends Model {
   start!: string
   end: string
 
-  meetups?: Meetup
+  calls?: Meetup[]
 
   static tableName = 'time_slots'
   static idColumn = 'id'
@@ -14,12 +14,12 @@ export class Slots extends Model {
 
 import('./user').then(({ User }) => {
   Slots.relationMappings = {
-    meetups: {
-      relation: Model.HasOneRelation,
+    calls: {
+      relation: Model.HasManyRelation,
       modelClass: Meetup,
       join: {
         from: 'time_slots.id',
-        to: 'meetups.slot_id',
+        to: 'calls.slot_id',
       },
     },
     user: {

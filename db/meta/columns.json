@@ -32,8 +32,9 @@
       "sort_pos"
     ]
   },
-  "meetups": {
+  "calls": {
     "columns": [
+      "id",
       "slot_id",
       "status",
       "mentee_id",

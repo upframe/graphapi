@@ -26,7 +26,7 @@ export const visitor: Group = {
     {
       effect: 'allow',
       action: 'read',
-      resource: 'meetups',
+      resource: 'calls',
     },
     {
       effect: 'allow',
@@ -71,7 +71,7 @@ export const visitor: Group = {
     {
       effect: 'allow',
       action: 'create',
-      resource: 'meetups',
+      resource: 'calls',
     },
     {
       effect: 'allow',
@@ -186,7 +186,7 @@ export const admin: Group = {
   policies: [
     { effect: 'allow', action: '*', resource: 'users' },
     { effect: 'allow', action: '*', resource: 'mentors' },
-    { effect: 'allow', action: '*', resource: 'meetups' },
+    { effect: 'allow', action: '*', resource: 'calls' },
     { effect: 'allow', action: '*', resource: 'lists' },
     { effect: 'allow', action: '*', resource: 'user_lists' },
     { effect: 'allow', action: '*', resource: 'tokens' },
