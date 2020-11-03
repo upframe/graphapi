@@ -47,3 +47,13 @@ export const lastUpdate = resolver<string, any>()(
     return new Date(lastUpdate).toISOString()
   }
 )
+
+export const slot = resolver<any, any>()(async ({ parent: { id } }) => {
+  const { slot, participants } = await Channel.get(id)
+  if (!slot) return
+  return {
+    ...slot,
+    participants,
+    time: new Date(slot.time).toISOString(),
+  }
+})

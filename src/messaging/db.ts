@@ -261,7 +261,7 @@ export const createChannel = async (
   conversationId: string,
   channelId: string,
   participants: string[],
-  slot?: { id: string; time: number; mentor: string }
+  slot?: { id: string; time: number; mentor: string; url: string }
 ) => {
   await Promise.all([
     put('conversations', {
@@ -277,6 +277,7 @@ export const createChannel = async (
         slotId: slot.id,
         slotTime: slot.time,
         slotMentor: slot.mentor,
+        slotUrl: slot.url,
       }),
     }),
     update(

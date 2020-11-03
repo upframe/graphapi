@@ -181,7 +181,12 @@ export const requestSlot = resolver().loggedIn(
     const channel = await new Channel(channelId).create(
       conversation.id,
       [mentee.id, mentor.id],
-      { id: slot.id, time: new Date(slot.start).getTime(), mentor: mentor.id }
+      {
+        id: slot.id,
+        time: new Date(slot.start).getTime(),
+        mentor: mentor.id,
+        url: meetup.location,
+      }
     )
     await channel.publish({ author: id, content: input.message, suffix: '_s' })
 

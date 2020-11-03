@@ -23,7 +23,12 @@ export default class Channel {
     const res = await db.getChannel(id)
     if (!res) return
     const slot = res.slotId
-      ? { id: res.slotId, time: res.slotTime, mentor: res.slotMentor }
+      ? {
+          id: res.slotId,
+          time: res.slotTime,
+          mentor: res.slotMentor,
+          url: res.slotUrl,
+        }
       : undefined
     channel = new Channel(
       id,
@@ -128,4 +133,4 @@ export type Message = {
   channel: string
 }
 
-type Slot = { id: string; time: number; mentor: string }
+type Slot = { id: string; url: string; time: number; mentor: string }
