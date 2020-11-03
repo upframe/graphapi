@@ -260,7 +260,8 @@ export const unsubscribeRead = async (client: string, skipMeta = false) => {
 export const createChannel = async (
   conversationId: string,
   channelId: string,
-  participants: string[]
+  participants: string[],
+  slot?: { id: string; time: number; mentor: string }
 ) => {
   await Promise.all([
     put('conversations', {
@@ -272,6 +273,11 @@ export const createChannel = async (
       participants: ddb.createSet(participants),
       created: Date.now(),
       lastUpdate: Date.now(),
+      ...(slot && {
+        slotId: slot.id,
+        slotTime: slot.time,
+        slotMentor: slot.mentor,
+      }),
     }),
     update(
       'conversations',

@@ -85,8 +85,6 @@ export const postForUser = resolver<any>()(
       v => v.email.toLowerCase() === email.toLowerCase()
     )
 
-    logger.info({ participants, user })
-
     if (!user) throw new AuthenticationError('')
 
     let time = Date.now()

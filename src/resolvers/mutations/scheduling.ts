@@ -8,6 +8,9 @@ import { UserInputError, ForbiddenError } from '../../error'
 import { UniqueViolationError } from 'objection'
 import { userClient } from '../../google'
 import axios from 'axios'
+import Conversation from '~/messaging/conversation'
+import Channel from '~/messaging/channel'
+import token from '~/utils/token'
 
 export const updateSlots = resolver<User>().loggedIn(
   async ({
@@ -118,7 +121,7 @@ export const requestSlot = resolver().loggedIn(
       fields: ['hostRoomUrl'],
     }
 
-    let roomUrl
+    let roomUrl: string
 
     try {
       const response = await axios({
@@ -167,6 +170,20 @@ export const requestSlot = resolver().loggedIn(
       mentee: mentee.id,
       slot,
     })
+
+    const channelId = `${(Date.now() / 1000) | 0}${token().slice(0, 4)}_s`
+    const conversation = await Conversation.create(
+      channelId,
+      mentee.id,
+      mentor.id
+    )
+
+    const channel = await new Channel(channelId).create(
+      conversation.id,
+      [mentee.id, mentor.id],
+      { id: slot.id, time: new Date(slot.start).getTime(), mentor: mentor.id }
+    )
+    await channel.publish({ author: id, content: input.message, suffix: '_s' })
 
     if (!mentor.connect_google?.calendar_id) return
     try {
