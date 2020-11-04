@@ -68,7 +68,9 @@ export const addToSpace = resolver<Space>().isAdmin(
     await Promise.all(
       userIds
         .filter(id => !failed.includes(id))
-        .map(user => audit.space(spaceId, 'add_user', { editor: id, user }))
+        .map(user =>
+          audit.space(spaceId, 'add_user', { editor: id, user, mentor, owner })
+        )
     )
 
     if (failed.length)
