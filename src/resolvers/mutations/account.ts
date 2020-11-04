@@ -30,6 +30,7 @@ import { s3 } from '../../utils/aws'
 import axios from 'axios'
 import MsgUser from '~/messaging/user'
 import AuthUser from '~/authorization/user'
+import audit from '~/utils/audit'
 
 export const signIn = resolver<User>()(
   async ({
@@ -352,6 +353,10 @@ export const completeSignup = resolver<User>()(
           space_id: spaceInvite.space,
           is_mentor: spaceInvite.mentor,
           is_owner: spaceInvite.owner,
+        }),
+        audit.space(spaceInvite.space, 'join_space', {
+          editor: user.id,
+          ...spaceInvite,
         }),
         invite.email &&
           knex('space_invites').where({ id: signup.token }).delete(),
