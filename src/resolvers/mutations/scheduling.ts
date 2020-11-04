@@ -93,7 +93,7 @@ export const updateSlots = resolver<User>().loggedIn(
   }
 )
 
-export const requestSlot = resolver().loggedIn(
+export const requestSlot = resolver<string>().loggedIn(
   async ({ query, knex, args: { input }, ctx: { id } }) => {
     const slot = await query.raw(Slots).findById(input.slotId)
 
@@ -181,7 +181,6 @@ export const requestSlot = resolver().loggedIn(
       mentor.id
     )
 
-    logger.info({ slot })
     const channel = await new Channel(channelId).create(
       conversation.id,
       [mentee.id, mentor.id],
@@ -194,7 +193,8 @@ export const requestSlot = resolver().loggedIn(
     )
     await channel.publish({ author: id, content: input.message, suffix: '_s' })
 
-    if (!mentor.connect_google?.calendar_id) return
+    if (!mentor.connect_google?.calendar_id)
+      return `${conversation.id}/${channelId}`
     try {
       const client = await userClient(knex, mentor.connect_google)
       await client.calendar.events.patch({
@@ -208,6 +208,8 @@ export const requestSlot = resolver().loggedIn(
     } catch (error) {
       logger.error(`couldn't update gcal event ${slot.id}`, { error })
     }
+
+    return `${conversation.id}/${channelId}`
   }
 )
 

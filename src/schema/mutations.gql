@@ -37,7 +37,7 @@ type Mutation {
   setInferTz(infer: Boolean!): Person
 
   updateSlots(slots: SlotUpdateInput!): Person
-  requestSlot(input: RequestSlotInput!): Int
+  requestSlot(input: RequestSlotInput!): String
 
   acceptMeetup(meetupId: ID!): Meetup
   cancelMeetup(meetupId: ID!): Int
