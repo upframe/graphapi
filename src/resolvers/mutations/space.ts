@@ -366,6 +366,7 @@ export const inviteToSpace = resolver()<{
       email.send({ template: 'SPACE_INVITE', ctx: { invite: invite.id } }),
       audit.space(space, 'invite_to_space', {
         editor: user.id,
+        ...upframeInvites.find(({ id }) => id === invite.id),
         ...invite,
       }),
     ])

@@ -165,7 +165,7 @@ export const requestSlot = resolver<string>().loggedIn(
     }
     await send({
       template: 'SLOT_REQUEST',
-      ctx: { slot: slot.id, requester: mentee.id },
+      ctx: { slot: slot.id, call: meetup.id, requester: mentee.id },
     })
 
     logger.info('slot requested', {
