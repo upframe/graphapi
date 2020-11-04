@@ -1,5 +1,5 @@
 import resolver from '../resolver'
-import type { List } from '~/models'
+import { List, Space } from '~/models'
 import { hexToRGB, luminance, contrast } from '~/utils/color'
 
 export const backgroundColor = resolver<string, List>()(
@@ -28,4 +28,9 @@ export const illustration = resolver<string, List>()(
 
 export const sortPos = resolver<number, List>()(
   ({ parent: { sort_pos } }) => sort_pos
+)
+
+export const space = resolver<Space, any>()(
+  async ({ parent: { space }, query }) =>
+    space && (await query.raw(Space).findById(space))
 )

@@ -11,6 +11,7 @@ export class Space extends Model {
   sidebar: string
   space_imgs: string[]
   cover_imgs: string[]
+  hidden: boolean
 
   members?: import('./user').User[]
   mentors?: import('./user').User[]

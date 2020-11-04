@@ -29,7 +29,8 @@
       "illustration",
       "background_color",
       "text_color",
-      "sort_pos"
+      "sort_pos",
+      "space"
     ]
   },
   "calls": {
@@ -81,7 +82,8 @@
       "mentor_invite",
       "owner_invite",
       "space_imgs",
-      "cover_imgs"
+      "cover_imgs",
+      "hidden"
     ]
   },
   "tags": {

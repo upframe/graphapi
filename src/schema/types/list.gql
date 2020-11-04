@@ -7,4 +7,5 @@ type List {
   textColor: String
   users: [Person!]
   sortPos: Int
+  space: Space
 }
