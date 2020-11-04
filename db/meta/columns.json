@@ -61,7 +61,7 @@
     "columns": ["email", "password", "user_id"]
   },
   "signup": {
-    "columns": ["token", "started", "email", "password", "google_id"]
+    "columns": ["token", "started", "email", "password", "google_id", "id"]
   },
   "time_slots": {
     "columns": ["id", "mentor_id", "start", "end"]

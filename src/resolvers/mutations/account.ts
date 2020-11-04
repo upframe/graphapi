@@ -29,6 +29,7 @@ import * as account from '../../account'
 import { s3 } from '../../utils/aws'
 import axios from 'axios'
 import MsgUser from '~/messaging/user'
+import AuthUser from '~/authorization/user'
 
 export const signIn = resolver<User>()(
   async ({
@@ -108,13 +109,13 @@ export const signUpPassword = resolver<any>()(
         throw new UserInputError(`${field} ${reason}`)
       })
 
-    await query
+    const signup = await query
       .raw(Signup)
-      .insert({ token, email, password: hashPassword(password) })
+      .insertAndFetch({ token, email, password: hashPassword(password) })
       .asUser(system)
 
     return {
-      id: token,
+      id: signup.id,
       email,
       password,
       role: invite.role.toUpperCase(),
@@ -142,9 +143,9 @@ export const signUpGoogle = resolver<any>()(
         knex
       )
 
-      await query
+      const signup = await query
         .raw(Signup)
-        .insert({ token, google_id: info.id })
+        .insertAndFetch({ token, google_id: info.id })
         .asUser(system)
 
       const picture = !info.picture?.endsWith('photo.jpg')
@@ -152,7 +153,7 @@ export const signUpGoogle = resolver<any>()(
         : undefined
 
       return {
-        id: token,
+        id: signup.id,
         email: info.email,
         role: invite.role.toUpperCase(),
         authComplete: true,
@@ -202,7 +203,7 @@ export const disconnectGoogle = resolver<User>()(
 export const completeSignup = resolver<User>()(
   async ({
     args: {
-      token,
+      token: signupId,
       name,
       handle,
       biography,
@@ -215,14 +216,14 @@ export const completeSignup = resolver<User>()(
     query,
     knex,
   }) => {
-    const signup = await query.raw(Signup).findById(token).asUser(system)
+    const signup = await query.raw(Signup).findById(signupId).asUser(system)
     if (!signup) throw new UserInputError('invalid signup token')
 
-    const role = (await query.raw(Invite).findById(token)).role
+    const invite = await query.raw(Invite).findById(signup.token)
 
     let user: Partial<User> = {
       id: uuid(),
-      role,
+      role: invite.role,
       name,
       handle,
       biography,
@@ -263,7 +264,7 @@ export const completeSignup = resolver<User>()(
 
     await query().insert(user)
 
-    if (role !== 'user') {
+    if (invite.role !== 'user') {
       const mentor = {
         id: user.id,
         listed: false,
@@ -341,7 +342,9 @@ export const completeSignup = resolver<User>()(
         .asUser(system)
     }
 
-    const spaceInvite = await knex('space_invites').where({ id: token }).first()
+    const spaceInvite = await knex('space_invites')
+      .where({ id: signup.token })
+      .first()
     if (spaceInvite) {
       await Promise.all([
         knex('user_spaces').insert({
@@ -350,19 +353,23 @@ export const completeSignup = resolver<User>()(
           is_mentor: spaceInvite.mentor,
           is_owner: spaceInvite.owner,
         }),
-        knex('space_invites').where({ id: token }).delete(),
+        invite.email &&
+          knex('space_invites').where({ id: signup.token }).delete(),
       ])
     }
+
+    ctx.user = new AuthUser(user.id)
 
     const finalUser = await query().findById(user.id).asUser(system)
 
     await Promise.all([
-      query.raw(Signup).deleteById(signup.token).asUser(system),
-      query
-        .raw(Invite)
-        .findById(signup.token)
-        .patch({ redeemed: finalUser.id })
-        .asUser(system),
+      query.raw(Signup).deleteById(signup.id).asUser(system),
+      invite.email &&
+        query
+          .raw(Invite)
+          .findById(signup.token)
+          .patch({ redeemed: finalUser.id })
+          .asUser(system),
       new MsgUser(finalUser.id).wantsEmailNotifications(true),
     ])
 

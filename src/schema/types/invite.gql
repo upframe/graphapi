@@ -10,7 +10,7 @@ enum InviteStatus {
 }
 
 type SignUpInfo {
-  id: ID!
+  id: ID
   email: String
   role: Role
   authComplete: Boolean

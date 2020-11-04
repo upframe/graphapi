@@ -15,6 +15,7 @@ import Channel from '~/messaging/channel'
 import { ddb } from '~/utils/aws'
 import * as filterExpr from '~/utils/filter'
 import { checkSpaceAdmin } from '~/utils/space'
+import { isUUID } from '~/utils/validity'
 
 export * from './space'
 
@@ -193,10 +194,12 @@ export const search = resolver<any>()(
 export const signUpInfo = resolver<any>()(
   async ({ args: { token }, query }) => {
     if (!token) throw new UserInputError('must provide token')
-    const invite = await query.raw(M.Invite).findById(token)
+    const signup: M.Signup = isUUID(token)
+      ? await query.raw(M.Signup).findById(token).asUser(system)
+      : undefined
+    const invite = await query.raw(M.Invite).findById(signup?.token ?? token)
     if (!invite) throw new UserInputError('invalid invite token')
     if (invite.redeemed) throw new UserInputError('invite token already used')
-    const signup = await query.raw(M.Signup).findById(token).asUser(system)
 
     let name: string
     let picture
@@ -218,7 +221,7 @@ export const signUpInfo = resolver<any>()(
     }
 
     return {
-      id: token,
+      id: signup?.id,
       email: invite.email,
       role: invite.role.toUpperCase(),
       authComplete: !!signup,
