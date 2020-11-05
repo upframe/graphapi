@@ -37,7 +37,7 @@ type Mutation {
   setInferTz(infer: Boolean!): Person
 
   updateSlots(slots: SlotUpdateInput!): Person
-  requestSlot(input: RequestSlotInput!): Int
+  requestSlot(input: RequestSlotInput!): String
 
   acceptMeetup(meetupId: ID!): Meetup
   cancelMeetup(meetupId: ID!): Int
@@ -81,4 +81,19 @@ type Mutation {
   deleteRedirect(path: String!): Int
 
   editUserInfo(userId: ID!, info: EditUserInfoInput!): Int
+  createSpace(name: String!, handle: String): Space
+  addToSpace(
+    spaceId: ID!
+    userIds: [ID!]!
+    mentor: Boolean = false
+    owner: Boolean = false
+  ): Space
+  changeSpaceInfo(input: SpaceInfoInput!): Space
+  createSpaceInvite(space: ID!, role: SpaceInviteRole!): ID!
+  revokeSpaceInvite(space: ID!, role: SpaceInviteRole): Int
+  inviteToSpace(space: ID!, emails: [String!]!, role: SpaceInviteRole!): Int
+  joinSpace(token: ID!): Space!
+  processSpaceImage(signedUrl: String!, crop: CropInput!): Int
+  removeFromSpace(space: ID!, user: ID!): Int
+  changeMemberRole(space: ID!, user: ID!, mentor: Boolean, owner: Boolean): Int
 }

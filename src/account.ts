@@ -2,7 +2,6 @@ import { createClient, google, UserInfo } from './google'
 import { UserInputError, InvalidGrantError } from './error'
 import { ConnectGoogle } from './models'
 import type { Query } from '~/resolvers/resolver'
-import logger from '~/logger'
 import { User, Model } from '~/models'
 
 export const connectGoogle = async (

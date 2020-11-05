@@ -1,6 +1,7 @@
 export * from './model'
 export * from './list'
 export * from './userLists'
+export * from './space'
 export * from './tags'
 export * from './meetups'
 export * from './slots'

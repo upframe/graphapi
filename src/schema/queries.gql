@@ -37,5 +37,9 @@ type Query {
     search: String
     filter: String
   ): UserConnection!
-  audit(trails: [ID!]!): [Audit!]!
+  audit(trail: ID!): [Audit!]!
+  spaces: [Space!]!
+  space(id: ID, handle: String): Space
+  spaceImgUploadLink(spaceId: ID!, type: SpacePhotoType!, ext: String!): String!
+  spaceInvite(token: ID!): Space
 }

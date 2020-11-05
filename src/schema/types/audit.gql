@@ -3,4 +3,7 @@ type Audit {
   id: ID!
   date: String!
   payload: String!
+  objects: [AuditObject!]
 }
+
+union AuditObject = User | Mentor | Space | List | Tag

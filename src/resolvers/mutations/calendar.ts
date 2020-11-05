@@ -5,7 +5,6 @@ import { google } from 'googleapis'
 import { getTokens, userClient, createClient, UserClient } from '../../google'
 import { decode } from 'jsonwebtoken'
 import * as account from '../../account'
-import logger from '../../logger'
 import { system } from '../../authorization/user'
 
 export const connectCalendar = resolver<User>().loggedIn(
@@ -88,7 +87,8 @@ export const disconnectCalendar = resolver<User>().loggedIn(
       query
         .raw(ConnectGoogle)
         .findById(user.connect_google.google_id)
-        .patch({ calendar_id: null }),
+        .patch({ calendar_id: null })
+        .asUser(system),
     ])
 
     logger.info('google calendar disconnected', { user: id })

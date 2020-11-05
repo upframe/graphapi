@@ -8,6 +8,7 @@ import {
   Invite,
   ConnectGoogle,
   SigninUpframe,
+  Space,
 } from '.'
 
 const regToStr = (reg: RegExp) => reg.toString().replace(/\/(.*)\//, '$1')
@@ -37,6 +38,7 @@ export class User extends Model {
   tags?: Tags[]
   profile_pictures?: ProfilePicture[]
   lists?: List[]
+  spaces?: Space[]
   invites?: Invite[]
   connect_google?: ConnectGoogle
   signin_upframe?: SigninUpframe
@@ -93,6 +95,18 @@ export class User extends Model {
           to: 'user_lists.list_id',
         },
         to: 'lists.id',
+      },
+    },
+    spaces: {
+      relation: Model.ManyToManyRelation,
+      modelClass: Space,
+      join: {
+        from: 'users.id',
+        through: {
+          from: 'user_spaces.user_id',
+          to: 'user_spaces.space_id',
+        },
+        to: 'spaces.id',
       },
     },
     invites: {

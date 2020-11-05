@@ -21,6 +21,7 @@ module.exports = {
     process: true,
     require: true,
     __dirname: 'readonly',
+    logger: 'readonly',
   },
   rules: {
     semi: ['error', 'never'],

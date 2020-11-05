@@ -1,6 +1,8 @@
 import { Model } from '.'
+import type { Slots } from './slots'
 
 export class Meetup extends Model {
+  id!: string
   slot_id!: string
   status: string
   mentee_id: string
@@ -9,8 +11,10 @@ export class Meetup extends Model {
   gcal_user_event_id: string
   gcal_upframe_event_id: string
 
-  static tableName = 'meetups'
-  static idColumn = 'slot_id'
+  slot?: Slots
+
+  static tableName = 'calls'
+  static idColumn = 'id'
 
   jsonSchema: {
     type: 'object'
@@ -23,3 +27,16 @@ export class Meetup extends Model {
     }
   }
 }
+
+import('./slots').then(({ Slots }) => {
+  Meetup.relationMappings = {
+    slot: {
+      relation: Model.BelongsToOneRelation,
+      modelClass: Slots,
+      join: {
+        from: 'calls.slot_id',
+        to: 'time_slots.id',
+      },
+    },
+  }
+})

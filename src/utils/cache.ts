@@ -1,5 +1,4 @@
 import { sns } from './aws'
-import logger from '~/logger'
 import type { User } from '~/models'
 import _knex from '~/db'
 

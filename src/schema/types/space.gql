@@ -1,0 +1,40 @@
+type Space {
+  id: ID!
+  name: String!
+  handle: String!
+  description: String
+  sidebar: String
+  mentors(includeOwners: Boolean = true): [Person!]
+  members(includeOwners: Boolean = true): [Person!]
+  owners: [Person!]
+  isMember: Boolean
+  isMentor(user: ID): Boolean
+  isOwner(user: ID): Boolean
+  inviteLinks: SpaceInviteLinks
+  photo: Image
+  cover: Image
+  invited: [Invited!]
+}
+
+type SpaceInviteLinks {
+  founder: ID
+  mentor: ID
+  owner: ID
+}
+
+enum SpaceInviteRole {
+  FOUNDER
+  MENTOR
+  OWNER
+}
+
+enum SpacePhotoType {
+  COVER
+  PROFILE
+}
+
+type Invited {
+  email: String!
+  role: SpaceInviteRole!
+  issued: String
+}

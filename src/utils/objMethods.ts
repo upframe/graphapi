@@ -1,6 +1,6 @@
-export const filterKeys = <T extends object>(
+export const filterKeys = <T>(
   obj: T,
-  filter: ((k: string) => boolean) | (keyof T)[] | RegExp
+  filter: ((k: string) => boolean) | (keyof T | string)[] | RegExp
 ) =>
   typeof obj === 'object'
     ? Object.fromEntries(
@@ -10,6 +10,22 @@ export const filterKeys = <T extends object>(
             : typeof filter === 'function'
             ? filter(k)
             : filter.test(k)
+        )
+      )
+    : obj
+
+export const filterValues = <T>(
+  obj: T,
+  filter: ((v: string) => boolean) | string[] | RegExp
+) =>
+  typeof obj === 'object'
+    ? Object.fromEntries(
+        Object.entries(obj).filter(([, v]) =>
+          Array.isArray(filter)
+            ? filter.includes(v)
+            : typeof filter === 'function'
+            ? filter(v)
+            : filter.test(v)
         )
       )
     : obj

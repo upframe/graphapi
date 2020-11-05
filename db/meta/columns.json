@@ -28,11 +28,14 @@
       "public",
       "illustration",
       "background_color",
-      "text_color"
+      "text_color",
+      "sort_pos",
+      "space"
     ]
   },
-  "meetups": {
+  "calls": {
     "columns": [
+      "id",
       "slot_id",
       "status",
       "mentee_id",
@@ -59,13 +62,29 @@
     "columns": ["email", "password", "user_id"]
   },
   "signup": {
-    "columns": ["token", "started", "email", "password", "google_id"]
+    "columns": ["token", "started", "email", "password", "google_id", "id"]
   },
   "time_slots": {
     "columns": ["id", "mentor_id", "start", "end"]
   },
   "socialmedia": {
     "columns": ["id", "name", "url"]
+  },
+  "spaces": {
+    "columns": [
+      "id",
+      "name",
+      "handle",
+      "created",
+      "description",
+      "sidebar",
+      "founder_invite",
+      "mentor_invite",
+      "owner_invite",
+      "space_imgs",
+      "cover_imgs",
+      "hidden"
+    ]
   },
   "tags": {
     "columns": ["id", "name"]

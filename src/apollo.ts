@@ -9,7 +9,6 @@ import { parseCookies } from './utils/cookie'
 import { decode } from './auth'
 import * as typeDefs from './schema'
 import { ValidationError } from 'objection'
-import logger from './logger'
 import { mapKeys } from '~/utils/object'
 
 export const requests = {}
@@ -40,7 +39,8 @@ export const server = new ApolloServer({
       user,
       roles,
       requestId,
-      clientIp: event.requestContext.identity.sourceIp,
+      clientIp:
+        event.headers['Client-IP'] ?? event.requestContext.identity.sourceIp,
       setHeader(header, value) {
         requests[requestId].responseHeaders[header] = value
       },
@@ -101,17 +101,16 @@ export const server = new ApolloServer({
     process.env.stage === 'dev'
       ? {
           apiKey: process.env.APOLLO_KEY,
-          schemaTag: 'beta',
+          graphVariant: 'beta',
         }
       : false,
-  extensions: [
-    () => ({
+  plugins: [
+    {
       requestDidStart({ request, operationName, context }) {
         requests[context.requestId].opName = operationName
-        const headers = Object.fromEntries(request.headers)
         logger.info('request', {
-          origin: headers.origin,
-          userAgent: headers['user-agent'],
+          origin: request.http.headers.get('origin'),
+          userAgent: request.http.headers.get('user-agent'),
           ip: context.clientIp,
           requestId: context.requestId,
           opName: operationName,
@@ -119,7 +118,7 @@ export const server = new ApolloServer({
           roles: (context.roles ?? []).join(', '),
         })
       },
-    }),
+    },
   ],
 })
 

@@ -1,33 +1,29 @@
-import {
-  User,
-  Tags,
-  List,
-  Tokens,
-  Invite,
-  Signup,
-  ConnectGoogle,
-} from '../models'
-import { handleError, UserInputError } from '../error'
-import resolver from './resolver'
-import { system } from '../authorization/user'
-import { searchUsers, searchTags } from '../search'
-import validate from '../utils/validity'
+import * as M from '~/models'
+import { ForbiddenError, handleError, UserInputError } from '~/error'
+import resolver from '../resolver'
+import { system } from '~/authorization/user'
+import { searchUsers, searchTags } from '~/search'
+import validate from '~/utils/validity'
 import {
   requestScopes,
   userClient,
   scopes,
   signUpInfo as googleInfo,
-} from '../google'
+} from '~/google'
 import Conversation from '~/messaging/conversation'
 import Channel from '~/messaging/channel'
-import { ddb } from '../utils/aws'
+import { ddb } from '~/utils/aws'
 import * as filterExpr from '~/utils/filter'
+import { checkSpaceAdmin } from '~/utils/space'
+import { isUUID } from '~/utils/validity'
 
-export const me = resolver<User>().loggedIn(
+export * from './space'
+
+export const me = resolver<M.User>().loggedIn(
   async ({ query, ctx: { id } }) => await query().findById(id)
 )
 
-export const mentors = resolver<User>()(
+export const mentors = resolver<M.User>()(
   async ({ query, knex }) =>
     await query({ join: true, include: 'mentors' })
       .select(knex.raw('LEAST(mentors.score, 1) as rank'))
@@ -36,7 +32,7 @@ export const mentors = resolver<User>()(
       .orderBy('rank', 'DESC')
 )
 
-export const user = resolver<User>()(
+export const user = resolver<M.User>()(
   async ({ query, args: { id, handle } }) => {
     if (!id && !handle) throw new UserInputError('must provide handle or id')
     const user = await query()
@@ -53,20 +49,20 @@ export const user = resolver<User>()(
   }
 )
 
-export const users = resolver<User[]>()(
+export const users = resolver<M.User[]>()(
   async ({ query, args: { ids = [], handles = [] } }) => {
     if (ids.length + handles.length === 0)
       throw new UserInputError('must provide at least one id or handle')
     return (await query()
       .whereIn('id', ids)
-      .orWhereIn('handle', handles)) as User[]
+      .orWhereIn('handle', handles)) as M.User[]
   }
 )
 
 export const calendarConnectUrl = resolver<string>().loggedIn(
   async ({ args: { redirect }, ctx: { id }, query, knex }) => {
     const googleConnect = await query
-      .raw(ConnectGoogle)
+      .raw(M.ConnectGoogle)
       .where({ user_id: id })
       .first()
     if (!googleConnect)
@@ -90,7 +86,7 @@ export const googleSignupUrl = resolver<
   requestScopes(redirect)('SIGNIN', { state })
 )
 
-export const tag = resolver<Tags>()(async ({ query, args: { id, name } }) => {
+export const tag = resolver<M.Tags>()(async ({ query, args: { id, name } }) => {
   if (!!id === !!name)
     throw new UserInputError('must provide either id or name')
   if (id) return await query().findById(id)
@@ -98,10 +94,10 @@ export const tag = resolver<Tags>()(async ({ query, args: { id, name } }) => {
   return {
     ...res,
     users: res.users.filter(({ searchable }) => searchable),
-  } as Tags
+  } as M.Tags
 })
 
-export const tags = resolver<Tags>()(
+export const tags = resolver<M.Tags>()(
   async ({ query, args: { ids, orderBy } }) => {
     let q = query({ ...(orderBy === 'users' && { include: 'users' }) })
     if (Array.isArray(ids)) q = q.whereIn('tags.id', ids)
@@ -116,7 +112,7 @@ export const tags = resolver<Tags>()(
   }
 )
 
-export const lists = resolver<List>()(
+export const lists = resolver<M.List>()(
   async ({ query, args: { includeUnlisted } }) => {
     let q = query()
     if (!includeUnlisted) q = q.where({ public: true }).orderBy('sort_pos')
@@ -124,7 +120,7 @@ export const lists = resolver<List>()(
   }
 )
 
-export const list = resolver<List>()(async ({ query, args: { name } }) => {
+export const list = resolver<M.List>()(async ({ query, args: { name } }) => {
   const res = await query({ join: true, include: 'users.mentors' })
     .where('lists.name', 'ILIKE', name.toLowerCase())
     .first()
@@ -140,7 +136,7 @@ export const list = resolver<List>()(async ({ query, args: { name } }) => {
 
 export const isTokenValid = resolver<boolean>()(
   async ({ args: { token: tokenId }, ctx: { id }, query }) => {
-    const token = await query.raw(Tokens).findById(tokenId).asUser(system)
+    const token = await query.raw(M.Tokens).findById(tokenId).asUser(system)
     return id && id !== token.subject ? false : !!token
   }
 )
@@ -157,7 +153,7 @@ export const search = resolver<any>()(
         ...withTags,
         ...(
           await query
-            .raw(Tags)
+            .raw(M.Tags)
             .select('id')
             .whereRaw(
               `name ILIKE ANY (ARRAY[${withTagNames
@@ -183,7 +179,7 @@ export const search = resolver<any>()(
       users = ((await query({
         section: 'users.user',
         entryName: 'Person',
-      }).whereIn('id', ids)) as User[])
+      }).whereIn('id', ids)) as M.User[])
         .sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id))
         .map(user => ({
           user,
@@ -198,16 +194,18 @@ export const search = resolver<any>()(
 export const signUpInfo = resolver<any>()(
   async ({ args: { token }, query }) => {
     if (!token) throw new UserInputError('must provide token')
-    const invite = await query.raw(Invite).findById(token)
+    const signup: M.Signup = isUUID(token)
+      ? await query.raw(M.Signup).findById(token).asUser(system)
+      : undefined
+    const invite = await query.raw(M.Invite).findById(signup?.token ?? token)
     if (!invite) throw new UserInputError('invalid invite token')
     if (invite.redeemed) throw new UserInputError('invite token already used')
-    const signup = await query.raw(Signup).findById(token).asUser(system)
 
     let name: string
     let picture
     if (signup?.google_id) {
       const creds = await query
-        .raw(ConnectGoogle)
+        .raw(M.ConnectGoogle)
         .findById(signup.google_id)
         .asUser(system)
       const data = await googleInfo(creds)
@@ -223,7 +221,7 @@ export const signUpInfo = resolver<any>()(
     }
 
     return {
-      id: token,
+      id: signup?.id,
       email: invite.email,
       role: invite.role.toUpperCase(),
       authComplete: !!signup,
@@ -292,12 +290,12 @@ export const userList = resolver<any>().isAdmin(
     const filtersBy = (prefix: string) =>
       filters.find(({ field }) => field.split('.')[0] === prefix)
 
-    let users: User[]
+    let users: M.User[]
     let total: number = undefined
     let ids: string[]
 
     let q: ReturnType<typeof query>
-    let totalQuery: typeof q = query.raw(User)
+    let totalQuery: typeof q = query.raw(M.User)
 
     const queryOpts = {
       entryName: 'Person',
@@ -350,7 +348,7 @@ export const userList = resolver<any>().isAdmin(
         )
       }
 
-      users = (await q) as User[]
+      users = (await q) as M.User[]
       if (search) users.sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id))
     }
 
@@ -362,26 +360,74 @@ export const userList = resolver<any>().isAdmin(
   }
 )
 
-export const audit = resolver<any>().isAdmin(
-  async ({ args: { trails = [] } }) => {
-    const res = await Promise.all(
-      trails.map((trailId: string) =>
-        ddb
-          .query({
-            TableName: 'audit_trail',
-            KeyConditionExpression: 'trail_id = :trail',
-            ExpressionAttributeValues: { ':trail': trailId },
-          })
-          .promise()
+type Case = [
+  match: string | RegExp,
+  test: boolean | (() => boolean | Promise<boolean>)
+]
+
+export const audit = resolver<any>()<{ trail: string }>(
+  async ({ args: { trail }, ctx: { user }, query, knex, fields }) => {
+    const access = async (tests: Case[]) => {
+      for (const [match, test] of tests)
+        if (typeof match === 'string' ? match !== trail : !match.test(trail))
+          continue
+        else if (typeof test === 'boolean' ? test : await test()) return
+      throw new ForbiddenError('your are not allowed to query this trail')
+    }
+
+    await access([
+      ['admin_edits', user.groups.includes('admin')],
+      [
+        /^SPACE\|/,
+        () => checkSpaceAdmin(trail.split('|').pop(), user, knex, false),
+      ],
+    ])
+
+    const { Items } = await ddb
+      .query({
+        TableName: 'audit_trail',
+        KeyConditionExpression: 'trail_id = :trail',
+        ExpressionAttributeValues: { ':trail': trail },
+      })
+      .promise()
+
+    const _objects: any[] = []
+
+    if ('objects' in fields)
+      _objects.push(
+        ...(
+          await Promise.all([
+            query({ entryName: 'Person', section: 'objects' }).whereIn(
+              'id',
+              Items.flatMap(({ user, editor }) => [user, editor]).filter(
+                Boolean
+              )
+            ),
+            query({ entryName: 'Space', section: 'objects' }).whereIn(
+              'id',
+              Items.map(({ space }) => space).filter(Boolean)
+            ),
+            query({ entryName: 'List', section: 'objects' }).whereIn(
+              'id',
+              Items.map(({ list }) => list).filter(Boolean)
+            ),
+            query({ entryName: 'Tag', section: 'objects' }).whereIn(
+              'id',
+              Items.map(({ tag }) => tag).filter(Boolean)
+            ),
+          ])
+        ).flat()
       )
-    )
-    return res.flatMap(({ Items }) =>
-      Items.map(({ trail_id, event_id, time, ...rest }) => ({
-        trailId: trail_id,
-        id: event_id,
-        date: new Date(time).toISOString(),
-        payload: JSON.stringify(rest),
-      }))
-    )
+
+    return Items.map(({ trail_id, event_id, time, ...rest }) => ({
+      trailId: trail_id,
+      id: event_id,
+      date: new Date(time),
+      payload: JSON.stringify(rest),
+      _editorId: rest.editor,
+      _objects,
+    }))
+      .sort((a, b) => b.date.getTime() - a.date.getTime())
+      .map(({ date, ...v }) => ({ date: date.toISOString(), ...v }))
   }
 )

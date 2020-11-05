@@ -26,7 +26,7 @@ export const visitor: Group = {
     {
       effect: 'allow',
       action: 'read',
-      resource: 'meetups',
+      resource: 'calls',
     },
     {
       effect: 'allow',
@@ -71,12 +71,17 @@ export const visitor: Group = {
     {
       effect: 'allow',
       action: 'create',
-      resource: 'meetups',
+      resource: 'calls',
     },
     {
       effect: 'allow',
       action: 'read',
       resource: 'invites',
+    },
+    {
+      effect: 'allow',
+      action: 'read',
+      resource: 'spaces',
     },
   ],
 }
@@ -96,12 +101,6 @@ export const user: Group = {
       action: 'update, delete',
       resource: 'users',
       where: 'users.id = current.id',
-    },
-    {
-      effect: 'allow',
-      action: 'delete',
-      resource: 'user_handles',
-      where: 'user_handles.user_id = current.id',
     },
     {
       effect: 'allow',
@@ -187,7 +186,7 @@ export const admin: Group = {
   policies: [
     { effect: 'allow', action: '*', resource: 'users' },
     { effect: 'allow', action: '*', resource: 'mentors' },
-    { effect: 'allow', action: '*', resource: 'meetups' },
+    { effect: 'allow', action: '*', resource: 'calls' },
     { effect: 'allow', action: '*', resource: 'lists' },
     { effect: 'allow', action: '*', resource: 'user_lists' },
     { effect: 'allow', action: '*', resource: 'tokens' },
@@ -196,5 +195,6 @@ export const admin: Group = {
     { effect: 'allow', action: '*', resource: 'signup' },
     { effect: 'allow', action: '*', resource: 'signin_upframe' },
     { effect: 'allow', action: '*', resource: 'invites' },
+    { effect: 'allow', action: '*', resource: 'spaces' },
   ],
 }

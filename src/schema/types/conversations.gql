@@ -17,6 +17,7 @@ type Channel {
   ): ChannelMessageConnection!
   created: String
   lastUpdate: String
+  slot: ChannelSlot
 }
 
 type ChannelMessageConnection implements Connection {
@@ -47,4 +48,20 @@ type Read {
   userId: ID!
   channelId: ID!
   msgId: ID!
+}
+
+type ChannelSlot {
+  id: ID!
+  time: String!
+  mentor: Person!
+  mentee: Person!
+  status: ChannelSlotStatus
+  location: String!
+}
+
+enum ChannelSlotStatus {
+  PENDING
+  CONFIRMED
+  DECLINED
+  EXPIRED
 }

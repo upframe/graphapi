@@ -1,7 +1,6 @@
 import jwt from 'jsonwebtoken'
 import * as bcrypt from 'bcrypt'
 import { User } from './models'
-import logger from '~/logger'
 
 export function decode(token: string) {
   if (!token) return

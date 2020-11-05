@@ -1,11 +1,12 @@
 import { sns } from './utils/aws'
-import logger from './logger'
 
 interface SendOptions {
   template: string
   ctx: any
 }
 export const send = async ({ template, ctx }: SendOptions) => {
+  if (process.env.DISABLE_EMAILS === 'true') return
+
   try {
     await sns
       .publish({

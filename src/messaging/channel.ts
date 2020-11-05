@@ -1,7 +1,6 @@
 import { ddb } from '~/utils/aws'
 import type { Optional } from '~/utils/types'
 import crypto from 'crypto'
-import logger from '~/logger'
 import * as db from './db'
 import { render } from './markdown'
 import type { PaginationArgs } from '~/utils/pagination'
@@ -14,26 +13,51 @@ export default class Channel {
     public readonly channelId: string,
     public participants?: string[],
     public readonly created?: number,
-    public readonly lastUpdate?: number
+    public readonly lastUpdate?: number,
+    public readonly slot?: Slot
   ) {}
 
-  public static async get(id: string): Promise<Channel> {
-    let channel = this.instances.find(({ channelId }) => channelId === id)
+  public static async get(
+    id: string,
+    forceFetch: boolean = false
+  ): Promise<Channel> {
+    let channel: Channel | undefined = forceFetch
+      ? undefined
+      : this.instances.find(({ channelId }) => channelId === id)
     if (channel) return channel
     const res = await db.getChannel(id)
     if (!res) return
-    channel = new Channel(id, res.participants, res.created, res.lastUpdate)
+    const slot = res.slotId
+      ? {
+          id: res.slotId,
+          time: res.slotTime,
+          mentor: res.slotMentor,
+          url: res.slotUrl,
+        }
+      : undefined
+    channel = new Channel(
+      id,
+      res.participants,
+      res.created,
+      res.lastUpdate,
+      slot
+    )
+    if (forceFetch) {
+      const i = Channel.instances.findIndex(({ channelId }) => channelId === id)
+      if (i !== -1) Channel.instances.splice(i, 1)
+    }
     Channel.instances.push(channel)
     return channel
   }
 
   public async create(
     conversationId: string,
-    participants: string[]
+    participants: string[],
+    slot?: Slot
   ): Promise<Channel> {
     logger.info(`create channel ${this.channelId} in ${conversationId}`)
 
-    await db.createChannel(conversationId, this.channelId, participants)
+    await db.createChannel(conversationId, this.channelId, participants, slot)
 
     this.participants = participants
     Channel.instances.push(this)
@@ -50,11 +74,14 @@ export default class Channel {
         .match(/.{2}/g)
         .map(v => parseInt(v, 16).toString(36))
         .join(''),
+    suffix = '',
     author,
     content,
-  }: Optional<Omit<Message, 'channel'>, 'time' | 'id'>): Promise<Message> {
+  }: Optional<Omit<Message, 'channel'>, 'time' | 'id'> & {
+    suffix?: string
+  }): Promise<Message> {
     const msg = {
-      id,
+      id: id + suffix,
       time,
       channel: this.channelId,
       author,
@@ -114,3 +141,5 @@ export type Message = {
   time: number
   channel: string
 }
+
+type Slot = { id: string; url: string; time: number; mentor: string }

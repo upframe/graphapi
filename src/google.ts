@@ -2,11 +2,10 @@ import { google, oauth2_v2, calendar_v3 } from 'googleapis'
 import { OAuth2Client } from 'google-auth-library/build/src/auth/oauth2client'
 import { ConnectGoogle } from './models'
 import { GoogleNotConnectedError } from './error'
-import logger from './logger'
 import { filterKeys } from './utils/object'
 
 export { google }
-export type UserInfo = oauth2_v2.Schema$Userinfoplus
+export type UserInfo = oauth2_v2.Schema$Userinfo
 
 export const createClient = (redirect?: string) =>
   new google.auth.OAuth2(

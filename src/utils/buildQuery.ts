@@ -12,6 +12,7 @@ import {
   Invite,
   ConnectGoogle,
   SigninUpframe,
+  Space,
 } from '../models'
 import getQueryFields from './queryFields'
 import { fromPaths } from '../utils/path'
@@ -22,6 +23,7 @@ const ENTRIES = {
   Mentor: User,
   List,
   Tag: Tags,
+  Space,
 }
 const GQL_SQL_MAP = new Map<
   typeof Model,
@@ -51,6 +53,7 @@ set(User)
   .add(SocialMedia, 'social')
   .add(ProfilePicture, 'profilePictures')
   .add(List, 'lists')
+  .add(Space, 'spaces')
   .add(Tags, 'tags')
   .add(Invite, 'invites')
   .add('invitedBy', 'invitedBy')
