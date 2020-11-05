@@ -9,7 +9,7 @@ export async function addMeetup(
   knex: ResolverCtx['knex']
 ): Promise<Partial<Meetup>> {
   const event = {
-    id: meetup.id.replace(/[^\w]/g, ''),
+    id: slot.id.replace(/[^\w]/g, ''),
     summary: `Upframe Meetup ${mentor.name.split(' ')[0]} & ${
       mentee.name.split(' ')[0]
     }`,

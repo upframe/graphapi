@@ -202,7 +202,7 @@ export const requestSlot = resolver<string>().loggedIn(
         eventId: slot.id.replace(/[^\w]/g, ''),
         requestBody: {
           summary: 'Upframe Slot (requested)',
-          description: `<p>Slot was requested by <a href="mailto:${mentee.email}">${mentee.name}</a></p><p><i>${input.message}</i></p><p><a href="https://upframe.io/meetup/confirm/${meetup.slot_id}">accept</a> | <a href="https://upframe.io/meetup/cancel/${meetup.slot_id}">decline</a></p>`,
+          description: `<p>Slot was requested by <a href="mailto:${mentee.email}">${mentee.name}</a></p><p><i>${input.message}</i></p><p><a href="https://upframe.io/meetup/confirm/${meetup.id}">accept</a> | <a href="https://upframe.io/meetup/cancel/${meetup.id}">decline</a></p>`,
         },
       })
     } catch (error) {
@@ -230,8 +230,16 @@ export const acceptMeetup = resolver<any>().loggedIn(
       throw new UserInputError('meetup already confirmed')
 
     const [users] = await Promise.all([
-      query.raw(User).whereIn('id', [meetup.slot.mentor_id, meetup.mentee_id]),
-      query.raw(Meetup).findById(meetup.id).patch({ status: 'confirmed' }),
+      query
+        .raw(User)
+        .whereIn('id', [meetup.slot.mentor_id, meetup.mentee_id])
+        .withGraphFetched('connect_google')
+        .asUser(system),
+      query
+        .raw(Meetup)
+        .findById(meetup.id)
+        .patch({ status: 'confirmed' })
+        .asUser(system),
     ])
 
     const mentor = users.splice(
@@ -242,7 +250,6 @@ export const acceptMeetup = resolver<any>().loggedIn(
 
     if (!meetup.gcal_upframe_event_id) {
       const gcal = await addMeetup(meetup.slot, meetup, mentor, mentee, knex)
-      logger.info({ gcal })
       await query.raw(Meetup).findById(meetup.id).patch(gcal).asUser(system)
     }
 
@@ -296,7 +303,7 @@ export const cancelMeetup = resolver().loggedIn(
       connectGoogle &&
         client?.calendar.events.patch({
           calendarId: connectGoogle.calendar_id,
-          eventId: meetup.id.replace(/[^\w]/g, ''),
+          eventId: meetup.slot.id.replace(/[^\w]/g, ''),
           requestBody: {
             summary: 'Upframe Slot',
             description: ``,
