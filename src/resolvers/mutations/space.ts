@@ -109,7 +109,7 @@ export const changeSpaceInfo = resolver<Space>()<{
 
   const { id, ...fields } = input.mapValues((v: string) => v || null)
 
-  const space = await query().findById(id)
+  const space = await query().findById(id).asUser(system)
   await Promise.all(
     Object.entries(args.input)
       .filter(([k]) => k !== 'id')
@@ -124,7 +124,7 @@ export const changeSpaceInfo = resolver<Space>()<{
   )
 
   try {
-    return await query().patchAndFetchById(id, fields)
+    return await query().patchAndFetchById(id, fields).asUser(system)
   } catch (e) {
     if (e instanceof UniqueViolationError)
       throw new UserInputError('handle already taken')
@@ -144,11 +144,14 @@ export const createSpaceInvite = resolver<string>()<{
   const existing = space[inviteColumn]
   if (existing) await knex('invites').where({ id: existing }).delete()
 
-  const invite = await query.raw(M.Invite).insertAndFetch({
-    id: genToken(),
-    issuer: user.id,
-    role: role === 'FOUNDER' ? 'user' : 'mentor',
-  })
+  const invite = await query
+    .raw(M.Invite)
+    .insertAndFetch({
+      id: genToken(),
+      issuer: user.id,
+      role: role === 'FOUNDER' ? 'user' : 'mentor',
+    })
+    .asUser(system)
 
   await knex('space_invites').insert({
     id: invite.id,
@@ -161,6 +164,7 @@ export const createSpaceInvite = resolver<string>()<{
     .raw(M.Space)
     .update({ [inviteColumn]: invite.id })
     .findById(spaceId)
+    .asUser(system)
 
   return invite.id
 })
