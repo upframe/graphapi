@@ -124,7 +124,11 @@ export const changeSpaceInfo = resolver<Space>()<{
   )
 
   try {
-    return await query().patchAndFetchById(id, fields).asUser(system)
+    const space = await query().patchAndFetchById(id, fields).asUser(system)
+    delete space.members
+    delete space.mentors
+    delete space.owners
+    return space
   } catch (e) {
     if (e instanceof UniqueViolationError)
       throw new UserInputError('handle already taken')

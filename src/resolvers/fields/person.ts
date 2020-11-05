@@ -123,6 +123,6 @@ export const joined = resolver<string, User>()(({ parent }) =>
 
 export const spaces = resolver<Space[], User>()(({ parent, ctx: { user } }) =>
   user.id === parent.id || user.groups.includes('admin')
-    ? parent.spaces.filter(({ hidden }) => !hidden)
+    ? parent.spaces?.filter(({ hidden }) => !hidden)
     : null
 )
