@@ -58,6 +58,7 @@
     "@types/uuid": "^3.4.9",
     "@typescript-eslint/eslint-plugin": "^4.6.1",
     "@typescript-eslint/parser": "^4.6.1",
+    "apollo": "^2.31.1",
     "babel-eslint": "^10.1.0",
     "babel-loader": "^8.1.0",
     "babel-plugin-source-map-support": "^2.1.3",

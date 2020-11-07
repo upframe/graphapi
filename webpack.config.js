@@ -74,6 +74,7 @@ module.exports = {
               .split('\n')
               .filter(Boolean)
               .map(v => v.split('='))
+              .filter(([k]) => k !== 'APOLLO_KEY')
               .map(([k, v]) => [`process.env.${k}`, JSON.stringify(v)])
           )
         : {}

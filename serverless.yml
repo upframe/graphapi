@@ -51,7 +51,6 @@ provider:
     stage: ${self:provider.stage}
     PUBLIC_KEY: ${ssm:/API/PublicKey}
     PRIVATE_KEY: ${ssm:/API/PrivateKey~true}
-    APOLLO_KEY: ${ssm:/API/ApolloKey~true}
     MAILGUN_KEY: ${ssm:/API/MailgunKey~true}
     OAUTH_CLIENT_ID: ${ssm:/API/OAuth/ClientId}
     OAUTH_CLIENT_SECRET: ${ssm:/API/OAuth/ClientSecret~true}
