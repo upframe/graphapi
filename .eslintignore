@@ -2,7 +2,7 @@ node_modules
 .webpack
 .serverless
 .dynamodb
-db/seeds/data
+/db
 /queries
 apollo.config.js
 .dyanmodb
