@@ -16,6 +16,16 @@ const handler = async (event: APIGatewayEvent, context: Context) => {
   Model.knex(knex)
   requests[context.awsRequestId].knex = knex
 
+  if (process.env.IS_OFFLINE && event.body) {
+    const opName = JSON.parse(event.body).operationName
+    const half = (process.stdout.columns - opName.length) / 2
+    console.log(
+      `\n${'-'.repeat(Math.floor(half) - 1)} ${opName} ${'-'.repeat(
+        Math.ceil(half) - 1
+      )}\n`
+    )
+  }
+
   const [error, data] = await new Promise(res =>
     apolloHandler(event, context, (error, body) => {
       body.headers = {

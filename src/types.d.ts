@@ -25,6 +25,8 @@ interface AccessGraph {
   [field: string]: boolean | AccessGraph
 }
 
+type DB = import('knex')
+
 interface ResolverCtx {
   user: import('./authorization/user').default
   id: string
@@ -32,7 +34,7 @@ interface ResolverCtx {
   requestId: string
   clientIp: string
   setHeader(header: string, value: string): void
-  knex: import('knex')
+  knex: DB
   service?: 'EMAIL'
 }
 
@@ -40,6 +42,16 @@ type ModelContent<M extends Model> = {
   [K in keyof Omit<M, keyof Model>]: M[K] extends Model
     ? ModelContent<M[K]>
     : M[K]
+}
+
+type PasswordSigninInput = {
+  email: string
+  password: string
+}
+
+type GoogleSigninInput = {
+  code: string
+  redirect: string
 }
 
 // GraphQL types
@@ -63,3 +75,10 @@ declare var logger: import('winston').Logger & {
   setRequestId(v: string): void
   setUserId(v: string): void
 }
+
+// helper types
+
+type Optional<T extends object, K extends keyof T> = Omit<T, K> &
+  Partial<Pick<T, K>>
+
+type PromType<T> = T extends PromiseLike<infer U> ? U : T

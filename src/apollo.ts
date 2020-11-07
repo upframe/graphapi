@@ -31,14 +31,7 @@ export const server = new ApolloServer({
     const requestId = context.awsRequestId
     logger.setUserId(id)
 
-    if (process.env.LOG_REQUEST) {
-      const body = JSON.parse(event.body)
-      logger.info(
-        process.env.LOG_REQUEST === 'full'
-          ? body
-          : `!${body.operationName ?? 'unknown opName'}`
-      )
-    }
+    if (process.env.LOG_REQUEST === 'full') logger.info(JSON.parse(event.body))
 
     return {
       id,
@@ -103,13 +96,7 @@ export const server = new ApolloServer({
         },
       }
     : { introspection: false, playground: false }),
-  engine:
-    process.env.stage === 'dev'
-      ? {
-          apiKey: process.env.APOLLO_KEY,
-          graphVariant: 'beta',
-        }
-      : false,
+  engine: false,
   plugins: [
     {
       requestDidStart({ request, context }) {
