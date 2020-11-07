@@ -31,8 +31,14 @@ export const server = new ApolloServer({
     const requestId = context.awsRequestId
     logger.setUserId(id)
 
-    if (process.env.IS_OFFLINE && event.body)
-      logger.info(JSON.parse(event.body))
+    if (process.env.LOG_REQUEST) {
+      const body = JSON.parse(event.body)
+      logger.info(
+        process.env.LOG_REQUEST === 'full'
+          ? body
+          : `!${body.operationName ?? 'unknown opName'}`
+      )
+    }
 
     return {
       id,
@@ -106,14 +112,15 @@ export const server = new ApolloServer({
       : false,
   plugins: [
     {
-      requestDidStart({ request, operationName, context }) {
-        requests[context.requestId].opName = operationName
+      requestDidStart({ request, context }) {
+        requests[context.requestId].opName = request.operationName
+        if (process.env.IS_OFFLINE) return
         logger.info('request', {
           origin: request.http.headers.get('origin'),
           userAgent: request.http.headers.get('user-agent'),
           ip: context.clientIp,
           requestId: context.requestId,
-          opName: operationName,
+          opName: request.operationName,
           user: context.id,
           roles: (context.roles ?? []).join(', '),
         })
