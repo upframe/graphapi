@@ -1,3 +1,4 @@
+import 'source-map-support/register'
 import logger from '~/logger'
 import { datadog } from 'datadog-lambda-js'
 import { handler as apolloHandler, requests } from './apollo'

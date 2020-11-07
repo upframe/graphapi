@@ -1,3 +1,4 @@
+import 'source-map-support/register'
 import logger from '~/logger'
 import uuidv4 from 'uuid/v4'
 import { parse, getOperationAST, validate, subscribe } from 'graphql'
