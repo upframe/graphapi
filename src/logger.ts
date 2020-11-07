@@ -10,7 +10,7 @@ let userId: string
 
 const logger = Object.assign(
   createLogger({
-    level: 'debug',
+    level: process.env.IS_OFFLINE ? 'debug' : 'info',
     defaultMeta: {
       get 'context.awsRequestId'() {
         return requestId
@@ -32,9 +32,21 @@ const logger = Object.assign(
                 format: 'HH:mm:ss',
               }),
               wsFormat.printf(
-                ({ timestamp, level, message, extensions, opName }) => {
+                ({
+                  timestamp,
+                  level,
+                  message,
+                  extensions,
+                  opName,
+                  ...rest
+                }) => {
                   let msg = `${timestamp} ${level}: ${prettyPrint(message)}`
-                  if (opName) msg += ` ${opName}`
+                  if (opName)
+                    msg += ` ${opName}`
+                    //
+                  ;(rest as any)[Symbol.for('splat')]?.forEach((v: unknown) => {
+                    msg += ` ${format(v)}`
+                  })
                   if (!extensions?.exception?.stacktrace) return msg
                   const stack = []
                   for (const path of extensions.exception.stacktrace.slice(1)) {
@@ -42,6 +54,7 @@ const logger = Object.assign(
                       path.replace(/\/[\w/.]+(:\/src|node_modules)\//, '')
                     )
                   }
+
                   return msg + `\n${stack.join('\n')}`
                 }
               )

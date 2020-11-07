@@ -46,7 +46,8 @@ export default function <M = void, P extends Model = null>() {
         try {
           assert(ctx)
         } catch (error) {
-          logger.warn('resolver assertion failed', { error, user: ctx.id })
+          if (error?.extensions?.code !== 'NOT_LOGGED_IN')
+            logger.warn('resolver assertion failed', { error, user: ctx.id })
           throw error
         }
       })
