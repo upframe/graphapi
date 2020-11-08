@@ -2,14 +2,13 @@ const path = require('path')
 
 module.exports = {
   extends: ['eslint:recommended'],
-  parser: '@typescript-eslint/parser',
-  plugins: ['prettier', '@typescript-eslint'],
+  parser: '@babel/eslint-parser',
+  plugins: ['prettier', '@babel', '@typescript-eslint'],
   env: {
     node: true,
     es6: true,
   },
   parserOptions: {
-    parser: 'babel-eslint',
     project: path.resolve(__dirname, './tsconfig.json'),
     tsconfigRootDir: __dirname,
     ecmaVersion: 2018,
@@ -25,6 +24,7 @@ module.exports = {
   },
   rules: {
     semi: ['error', 'never'],
+    'no-unused-vars': 'off',
     '@typescript-eslint/no-unused-vars': 'error',
     'no-unreachable': 'warn',
     'require-await': 'warn',
