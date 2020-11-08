@@ -27,28 +27,19 @@ const logger = Object.assign(
               wsFormat(info =>
                 block.some(exp => exp.test(info.message)) ? false : info
               )(),
+              // wsFormat.errors({ stack: true }),
               wsFormat.colorize(),
               wsFormat.timestamp({
                 format: 'HH:mm:ss',
               }),
               wsFormat.printf(
-                ({
-                  timestamp,
-                  level,
-                  message,
-                  extensions,
-                  opName,
-                  ...rest
-                }) => {
+                ({ timestamp, level, message, extensions, path, ...rest }) => {
                   let msg = `${timestamp} ${level}: ${prettyPrint(message)}`
-                  if (opName)
-                    msg += ` ${opName}`
-                    //
                   ;(rest as any)[Symbol.for('splat')]?.forEach((v: unknown) => {
                     msg += ` ${format(v)}`
                   })
                   if (!extensions?.exception?.stacktrace) return msg
-                  const stack = []
+                  const stack = path?.map(v => '  ' + v) ?? []
                   for (const path of extensions.exception.stacktrace.slice(1)) {
                     stack.push(
                       path.replace(/\/[\w/.]+(:\/src|node_modules)\//, '')

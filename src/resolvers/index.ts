@@ -18,6 +18,7 @@ import * as UserConnection from './fields/userList'
 import * as Space from './fields/space'
 import * as Audit from './fields/audit'
 import * as ChannelSlot from './fields/channelSlot'
+import * as Google from './fields/google'
 
 const AuditObject = Audit.AuditObject
 
@@ -47,4 +48,5 @@ export default {
   ),
   AuditObject,
   ChannelSlot,
+  Google,
 }

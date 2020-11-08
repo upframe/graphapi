@@ -1,7 +1,5 @@
 import resolver from '../resolver'
 import { SocialMedia, User, Tags, Space } from '~/models'
-import { createClient } from '~/google'
-import { google as gapi } from 'googleapis'
 import Conversation from '~/messaging/conversation'
 import { msgToken as createMsgToken } from '~/auth'
 import * as db from '~/messaging/db'
@@ -68,20 +66,9 @@ export const invites = resolver<any[], User>()(({ parent: { invites } }) =>
   }))
 )
 
-export const google = resolver<any, User>()(
-  async ({ parent: { connect_google, signin_upframe } }) => {
-    try {
-      if (!connect_google?.refresh_token) return { connected: false }
-      const client = createClient()
-      client.setCredentials(connect_google)
-      const { data } = await gapi
-        .oauth2({ auth: client, version: 'v2' })
-        .userinfo.get()
-      return { connected: true, canDisconnect: !!signin_upframe, ...data }
-    } catch (e) {
-      return { connected: false }
-    }
-  }
+export const google = resolver<any, User>().isSelfOrAdmin(
+  async ({ knex, parent }) =>
+    await knex('connect_google').where({ user_id: parent.id }).first()
 )
 
 export const timezone = resolver<any, User>()(({ parent }) =>
