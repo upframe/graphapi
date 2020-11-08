@@ -23,4 +23,8 @@ export const NotLoggedInError = (msg = 'not logged in') =>
 export const GoogleError = (msg = 'google auth error') =>
   new ApolloError(msg, 'GOOGLE_ERROR')
 
+export const GoogleAuthError = (
+  msg = 'Error accessing Google. Please sign in again.'
+) => new ApolloError(msg, 'GOOGLE_AUTH_ERROR')
+
 export { AuthenticationError, ForbiddenError, ApolloError, UserInputError }

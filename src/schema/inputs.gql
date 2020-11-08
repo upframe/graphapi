@@ -1,6 +1,11 @@
-input LoginInput {
+input PasswordLoginInput {
   email: String!
   password: String!
+}
+
+input GoogleLoginInput {
+  code: ID!
+  redirect: String!
 }
 
 input createAccountInput {

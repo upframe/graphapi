@@ -1,5 +1,4 @@
 import { ddb } from '~/utils/aws'
-import type { Optional } from '~/utils/types'
 import crypto from 'crypto'
 import * as db from './db'
 import { render } from './markdown'

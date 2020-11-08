@@ -6,7 +6,7 @@ import {
 } from 'apollo-server-lambda'
 import resolvers from './resolvers'
 import { parseCookies } from './utils/cookie'
-import { decode } from './auth'
+import { decode, cookie } from './auth'
 import * as typeDefs from './schema'
 import { ValidationError } from 'objection'
 import { mapKeys } from '~/utils/object'
@@ -31,7 +31,12 @@ export const server = new ApolloServer({
     const requestId = context.awsRequestId
     logger.setUserId(id)
 
-    if (process.env.LOG_REQUEST === 'full') logger.info(JSON.parse(event.body))
+    const body = JSON.parse(event.body)
+    if (
+      process.env.LOG_REQUEST === 'full' ||
+      (process.env.IS_OFFLINE && !body.operationName)
+    )
+      logger.info(body)
 
     return {
       id,
@@ -42,6 +47,13 @@ export const server = new ApolloServer({
         event.headers['Client-IP'] ?? event.requestContext.identity.sourceIp,
       setHeader(header, value) {
         requests[requestId].responseHeaders[header] = value
+      },
+      signOut() {
+        requests[requestId].responseHeaders['Set-Cookie'] = cookie(
+          'auth',
+          'deleted',
+          -1
+        )
       },
       knex: requests[requestId].knex,
       service:

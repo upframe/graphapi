@@ -1,6 +1,8 @@
 type Mutation {
-  signIn(input: LoginInput!): Person
-  signInGoogle(code: ID!, redirect: String!): Person
+  signIn(
+    passwordInput: PasswordLoginInput
+    googleInput: GoogleLoginInput
+  ): Person
   signOut: Int
 
   signUpPassword(token: ID!, email: String!, password: String!): SignUpInfo

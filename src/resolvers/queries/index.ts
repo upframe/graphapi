@@ -4,12 +4,6 @@ import resolver from '../resolver'
 import { system } from '~/authorization/user'
 import { searchUsers, searchTags } from '~/search'
 import validate from '~/utils/validity'
-import {
-  requestScopes,
-  userClient,
-  scopes,
-  signUpInfo as googleInfo,
-} from '~/google'
 import Conversation from '~/messaging/conversation'
 import Channel from '~/messaging/channel'
 import { ddb } from '~/utils/aws'
@@ -18,6 +12,7 @@ import { checkSpaceAdmin } from '~/utils/space'
 import { isUUID } from '~/utils/validity'
 
 export * from './space'
+export * from './google'
 
 export const me = resolver<M.User>().loggedIn(
   async ({ query, ctx: { id } }) => await query().findById(id)
@@ -57,33 +52,6 @@ export const users = resolver<M.User[]>()(
       .whereIn('id', ids)
       .orWhereIn('handle', handles)) as M.User[]
   }
-)
-
-export const calendarConnectUrl = resolver<string>().loggedIn(
-  async ({ args: { redirect }, ctx: { id }, query, knex }) => {
-    const googleConnect = await query
-      .raw(M.ConnectGoogle)
-      .where({ user_id: id })
-      .first()
-    if (!googleConnect)
-      return requestScopes(redirect)([...scopes.SIGNIN, ...scopes.CALENDAR])
-    if (googleConnect.calendar_id) return null
-    const client = await userClient(knex, googleConnect)
-    const info = await client.userInfo()
-    return requestScopes(redirect)('CALENDAR', { login_hint: info.email }, true)
-  }
-)
-
-export const googleSigninUrl = resolver<
-  string
->()(({ args: { redirect, state } }) =>
-  requestScopes(redirect)('SIGNIN', state ? { state } : {}, true)
-)
-
-export const googleSignupUrl = resolver<
-  string
->()(({ args: { redirect, state } }) =>
-  requestScopes(redirect)('SIGNIN', { state })
 )
 
 export const tag = resolver<M.Tags>()(async ({ query, args: { id, name } }) => {
@@ -203,22 +171,22 @@ export const signUpInfo = resolver<any>()(
 
     let name: string
     let picture
-    if (signup?.google_id) {
-      const creds = await query
-        .raw(M.ConnectGoogle)
-        .findById(signup.google_id)
-        .asUser(system)
-      const data = await googleInfo(creds)
-      if (data.name) name = data.name
-      if (data.picture) picture = data.picture
-    } else if (signup?.email) {
-      name = signup.email
-        .split('@')[0]
-        .replace(/[^a-zA-Z]+/g, ' ')
-        .toLowerCase()
-        .trim()
-        .replace(/(\s|^)[a-z]/g, v => v.toUpperCase())
-    }
+    // if (signup?.google_id) {
+    //   const creds = await query
+    //     .raw(M.ConnectGoogle)
+    //     .findById(signup.google_id)
+    //     .asUser(system)
+    //   const data = await googleInfo(creds)
+    //   if (data.name) name = data.name
+    //   if (data.picture) picture = data.picture
+    // } else if (signup?.email) {
+    name = signup.email
+      .split('@')[0]
+      .replace(/[^a-zA-Z]+/g, ' ')
+      .toLowerCase()
+      .trim()
+      .replace(/(\s|^)[a-z]/g, v => v.toUpperCase())
+    // }
 
     return {
       id: signup?.id,

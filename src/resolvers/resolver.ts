@@ -2,6 +2,7 @@ import query from '../utils/buildQuery'
 import { ForbiddenError, NotLoggedInError } from '../error'
 import { Model, QueryBuilder } from '../models'
 import getQueryFields from '../utils/queryFields'
+import { catchError } from '~/utils/error'
 
 export default function <M = void, P extends Model = null>() {
   type Assertions<M, P> = {
@@ -36,6 +37,16 @@ export default function <M = void, P extends Model = null>() {
         return this
       },
     },
+    isSelfOrAdmin: {
+      get() {
+        asserts.push((ctx, parent) => {
+          if (ctx.user?.groups.includes('admin')) return
+          if (!ctx.id || parent.id !== ctx.id)
+            throw new ForbiddenError("you can't query this field")
+        })
+        return this
+      },
+    },
   }
 
   return Object.defineProperties(
@@ -44,7 +55,7 @@ export default function <M = void, P extends Model = null>() {
     ) => {
       asserts.forEach(assert => {
         try {
-          assert(ctx)
+          assert(ctx, parent)
         } catch (error) {
           if (error?.extensions?.code !== 'NOT_LOGGED_IN')
             logger.warn('resolver assertion failed', { error, user: ctx.id })
@@ -52,7 +63,14 @@ export default function <M = void, P extends Model = null>() {
         }
       })
       const fields = getQueryFields(info)
-      return handler({
+      return catchError(
+        handler,
+        true
+      )(e => {
+        if (e?.extensions?.code !== 'GOOGLE_AUTH_ERROR') return
+        logger.debug('GOOGLE_AUTH_ERROR in resolver wrapper')
+        ctx.signOut?.()
+      })({
         query: Object.assign(
           (options = {}) =>
             query(

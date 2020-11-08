@@ -34,6 +34,7 @@ interface ResolverCtx {
   requestId: string
   clientIp: string
   setHeader(header: string, value: string): void
+  signOut(): void
   knex: DB
   service?: 'EMAIL'
 }
