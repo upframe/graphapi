@@ -1,6 +1,6 @@
 import resolver from '~/resolvers/resolver'
 import { UserInputError, AuthenticationError } from '~/error'
-import { cookie, signInToken } from '~/auth'
+import { cookie, signInToken, hashPassword } from '~/auth'
 import * as M from '~/models'
 import AuthUser, { system } from '~/authorization/user'
 import MsgUser from '~/messaging/user'
@@ -48,6 +48,29 @@ export const signUp = resolver<any>()<{
         .delete()
         .where({ google_id: info.id, user_id: null })
 
+      const signIn = await query
+        .raw(M.ConnectGoogle)
+        .findById(info.id)
+        .whereNotNull('user_id')
+        .asUser(system)
+
+      if (signIn) {
+        // sign in instead
+        logger.info('sign in instead of sign up', {
+          user: signIn.user_id,
+          google: info.id,
+        })
+
+        const user = await query({ entryName: 'Person' })
+          .findById(signIn.user_id)
+          .asUser(system)
+
+        client.userId = signIn.user_id
+        ctx.setHeader('Set-Cookie', cookie('auth', signInToken(user)))
+        ctx.id = user.id
+        return user
+      }
+
       await client.persistLogin()
     } catch (error) {
       logger.error("couldn't get google signup info", { error, ...input })
@@ -55,44 +78,33 @@ export const signUp = resolver<any>()<{
       throw new AuthenticationError('failed to sign up with google')
     }
 
-    const signIn = await query
-      .raw(M.ConnectGoogle)
-      .findById(info.id)
-      .whereNotNull('user_id')
-      .asUser(system)
-
-    if (signIn) {
-      logger.info('sign in instead of sign up', {
-        user: signIn.user_id,
-        google: info.id,
-      })
-
-      // sign in instead
-      const user = await query({ entryName: 'Person' })
-        .findById(signIn.user_id)
-        .asUser(system)
-
-      client.userId = signIn.user_id
-      ctx.setHeader('Set-Cookie', cookie('auth', signInToken(user)))
-      ctx.id = user.id
-      return user
-    }
-
     signup.google_id = info.id
-    signup.email = info.email
+  } else {
+    const { email, password } = input.passwordInput
+
+    const inUse = await Promise.all([
+      knex('users').where({ email }).first(),
+      knex('signup').where({ email }).first(),
+    ])
+    if (inUse.some(Boolean)) throw new UserInputError('email already in use')
+
+    await knex('signin_upframe').insert({
+      email,
+      password: hashPassword(password),
+    })
+
+    signup.email = email
   }
 
   signup = await query.raw(M.Signup).insertAndFetch(signup).asUser(system)
 
-  logger.info({ signup })
-
   return {
     id: signup.id,
-    email: signup.email,
+    email: info?.email,
     role: invite.role.toUpperCase(),
     authComplete: true,
     name: info?.name,
-    picture: { url: info.picture },
+    picture: info?.picture && { url: info.picture },
     defaultPicture: {
       url: process.env.BUCKET_URL + 'default.png',
     },
@@ -133,6 +145,12 @@ export const completeSignup = resolver<M.User>()(
     }
 
     if (signup.email) user.email = signup.email
+    else {
+      const { email } = await knex('connect_google')
+        .where({ google_id: signup.google_id })
+        .first()
+      user.email = email
+    }
 
     const validStatus = await validate.batch(
       {
@@ -212,23 +230,14 @@ export const completeSignup = resolver<M.User>()(
       }
     }
 
-    if (signup.password) {
-      await query
-        .raw(M.SigninUpframe)
-        .insert({
-          user_id: user.id,
-          email: signup.email,
-          password: signup.password,
-        })
-        .asUser(system)
-    }
-    if (signup.google_id) {
-      await query
-        .raw(M.ConnectGoogle)
-        .findById(signup.google_id)
-        .patch({ user_id: user.id })
-        .asUser(system)
-    }
+    if (signup.email)
+      await knex('signin_upframe')
+        .where({ email: signup.email })
+        .update({ user_id: user.id })
+    else
+      await knex('connect_google')
+        .where({ google_id: signup.google_id })
+        .update({ user_id: user.id })
 
     const spaceInvite = await knex('space_invites')
       .where({ id: signup.token })

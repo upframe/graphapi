@@ -68,7 +68,7 @@ export const invites = resolver<any[], User>()(({ parent: { invites } }) =>
 
 export const google = resolver<any, User>().isSelfOrAdmin(
   async ({ knex, parent }) =>
-    await knex('connect_google').where({ user_id: parent.id }).first()
+    (await knex('connect_google').where({ user_id: parent.id }).first()) ?? {}
 )
 
 export const timezone = resolver<any, User>()(({ parent }) =>
