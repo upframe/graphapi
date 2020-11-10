@@ -77,6 +77,7 @@ export default class Client {
       refresh_token: this.credentials.refresh_token ?? undefined,
       access_token: this.credentials.access_token,
       scopes: this.credentials.scope?.split(' '),
+      user_id: this.userId,
       email,
       name,
       picture,

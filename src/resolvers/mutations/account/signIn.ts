@@ -39,9 +39,7 @@ export const signIn = resolver<M.User>()<{
     let client: GoogleClient
     try {
       client = await GoogleClient.fromAuthCode(code, redirect)
-      logger.info('!info:')
       info = await client.userInfo()
-      logger.info({ info })
       if (!info?.id) throw Error('no id in google user info')
     } catch (error) {
       logger.error("couldn't signin with google", { error, googleInput })
@@ -53,7 +51,7 @@ export const signIn = resolver<M.User>()<{
       .findById(info.id)
       .asUser(system)
 
-    if (!data)
+    if (!data?.user_id)
       throw new AuthenticationError(
         'there is no Upframe account connected to this Google account'
       )
