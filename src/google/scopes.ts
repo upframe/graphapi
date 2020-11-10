@@ -1,6 +1,6 @@
 export const googleOAuthScopes = {
-  signIn: [
-    'https://www.googleapis.com/auth/plus.me',
+  signIn: ['openid'],
+  signUp: [
     'https://www.googleapis.com/auth/userinfo.email',
     'https://www.googleapis.com/auth/userinfo.profile',
   ],

@@ -9,7 +9,7 @@ export const oAuth2Client = (redirectURI?: string) =>
   )
 
 export function generateAuthUrl(
-  redirect: string,
+  { redirect, state }: { redirect: string; state: string },
   ...scopes: GoogleOAuthScope[]
 ): string {
   if (!scopes.includes('signIn')) scopes.push('signIn')
@@ -19,9 +19,10 @@ export function generateAuthUrl(
   logger.debug(`generate oauth url with scopes`, scopeUrls, { redirect })
 
   const url = oAuth2Client(redirect).generateAuthUrl({
-    access_type: 'offline',
     scope: scopeUrls,
+    ...(scopes.includes('calendar') && { access_type: 'offline' }),
     include_granted_scopes: true,
+    state,
   })
 
   return url

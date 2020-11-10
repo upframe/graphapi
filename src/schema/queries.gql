@@ -16,7 +16,11 @@ type Query {
     maxTags: Int = 3
   ): SearchResult
   signUpInfo(token: ID!): SignUpInfo
-  googleAuthUrl(redirect: String!, state: String): String
+  googleAuthUrl(
+    redirect: String!
+    scope: GoogleAuthScope!
+    state: String
+  ): String
   calendarConnectUrl(redirect: String!): String
   checkValidity(
     name: String

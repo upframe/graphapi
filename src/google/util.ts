@@ -10,9 +10,6 @@ export const catchInvalid: MethodDecorator = (
   descriptor.value = function (...args: any[]) {
     return catchError(org.bind(this))(error => {
       logger.warn(`[@catchInvalid] error caught in ${String(key)}`, { error })
-      logger.info(this.credentials)
-      logger.info(this)
-      logger.info(this.constructor.db)
       if (!this.userId)
         logger.warn(
           "[@catchInvalid] can't remove credentials because userId isn't set",

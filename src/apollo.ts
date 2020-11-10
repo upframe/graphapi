@@ -38,7 +38,17 @@ export const server = new ApolloServer({
     )
       logger.info(body)
 
-    return {
+    function signOut() {
+      requests[requestId].responseHeaders['Set-Cookie'] = cookie(
+        'auth',
+        'deleted',
+        -1
+      )
+      ctx.id = undefined
+      ctx.user = undefined
+    }
+
+    const ctx: ResolverCtx = {
       id,
       user,
       roles,
@@ -48,13 +58,7 @@ export const server = new ApolloServer({
       setHeader(header, value) {
         requests[requestId].responseHeaders[header] = value
       },
-      signOut() {
-        requests[requestId].responseHeaders['Set-Cookie'] = cookie(
-          'auth',
-          'deleted',
-          -1
-        )
-      },
+      signOut,
       knex: requests[requestId].knex,
       service:
         headers['service-auth'] &&
@@ -62,6 +66,8 @@ export const server = new ApolloServer({
           ? 'EMAIL'
           : undefined,
     }
+
+    return ctx
   },
   debug: !!process.env.IS_OFFLINE,
   formatError: err => {

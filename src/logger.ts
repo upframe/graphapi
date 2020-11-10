@@ -27,7 +27,6 @@ const logger = Object.assign(
               wsFormat(info =>
                 block.some(exp => exp.test(info.message)) ? false : info
               )(),
-              // wsFormat.errors({ stack: true }),
               wsFormat.colorize(),
               wsFormat.timestamp({
                 format: 'HH:mm:ss',

@@ -4,28 +4,42 @@ import { getTokensFromAuthCode } from '.'
 import { catchInvalid } from './util'
 
 export default class Client {
-  private static readonly instances: Client[] = []
   public static db: DB
   public static readonly tasks: Promise<any>[] = []
 
-  static fromCreds(credentials: Credentials): Client {
-    for (const client of Client.instances)
-      if (client.credentials.refresh_token === credentials.refresh_token)
-        return client.update(credentials)
-
+  public static fromCreds(credentials: Credentials): Client {
     const client = new Client(credentials)
     const { user_id } = credentials as any
     if (user_id) client._userId = user_id
-    Client.instances.push(client)
-
     return client
   }
 
-  static async fromAuthCode(code: string, redirect: string) {
+  public static async fromAuthCode(
+    code: string,
+    redirect: string
+  ): Promise<Client> {
     const tokens = await getTokensFromAuthCode(code, redirect)
     if (!tokens) throw new Error('invalid auth code')
     logger.info({ tokens })
     return Client.fromCreds(tokens)
+  }
+
+  public static async fromGoogleId(id: string): Promise<Client> {
+    if (!id) return
+    const creds = await Client.db('connect_google')
+      .where({ google_id: id })
+      .first()
+    if (!creds) return
+    return Client.fromCreds(creds)
+  }
+
+  public static async fromUserId(id: string): Promise<Client> {
+    if (!id) return
+    const creds = await Client.db('connect_google')
+      .where({ user_id: id })
+      .first()
+    if (!creds) return
+    return Client.fromCreds(creds)
   }
 
   private constructor(credentials: Credentials) {
@@ -55,10 +69,27 @@ export default class Client {
     return data
   }
 
-  private update(credentials: Credentials): Client {
-    if (this.credentials.expiry_date < credentials.expiry_date)
-      this.credentials = credentials
-    return this
+  public async persistLogin() {
+    const { id, email, name, picture } = await this.userInfo()
+    logger.info('persist google login', { id })
+    await Client.db('connect_google').insert({
+      google_id: id,
+      refresh_token: this.credentials.refresh_token ?? undefined,
+      access_token: this.credentials.access_token,
+      scopes: this.credentials.scope?.split(' '),
+      email,
+      name,
+      picture,
+    })
+  }
+
+  public async revoke() {
+    logger.debug('revoke google tokens', { client: this })
+    await this.oAuthClient.revokeToken(
+      this.credentials.refresh_token ?? this.credentials.access_token
+    )
+    if (this.userId)
+      await Client.db('connect_google').where({ user_id: this.userId }).delete()
   }
 
   private async syncCredentials() {
@@ -69,10 +100,13 @@ export default class Client {
       )
     logger.debug('sync google credentials for ' + this.userId)
     try {
-      await Client.db('connect_google').where({ user_id: this.userId }).update({
-        refresh_token: this.credentials.refresh_token,
-        access_token: this.credentials.access_token,
-      })
+      await Client.db('connect_google')
+        .where({ user_id: this.userId })
+        .update({
+          refresh_token: this.credentials.refresh_token ?? undefined,
+          access_token: this.credentials.access_token,
+          scopes: this.credentials.scope?.split(' '),
+        })
     } catch (error) {
       logger.error('failed to write Google credentials to db', {
         userId: this.userId,

@@ -10,6 +10,7 @@ import { ddb } from '~/utils/aws'
 import * as filterExpr from '~/utils/filter'
 import { checkSpaceAdmin } from '~/utils/space'
 import { isUUID } from '~/utils/validity'
+import GoogleClient from '~/google/client'
 
 export * from './space'
 export * from './google'
@@ -162,43 +163,32 @@ export const search = resolver<any>()(
 export const signUpInfo = resolver<any>()(
   async ({ args: { token }, query }) => {
     if (!token) throw new UserInputError('must provide token')
-    const signup: M.Signup = isUUID(token)
+    let signup: M.Signup = isUUID(token)
       ? await query.raw(M.Signup).findById(token).asUser(system)
       : undefined
     const invite = await query.raw(M.Invite).findById(signup?.token ?? token)
     if (!invite) throw new UserInputError('invalid invite token')
     if (invite.redeemed) throw new UserInputError('invite token already used')
 
-    let name: string
-    let picture
-    // if (signup?.google_id) {
-    //   const creds = await query
-    //     .raw(M.ConnectGoogle)
-    //     .findById(signup.google_id)
-    //     .asUser(system)
-    //   const data = await googleInfo(creds)
-    //   if (data.name) name = data.name
-    //   if (data.picture) picture = data.picture
-    // } else if (signup?.email) {
-    name = signup.email
-      .split('@')[0]
-      .replace(/[^a-zA-Z]+/g, ' ')
-      .toLowerCase()
-      .trim()
-      .replace(/(\s|^)[a-z]/g, v => v.toUpperCase())
-    // }
+    if (!signup && invite.email)
+      signup = await query.raw(M.Signup).where({ token }).first().asUser(system)
+
+    let info: ModelContent<M.ConnectGoogle>
+
+    if (signup?.google_id)
+      info = await query
+        .raw(M.ConnectGoogle)
+        .where({ google_id: signup.google_id })
+        .first()
+        .asUser(system)
 
     return {
       id: signup?.id,
+      name: info?.name,
+      ...(info?.picture && { picture: { url: info?.picture } }),
       email: invite.email,
       role: invite.role.toUpperCase(),
       authComplete: !!signup,
-      name,
-      ...(picture && {
-        picture: {
-          url: picture,
-        },
-      }),
       defaultPicture: {
         url: process.env.BUCKET_URL + 'default.png',
       },

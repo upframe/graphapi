@@ -10,4 +10,7 @@ export class ConnectGoogle extends Model {
   access_token: string
   scopes: string[]
   calendar_id: string
+  email: string
+  name: string
+  picture: string
 }

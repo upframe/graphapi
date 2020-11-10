@@ -18,3 +18,5 @@ type SignUpInfo {
   picture: ProfilePicture
   defaultPicture: ProfilePicture
 }
+
+union SignUpResult = SignUpInfo | User | Mentor

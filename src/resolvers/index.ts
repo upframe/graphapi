@@ -19,6 +19,7 @@ import * as Space from './fields/space'
 import * as Audit from './fields/audit'
 import * as ChannelSlot from './fields/channelSlot'
 import * as Google from './fields/google'
+import * as SignUpResult from './fields/signUpResult'
 
 const AuditObject = Audit.AuditObject
 
@@ -49,4 +50,5 @@ export default {
   AuditObject,
   ChannelSlot,
   Google,
+  SignUpResult,
 }

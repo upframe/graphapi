@@ -5,8 +5,11 @@ type Mutation {
   ): Person
   signOut: Int
 
-  signUpPassword(token: ID!, email: String!, password: String!): SignUpInfo
-  signUpGoogle(token: ID!, code: ID!, redirect: String!): SignUpInfo
+  signUp(
+    token: ID!
+    passwordInput: PasswordLoginInput
+    googleInput: GoogleLoginInput
+  ): SignUpResult!
   completeSignup(
     token: ID!
     name: String!

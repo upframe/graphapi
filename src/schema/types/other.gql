@@ -10,6 +10,12 @@ type Google {
   canDisconnect: Boolean
 }
 
+enum GoogleAuthScope {
+  SIGN_IN
+  SIGN_UP
+  CALENDAR
+}
+
 type Redirect {
   from: String!
   to: String!

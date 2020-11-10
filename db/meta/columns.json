@@ -6,7 +6,10 @@
       "refresh_token",
       "access_token",
       "scopes",
-      "calendar_id"
+      "calendar_id",
+      "email",
+      "name",
+      "picture"
     ]
   },
   "invites": {
@@ -56,19 +59,44 @@
     ]
   },
   "profile_pictures": {
-    "columns": ["user_id", "url", "size", "type"]
+    "columns": [
+      "user_id",
+      "url",
+      "size",
+      "type"
+    ]
   },
   "signin_upframe": {
-    "columns": ["email", "password", "user_id"]
+    "columns": [
+      "email",
+      "password",
+      "user_id"
+    ]
   },
   "signup": {
-    "columns": ["token", "started", "email", "password", "google_id", "id"]
+    "columns": [
+      "token",
+      "started",
+      "email",
+      "password",
+      "google_id",
+      "id"
+    ]
   },
   "time_slots": {
-    "columns": ["id", "mentor_id", "start", "end"]
+    "columns": [
+      "id",
+      "mentor_id",
+      "start",
+      "end"
+    ]
   },
   "socialmedia": {
-    "columns": ["id", "name", "url"]
+    "columns": [
+      "id",
+      "name",
+      "url"
+    ]
   },
   "spaces": {
     "columns": [
@@ -87,10 +115,20 @@
     ]
   },
   "tags": {
-    "columns": ["id", "name"]
+    "columns": [
+      "id",
+      "name"
+    ]
   },
   "tokens": {
-    "columns": ["token", "scope", "subject", "payload", "issued", "expires"]
+    "columns": [
+      "token",
+      "scope",
+      "subject",
+      "payload",
+      "issued",
+      "expires"
+    ]
   },
   "users": {
     "columns": [
@@ -114,12 +152,22 @@
     ]
   },
   "user_handles": {
-    "columns": ["user_id", "platform_id", "handle"]
+    "columns": [
+      "user_id",
+      "platform_id",
+      "handle"
+    ]
   },
   "user_lists": {
-    "columns": ["user_id", "list_id"]
+    "columns": [
+      "user_id",
+      "list_id"
+    ]
   },
   "user_tags": {
-    "columns": ["user_id", "tag_id"]
+    "columns": [
+      "user_id",
+      "tag_id"
+    ]
   }
 }
