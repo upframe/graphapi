@@ -2,6 +2,7 @@ import { google } from 'googleapis'
 import type { Credentials } from './auth'
 import { getTokensFromAuthCode } from '.'
 import { catchInvalid } from './util'
+import axios from 'axios'
 
 export default class Client {
   public static db: DB
@@ -42,9 +43,32 @@ export default class Client {
     return Client.fromCreds(creds)
   }
 
+  public static async getAccessToken(
+    refresh_token: string
+  ): Promise<Partial<Credentials>> {
+    logger.debug('manually request new access token for ' + refresh_token)
+    try {
+      const { data } = await axios.post('https://oauth2.googleapis.com/token', {
+        client_id: process.env.OAUTH_CLIENT_ID,
+        client_secret: process.env.OAUTH_CLIENT_SECRET,
+        grant_type: 'refresh_token',
+        refresh_token,
+      })
+      return data
+    } catch (error) {
+      logger.error('failed to fetch new token', { error })
+      throw error
+    }
+  }
+
   private constructor(credentials: Credentials) {
     logger.debug('create google client', credentials)
     this.credentials = credentials
+
+    this.oAuthClient.on('tokens', tokens => {
+      logger.debug("oAuthClient.on('tokens')", { tokens })
+      this.credentials = { ...this.credentials, ...tokens }
+    })
   }
 
   readonly oAuthClient = new google.auth.OAuth2(
@@ -69,9 +93,35 @@ export default class Client {
     return data
   }
 
+  public async getScopes(retry = true): Promise<string[]> {
+    if (!this.credentials.refresh_token)
+      return (
+        (this._credentials as any).scopes ??
+        this._credentials.scope?.split(' ') ??
+        []
+      )
+    try {
+      const { scopes } = await this.oAuthClient.getTokenInfo(
+        this.credentials.access_token
+      )
+      return scopes
+    } catch (error) {
+      if (!retry)
+        return void logger.error(
+          'permanently failed to retreive token scoeps',
+          { error }
+        )
+      this.credentials = {
+        ...this.credentials,
+        ...(await Client.getAccessToken(this.credentials.refresh_token)),
+      }
+      return await this.getScopes(false)
+    }
+  }
+
   public async persistLogin() {
     const { id, email, name, picture } = await this.userInfo()
-    logger.info('persist google login', { id })
+    logger.info('persist google login', { id, email })
     await Client.db('connect_google').insert({
       google_id: id,
       refresh_token: this.credentials.refresh_token ?? undefined,
@@ -86,23 +136,26 @@ export default class Client {
 
   public async revoke() {
     logger.debug('revoke google tokens', { client: this })
-    await this.oAuthClient.revokeToken(
-      this.credentials.refresh_token ?? this.credentials.access_token
-    )
+    try {
+      if (this.credentials.refresh_token)
+        await this.oAuthClient.revokeToken(this.credentials.refresh_token)
+    } catch (error) {
+      logger.error("couldn't revoke google tokens", { error, client: this })
+    }
     if (this.userId)
       await Client.db('connect_google').where({ user_id: this.userId }).delete()
   }
 
-  private async syncCredentials() {
-    if (!this.userId) return
+  public async syncCredentials(userId = this.userId) {
+    if (!userId) return
     if (!Client.db)
       return void logger.warn(
         "didn't write Google credentials to DB because Client.db isn't set"
       )
-    logger.debug('sync google credentials for ' + this.userId)
+    logger.debug('sync google credentials for ' + userId)
     try {
       await Client.db('connect_google')
-        .where({ user_id: this.userId })
+        .where({ user_id: userId })
         .update({
           refresh_token: this.credentials.refresh_token ?? undefined,
           access_token: this.credentials.access_token,
@@ -110,16 +163,16 @@ export default class Client {
         })
     } catch (error) {
       logger.error('failed to write Google credentials to db', {
-        userId: this.userId,
+        userId,
         error,
       })
     }
   }
 
-  private get credentials() {
+  public get credentials() {
     return this._credentials
   }
-  private set credentials(creds: Credentials) {
+  public set credentials(creds: Credentials) {
     this._credentials = creds
     this.oAuthClient.setCredentials(creds)
     this.syncCredentials()
@@ -139,6 +192,10 @@ export default class Client {
     logger.warn('tried to set user id of google client that already has one', {
       userId: this._userId,
     })
+  }
+
+  public get calendar() {
+    return google.calendar({ version: 'v3', auth: this.oAuthClient })
   }
 }
 
