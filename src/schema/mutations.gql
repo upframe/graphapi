@@ -25,6 +25,7 @@ type Mutation {
   disconnectGoogle: Person
   connectGCal(input: GoogleLoginInput!): Person
   disconnectGCal: Person
+  setGCal(calendar: ID): Person
 
   deleteAccount(handle: String!): Int
   requestEmailChange(email: String!): Int

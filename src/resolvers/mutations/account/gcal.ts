@@ -50,3 +50,22 @@ export const connectGCal = resolver<M.User>().isMentor<{
 )
 
 export const disconnectGCal = resolver().isMentor(async () => {})
+
+export const setGCal = resolver<M.User>().isMentor<{ calendar?: string }>(
+  async ({ args: { calendar }, query, ctx: { id } }) => {
+    if (!calendar) {
+      const client = await GoogleClient.fromUserId(id)
+      const { data } = await client.calendar.calendars.insert({
+        requestBody: { summary: 'Upframe' },
+      })
+      calendar = data.id
+    }
+
+    await query
+      .raw(M.ConnectGoogle)
+      .patch({ calendar_id: calendar })
+      .where({ user_id: id })
+
+    return query().findById(id)
+  }
+)

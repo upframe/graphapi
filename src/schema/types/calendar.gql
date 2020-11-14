@@ -1,9 +1,10 @@
 type Calendar {
   id: ID!
-  name: String
+  name: String!
   description: String
   color: String
   events(max: Int = 100, start: String = "today"): [Event!]
+  access: String
 }
 
 type Event {

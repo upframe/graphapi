@@ -37,7 +37,6 @@ export const calendars = resolver<any[], ConnectGoogle>()(
     if (!parent) return
     const client = GoogleClient.fromCreds(parent)
     const { data } = await client.calendar.calendarList.list()
-    // logger.info({ list })
     return data?.items ?? []
   }
 )
