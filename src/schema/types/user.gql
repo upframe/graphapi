@@ -75,8 +75,6 @@ type Mentor implements Node & Person {
   visibility: Visibility
   notificationPrefs: MentorNotificationPreferences
   slots(after: String, before: String, includeBooked: Boolean = false): [Slot!]!
-  calendars(ids: [ID!]): [Calendar!]
-  calendarConnected: Boolean
   role: Role
   invites: [Invite]
   google: Google

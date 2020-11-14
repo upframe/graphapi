@@ -8,6 +8,9 @@ type Google {
   connected: Boolean
   email: String
   canDisconnect: Boolean
+  gcalGranted: Boolean
+  gcalConnected: String
+  calendars: [Calendar!]
 }
 
 enum GoogleAuthScope {
