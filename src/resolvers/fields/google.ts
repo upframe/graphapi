@@ -32,11 +32,13 @@ export const gcalConnected = resolver<string, ConnectGoogle>()(
   ({ parent }) => parent.calendar_id
 )
 
-export const calendars = resolver<any[], ConnectGoogle>()(
-  async ({ parent }) => {
+export const calendars = resolver<any[], ConnectGoogle>()<{ ids?: string[] }>(
+  async ({ parent, args: { ids } }) => {
     if (!parent) return
     const client = GoogleClient.fromCreds(parent)
     const { data } = await client.calendar.calendarList.list()
-    return data?.items ?? []
+    return (data?.items ?? [])
+      .filter(({ id }) => ids?.includes(id) ?? true)
+      .map(v => ({ ...v, client }))
   }
 )

@@ -10,7 +10,7 @@ type Google {
   canDisconnect: Boolean
   gcalGranted: Boolean
   gcalConnected: String
-  calendars: [Calendar!]
+  calendars(ids: [ID!]): [Calendar!]
 }
 
 enum GoogleAuthScope {
