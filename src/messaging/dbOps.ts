@@ -54,11 +54,12 @@ export const batchRead = async <T extends keyof tables>(
   table: T,
   keys: tables[T][]
 ) => {
-  const { Responses } = await ddb
-    .batchGet({ RequestItems: { [table]: { Keys: keys } } })
-    .promise()
-
-  return Responses?.[table]?.map(format)
+  const res = await Promise.all(
+    batch(keys, 100).map(Keys =>
+      ddb.batchGet({ RequestItems: { [table]: { Keys } } }).promise()
+    )
+  )
+  return res.flatMap(({ Responses }) => Responses?.[table] ?? [])?.map(format)
 }
 
 export const batchRequest = async <T extends keyof tables>(
