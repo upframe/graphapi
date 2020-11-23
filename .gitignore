@@ -3,7 +3,8 @@ node_modules
 .serverless
 .dynamodb
 .env*
-*.key
+/*.key*
+/*.pem
 .DS_STORE
 *.log
 *credentials*

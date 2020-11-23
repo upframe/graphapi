@@ -1,11 +1,24 @@
 import jwt from 'jsonwebtoken'
 import * as bcrypt from 'bcrypt'
 import { User } from './models'
+import fs from 'fs'
+
+const [PUBLIC_KEY, PRIVATE_KEY] = (() => {
+  if (process.env.PUBLIC_KEY && process.env.PUBLIC_KEY !== 'undefined')
+    return [process.env.PUBLIC_KEY, process.env.PRIVATE_KEY]
+  if (!fs.existsSync('jwt.key') || !fs.existsSync('jwt.key.pub'))
+    throw Error("couldn't find rsa key in env or file")
+  logger.info('read jwt key from file')
+  return [
+    fs.readFileSync('jwt.key.pub', 'utf-8'),
+    fs.readFileSync('jwt.key', 'utf-8'),
+  ].map(v => v.replace(/\\n/gm, '\n'))
+})()
 
 export function decode(token: string) {
   if (!token) return
   try {
-    return jwt.verify(token, process.env.PUBLIC_KEY) as any
+    return jwt.verify(token, PUBLIC_KEY) as any
   } catch (e) {
     logger.error(e)
     if (e instanceof jwt.JsonWebTokenError) return
@@ -14,7 +27,7 @@ export function decode(token: string) {
 }
 
 export const signInToken = (user: User): string =>
-  jwt.sign({ id: user.id, role: user.role }, process.env.PRIVATE_KEY, {
+  jwt.sign({ id: user.id, role: user.role }, PRIVATE_KEY, {
     issuer: 'upframe',
     subject: user.email,
     algorithm: 'RS256',
@@ -22,16 +35,12 @@ export const signInToken = (user: User): string =>
   })
 
 export const msgToken = (user: User): string =>
-  jwt.sign(
-    { user: `msg:${user.id}`, role: user.role },
-    process.env.PRIVATE_KEY,
-    {
-      issuer: 'upframe',
-      subject: user.email,
-      algorithm: 'RS256',
-      expiresIn: '1d',
-    }
-  )
+  jwt.sign({ user: `msg:${user.id}`, role: user.role }, PRIVATE_KEY, {
+    issuer: 'upframe',
+    subject: user.email,
+    algorithm: 'RS256',
+    expiresIn: '1d',
+  })
 
 export const checkPassword = (input: string, password: string): boolean =>
   input && password ? bcrypt.compareSync(input, password) : false
