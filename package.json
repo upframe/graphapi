@@ -21,7 +21,7 @@
   "dependencies": {
     "@babel/runtime": "^7.10.3",
     "apollo-server-lambda": "^2.15.0",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "bcrypt": "^5.0.0",
     "fast-levenshtein": "^2.0.6",
     "googleapis": "^62.0.0",
