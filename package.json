@@ -29,7 +29,7 @@
     "jsonwebtoken": "^8.5.1",
     "knex": "^0.20.15",
     "lodash": "^4.17.19",
-    "markdown-it": "^11.0.0",
+    "markdown-it": "^12.3.2",
     "mjml": "^4.6.3",
     "moment-timezone": "^0.5.31",
     "mustache": "^4.0.1",
